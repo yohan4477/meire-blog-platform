@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Search } from 'lucide-react';
+import { Search, BarChart3 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function Header() {
   return (
@@ -13,9 +14,9 @@ export default function Header() {
           {/* 로고 */}
           <Link href="/" className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">M</span>
+              <span className="text-primary-foreground font-bold text-lg">P</span>
             </div>
-            <span className="font-bold text-xl">Meire Blog</span>
+            <span className="font-bold text-xl">우리아빠 피터린치 / 우리형 메르 Blog</span>
           </Link>
 
           {/* 네비게이션 */}
@@ -33,14 +34,15 @@ export default function Header() {
               포스트
             </Link>
             <Link 
-              href="/categories" 
-              className="text-sm font-medium hover:text-primary transition-colors"
+              href="/investment" 
+              className="text-sm font-medium hover:text-primary transition-colors flex items-center space-x-1"
             >
-              카테고리
+              <BarChart3 className="h-4 w-4" />
+              <span>투자 현황</span>
             </Link>
           </nav>
 
-          {/* 검색 */}
+          {/* 검색 및 액션 */}
           <div className="flex items-center space-x-4">
             <div className="relative hidden sm:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -52,6 +54,7 @@ export default function Header() {
             <Button variant="ghost" size="icon" className="sm:hidden">
               <Search className="h-5 w-5" />
             </Button>
+            <ThemeToggle />
           </div>
         </div>
       </div>

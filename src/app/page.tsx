@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { BlogPost } from '@/types';
 import PostCard from '@/components/blog/PostCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, TrendingUp } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { ArrowRight, TrendingUp, BarChart3, BookOpen, MessageSquare } from 'lucide-react';
+import ScionHoldings from '@/components/investment/ScionHoldings';
 
 export default function Home() {
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
@@ -16,7 +18,13 @@ export default function Home() {
       try {
         const response = await fetch('/api/posts?limit=6');
         const data = await response.json();
-        setRecentPosts(data.posts || []);
+        
+        if (data.success) {
+          setRecentPosts(data.data || []);
+        } else {
+          console.error('Recent posts API error:', data.error);
+          setRecentPosts([]);
+        }
       } catch (error) {
         console.error('Failed to fetch recent posts:', error);
       } finally {
@@ -43,11 +51,12 @@ export default function Home() {
       {/* Hero Section */}
       <section className="text-center py-16">
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-          Meire Blog
+          우리아빠 피터린치 / 우리형 메르 Blog
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          경제, 투자, 일상의 이야기를 담은 블로그입니다. 
-          다양한 관점에서 바라본 세상의 이야기를 전달합니다.
+          니가 뭘 알아. 니가 뭘 아냐고.<br />
+          우리아빠 피터린치, 우리형 메르를 보유한 최모군이 선사하는 
+          프리미엄 투자 지식과 라이프스타일을 경험하세요.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg">
@@ -64,6 +73,7 @@ export default function Home() {
           </Button>
         </div>
       </section>
+
 
       {/* 최근 포스트 */}
       <section className="py-16">
@@ -88,6 +98,15 @@ export default function Home() {
             <p className="text-muted-foreground">포스트를 불러올 수 없습니다.</p>
           </div>
         )}
+      </section>
+
+      {/* Scion 투자 현황 섹션 */}
+      <section className="py-16">
+        <ScionHoldings 
+          limit={8} 
+          showRefreshButton={true}
+          className="w-full"
+        />
       </section>
 
       {/* 통계 섹션 */}

@@ -10,12 +10,13 @@ import { ArrowLeft, Calendar, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 interface PostPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 async function getPost(id: string): Promise<BlogPost | null> {
   try {
-    const response = await fetch(`http://localhost:3000/api/posts/${id}`, {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
+    const response = await fetch(`${baseUrl}/api/posts/${id}`, {
       cache: 'no-store'
     });
     
@@ -23,7 +24,19 @@ async function getPost(id: string): Promise<BlogPost | null> {
       return null;
     }
     
-    return await response.json();
+    const data = await response.json();
+    
+    // 새로운 API 응답 형식 처리
+    if (data.success && data.data) {
+      return data.data;
+    }
+    
+    // 이전 형식과의 호환성을 위해
+    if (data.id) {
+      return data;
+    }
+    
+    return null;
   } catch (error) {
     console.error('Failed to fetch post:', error);
     return null;
@@ -54,7 +67,8 @@ function getReadingTime(content: string): number {
 }
 
 export default async function PostPage({ params }: PostPageProps) {
-  const post = await getPost(params.id);
+  const resolvedParams = await params;
+  const post = await getPost(resolvedParams.id);
 
   if (!post) {
     notFound();
@@ -112,7 +126,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <article className="prose prose-neutral dark:prose-invert max-w-none">
         <div className="whitespace-pre-wrap leading-relaxed">
           {/* HTML 태그가 포함된 경우를 대비한 안전한 렌더링 */}
-          <ReactMarkdown className="prose prose-lg max-w-none">
+          <ReactMarkdown>
             {markdownContent}
           </ReactMarkdown>
         </div>
@@ -148,7 +162,8 @@ export default async function PostPage({ params }: PostPageProps) {
 
 // 메타데이터 생성
 export async function generateMetadata({ params }: PostPageProps) {
-  const post = await getPost(params.id);
+  const resolvedParams = await params;
+  const post = await getPost(resolvedParams.id);
   
   if (!post) {
     return {

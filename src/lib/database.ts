@@ -1,19 +1,23 @@
 import mysql from 'mysql2/promise';
 
-const dbConfig = {
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'meire_blog',
-  charset: 'utf8mb4',
-  timezone: '+00:00'
-};
+const dbConfig = process.env.DATABASE_URL 
+  ? { uri: process.env.DATABASE_URL, ssl: { rejectUnauthorized: true } }
+  : {
+      host: 'localhost',
+      user: 'root',
+      password: '',
+      database: 'meire_blog',
+      charset: 'utf8mb4',
+      timezone: '+00:00'
+    };
 
 let connection: mysql.Connection | null = null;
 
 export async function getConnection(): Promise<mysql.Connection> {
   if (!connection) {
-    connection = await mysql.createConnection(dbConfig);
+    connection = process.env.DATABASE_URL 
+      ? await mysql.createConnection(process.env.DATABASE_URL)
+      : await mysql.createConnection(dbConfig);
   }
   return connection;
 }

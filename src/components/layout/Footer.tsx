@@ -7,10 +7,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* 사이트 정보 */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Meire Blog</h3>
+            <h3 className="font-semibold text-lg mb-4">우리아빠 피터린치 / 우리형 메르 Blog</h3>
             <p className="text-sm text-muted-foreground">
-              경제, 투자, 일상의 이야기를 담은 개인 블로그입니다.
-              다양한 주제의 글을 통해 유익한 정보를 전달합니다.
+              니가 뭘 알아. 니가 뭘 아냐고.<br />
+              전설적 투자자의 철학을 품은 차세대 투자 인사이트 플랫폼.
+              우리아빠 피터린치와 우리형 메르가 선사하는 프리미엄 투자 지식과 라이프스타일을 경험하세요.
             </p>
           </div>
 
@@ -53,7 +54,7 @@ export default function Footer() {
         <Separator className="my-6" />
 
         <div className="text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 Meire Blog. All rights reserved.</p>
+          <p>&copy; 2025 우리아빠 피터린치 / 우리형 메르 Blog. All rights reserved.</p>
         </div>
       </div>
     </footer>

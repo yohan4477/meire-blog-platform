@@ -1,25 +1,33 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/database';
+import {
+  createSuccessResponse,
+  createDatabaseErrorResponse,
+  addSecurityHeaders,
+  withPerformanceMonitoring
+} from '@/lib/api-utils';
 
 export async function GET() {
-  try {
-    const categories = await query<{ name: string; count: number }>(
-      `SELECT 
-         category as name, 
-         COUNT(*) as count 
-       FROM blog_posts 
-       WHERE category IS NOT NULL 
-       GROUP BY category 
-       ORDER BY count DESC`
-    );
+  return withPerformanceMonitoring(async () => {
+    try {
+      const categories = await query<{ name: string; count: number }>(
+        `SELECT 
+           category as name, 
+           COUNT(*) as count 
+         FROM blog_posts 
+         WHERE category IS NOT NULL 
+         GROUP BY category 
+         ORDER BY count DESC`
+      );
 
-    return NextResponse.json(categories);
+      return addSecurityHeaders(createSuccessResponse(
+        categories,
+        categories.length > 0 ? `Retrieved ${categories.length} categories` : 'No categories found'
+      ));
 
-  } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch categories' },
-      { status: 500 }
-    );
-  }
+    } catch (error) {
+      console.error('Categories API Error:', error);
+      return addSecurityHeaders(createDatabaseErrorResponse(error as Error));
+    }
+  }, 'GET /api/categories');
 }

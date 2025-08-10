@@ -45,13 +45,25 @@ export default function PostsPage() {
         const postsResponse = await fetch(postsUrl.toString());
         const postsData = await postsResponse.json();
         
-        setPosts(postsData.posts || []);
-        setTotalPages(postsData.totalPages || 1);
+        if (postsData.success) {
+          setPosts(postsData.data || []);
+          setTotalPages(postsData.meta?.totalPages || 1);
+        } else {
+          console.error('Posts API error:', postsData.error);
+          setPosts([]);
+          setTotalPages(1);
+        }
 
         // 카테고리 목록 가져오기
         const categoriesResponse = await fetch('/api/categories');
         const categoriesData = await categoriesResponse.json();
-        setCategories(categoriesData || []);
+        
+        if (categoriesData.success) {
+          setCategories(categoriesData.data || []);
+        } else {
+          console.error('Categories API error:', categoriesData.error);
+          setCategories([]);
+        }
         
       } catch (error) {
         console.error('Failed to fetch data:', error);

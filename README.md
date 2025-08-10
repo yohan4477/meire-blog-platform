@@ -16,8 +16,8 @@
 - **Frontend**: Next.js 14, TypeScript, TailwindCSS
 - **UI Components**: Shadcn/ui, Lucide React
 - **Backend**: Next.js API Routes
-- **Database**: MySQL (PlanetScale)
-- **Deployment**: Vercel
+- **Database**: MySQL 
+- **Deployment**: AWS EC2
 - **Typography**: Noto Sans KR (한글 최적화)
 
 ## 🚀 로컬 개발
