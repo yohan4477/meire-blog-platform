@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ScionPortfolio } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import HoldingsSkeleton from '@/components/investment/HoldingsSkeleton';
 import ErrorDisplay from '@/components/investment/ErrorDisplay';
 import InvestmentInsights from '@/components/investment/InvestmentInsights';
