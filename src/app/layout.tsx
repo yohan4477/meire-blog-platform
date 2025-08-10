@@ -20,13 +20,13 @@ const notoSansKr = Noto_Sans_KR({
 
 export const metadata: Metadata = {
   title: {
-    default: '우리아빠 피터린치 / 우리형 메르 Blog',
-    template: '%s | 우리아빠 피터린치 / 우리형 메르 Blog'
+    default: '요르의 투자 블로그',
+    template: '%s | 요르의 투자 블로그'
   },
-  description: '니가 뭘 알아. 니가 뭘 아냐고.\n우리아빠 피터린치, 우리형 메르를 보유한 최모군이 선사하는 프리미엄 투자 지식과 라이프스타일 경험',
-  keywords: ['피터린치', '투자', '주식', '포트폴리오', '투자 철학', '경제 분석', '국민연금', '투자 인사이트', '금융', '자산관리'],
-  authors: [{ name: '우리아빠 피터린치' }],
-  creator: '우리아빠 피터린치',
+  description: '니가 뭘 알아. 니가 뭘 아냐고.\n요르가 전하는 날카로운 투자 인사이트와 포트폴리오 분석',
+  keywords: ['요르', '투자', '주식', '포트폴리오', '투자 철학', '경제 분석', '투자 인사이트', '금융', '자산관리', 'Scion'],
+  authors: [{ name: '요르' }],
+  creator: '요르',
   
   // Enhanced SEO metadata
   category: 'finance',
@@ -41,26 +41,26 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'ko_KR',
-    url: 'https://peter-lynch-blog.vercel.app',
-    title: '우리아빠 피터린치 / 우리형 메르 Blog',
-    description: '니가 뭘 알아. 니가 뭘 아냐고.\n우리아빠 피터린치, 우리형 메르를 보유한 최모군이 선사하는 프리미엄 투자 지식과 라이프스타일 경험',
-    siteName: '우리아빠 피터린치 / 우리형 메르 Blog',
+    url: 'https://yor-investment-blog.vercel.app',
+    title: '요르의 투자 블로그',
+    description: '니가 뭘 알아. 니가 뭘 아냐고.\n요르가 전하는 날카로운 투자 인사이트와 포트폴리오 분석',
+    siteName: '요르의 투자 블로그',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: '우리아빠 피터린치 / 우리형 메르 Blog',
+        alt: '요르의 투자 블로그',
       },
     ],
   },
   
   twitter: {
     card: 'summary_large_image',
-    title: '우리아빠 피터린치 / 우리형 메르 Blog',
-    description: '프리미엄 투자 지식과 라이프스타일 경험',
+    title: '요르의 투자 블로그',
+    description: '날카로운 투자 인사이트와 포트폴리오 분석',
     images: ['/og-image.jpg'],
-    creator: '@peter_lynch_blog',
+    creator: '@yor_investment',
   },
   
   robots: {
@@ -156,7 +156,7 @@ export default function RootLayout({
                 
                 <footer className="border-t mt-16">
                   <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
-                    <p>&copy; 2025 우리아빠 피터린치 / 우리형 메르 Blog. All rights reserved.</p>
+                    <p>&copy; 2025 요르의 투자 블로그. All rights reserved.</p>
                     <p className="text-sm mt-2">니가 뭘 알아. 니가 뭘 아냐고.</p>
                   </div>
                 </footer>

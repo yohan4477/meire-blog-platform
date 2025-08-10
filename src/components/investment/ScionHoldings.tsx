@@ -19,6 +19,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import HoldingsSkeleton from './HoldingsSkeleton';
 import ErrorDisplay from './ErrorDisplay';
+import InvestmentInsights from './InvestmentInsights';
 
 interface ScionHoldingsProps {
   limit?: number;

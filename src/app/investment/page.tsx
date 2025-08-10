@@ -3,17 +3,10 @@
 import { useEffect, useState } from 'react';
 import { ScionPortfolio } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import ScionHoldings from '@/components/investment/ScionHoldings';
-import HoldingsTable from '@/components/investment/HoldingsTable';
-import EnhancedHoldingsTable from '@/components/investment/EnhancedHoldingsTable';
-import PortfolioStats from '@/components/investment/PortfolioStats';
 import HoldingsSkeleton from '@/components/investment/HoldingsSkeleton';
 import ErrorDisplay from '@/components/investment/ErrorDisplay';
-import QuarterlyTrend from '@/components/investment/QuarterlyTrend';
-import PortfolioPieChart from '@/components/investment/PortfolioPieChart';
-import TrendChart from '@/components/investment/TrendChart';
-import FilterControls from '@/components/investment/FilterControls';
+import InvestmentInsights from '@/components/investment/InvestmentInsights';
+import RealPerformanceTable from '@/components/investment/RealPerformanceTable';
 import { 
   RefreshCw, 
   BarChart3, 
@@ -21,14 +14,7 @@ import {
   ArrowLeft,
   Download,
   ExternalLink,
-  Calendar,
-  Filter,
-  Search,
-  Eye,
-  Grid3x3,
-  List,
-  PieChart,
-  Activity
+  Calendar
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
@@ -40,53 +26,6 @@ export default function InvestmentPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSector, setSelectedSector] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('rank');
-
-  // 필터링된 holdings 계산
-  const filteredHoldings = portfolio?.holdings.filter(holding => {
-    // 검색 필터
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      if (!holding.ticker.toLowerCase().includes(searchLower) && 
-          !holding.name.toLowerCase().includes(searchLower)) {
-        return false;
-      }
-    }
-    
-    // 섹터 필터 (간단한 예시 - 실제로는 섹터 정보가 데이터에 있어야 함)
-    if (selectedSector !== 'all') {
-      // TODO: 실제 섹터 정보 기반 필터링
-    }
-    
-    return true;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'value':
-        return b.marketValue - a.marketValue;
-      case 'change-positive':
-        const aChange = ((a.marketValue - (a.change?.quarterlyTrend?.Q4_2024?.marketValue || a.marketValue)) / (a.change?.quarterlyTrend?.Q4_2024?.marketValue || a.marketValue)) * 100;
-        const bChange = ((b.marketValue - (b.change?.quarterlyTrend?.Q4_2024?.marketValue || b.marketValue)) / (b.change?.quarterlyTrend?.Q4_2024?.marketValue || b.marketValue)) * 100;
-        return bChange - aChange;
-      case 'change-negative':
-        const aChangeNeg = ((a.marketValue - (a.change?.quarterlyTrend?.Q4_2024?.marketValue || a.marketValue)) / (a.change?.quarterlyTrend?.Q4_2024?.marketValue || a.marketValue)) * 100;
-        const bChangeNeg = ((b.marketValue - (b.change?.quarterlyTrend?.Q4_2024?.marketValue || b.marketValue)) / (b.change?.quarterlyTrend?.Q4_2024?.marketValue || b.marketValue)) * 100;
-        return aChangeNeg - bChangeNeg;
-      case 'alphabetical':
-        return a.ticker.localeCompare(b.ticker);
-      default: // 'rank'
-        return a.rank - b.rank;
-    }
-  }) || [];
-
-  const handleResetFilters = () => {
-    setSearchTerm('');
-    setSelectedSector('all');
-    setSortBy('rank');
-  };
 
   const fetchScionData = async (forceRefresh = false) => {
     try {
@@ -283,160 +222,21 @@ export default function InvestmentPage() {
         </div>
       </div>
 
-      {/* Enhanced Dashboard Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
-        {/* Portfolio Statistics */}
-        <div className="xl:col-span-8">
-          <PortfolioStats portfolio={portfolio} />
-        </div>
-        
-        {/* Portfolio Pie Chart */}
-        <div className="xl:col-span-4">
-          <PortfolioPieChart holdings={portfolio.holdings} />
-        </div>
-      </div>
-
-      {/* Trend Chart */}
+      {/* 투자 전략 인사이트 - 가장 중요한 정보를 맨 위에 */}
       <div className="mb-8">
-        <TrendChart holdings={portfolio.holdings} />
+        <InvestmentInsights holdings={portfolio.holdings} />
       </div>
 
-      {/* Filter Controls */}
-      <FilterControls
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        selectedSector={selectedSector}
-        setSelectedSector={setSelectedSector}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        totalCount={portfolio.holdings.length}
-        filteredCount={filteredHoldings.length}
-        onReset={handleResetFilters}
-      />
-
-      {/* Holdings Display */}
-      {viewMode === 'table' ? (
-        <EnhancedHoldingsTable 
-          holdings={filteredHoldings} 
-          title="포트폴리오 보유 종목 (실시간 수익률)"
-          showRank={true}
+      {/* 핵심 포트폴리오 현황 - 실제 수익/손실 정보 */}
+      <div className="mb-8">
+        <RealPerformanceTable 
+          holdings={portfolio.holdings} 
+          title="국민연금 실제 손익 현황"
+          limit={10}
         />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-          {filteredHoldings.map((holding, index) => (
-            <Card key={holding.ticker} className="p-4 hover:shadow-lg transition-all duration-200 group">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary">
-                    {holding.rank}
-                  </div>
-                  <div>
-                    <div className="font-mono font-bold text-lg text-primary group-hover:text-primary/80 transition-colors">
-                      {holding.ticker}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold">
-                    {holding.portfolioPercent.toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-              
-              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                {holding.name}
-              </p>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">시장가치</span>
-                  <span className="font-semibold">
-                    ${(holding.marketValue / 1e6).toFixed(1)}M
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">주식수</span>
-                  <span className="font-mono">
-                    {(holding.shares / 1e6).toFixed(1)}M
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">평단가</span>
-                  <span className="font-mono font-semibold text-primary">
-                    ${(holding.marketValue / holding.shares).toFixed(2)}
-                  </span>
-                </div>
-                
-                {holding.change && (
-                  <div className="pt-2 border-t">
-                    <div className={`text-xs px-2 py-1 rounded-full text-center ${
-                      holding.change.type === 'increased' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                      holding.change.type === 'decreased' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                      holding.change.type === 'new' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                      'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                    }`}>
-                      {holding.change.type === 'increased' && '📈 증가'}
-                      {holding.change.type === 'decreased' && '📉 감소'}
-                      {holding.change.type === 'new' && '✨ 신규'}
-                      {holding.change.type === 'unchanged' && '➡️ 유지'}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* No Results */}
-      {filteredHoldings.length === 0 && (
-        <Card className="p-12 text-center">
-          <div className="text-muted-foreground">
-            <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">검색 결과가 없습니다</p>
-            <p>다른 검색어나 필터 조건을 시도해보세요.</p>
-            <Button variant="outline" onClick={handleResetFilters} className="mt-4">
-              필터 초기화
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {/* Detailed Quarterly Trends Section */}
-      <div className="mt-12">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <TrendingUp className="h-6 w-6" />
-            상위 종목 세부 분석
-          </h2>
-          <p className="text-muted-foreground mt-2">
-            상위 5개 종목의 3분기 세부 투자 패턴과 포지션 변화를 상세히 분석합니다.
-          </p>
-        </div>
-        
-        <div className="grid gap-6">
-          {portfolio.holdings
-            .filter(holding => holding.change?.quarterlyTrend && holding.rank <= 5)
-            .map(holding => (
-              <QuarterlyTrend 
-                key={holding.ticker} 
-                holding={holding}
-              />
-            ))
-          }
-        </div>
-        
-        {portfolio.holdings.filter(h => h.change?.quarterlyTrend).length === 0 && (
-          <Card className="p-8 text-center">
-            <div className="text-muted-foreground">
-              <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>분기별 추이 데이터를 준비 중입니다.</p>
-            </div>
-          </Card>
-        )}
       </div>
+
+
 
       {/* Footer */}
       <div className="mt-8 pt-6 border-t text-center text-sm text-muted-foreground">

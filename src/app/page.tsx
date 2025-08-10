@@ -7,32 +7,42 @@ import PostCard from '@/components/blog/PostCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowRight, TrendingUp, BarChart3, BookOpen, MessageSquare } from 'lucide-react';
-import ScionHoldings from '@/components/investment/ScionHoldings';
+import RealPerformanceTable from '@/components/investment/RealPerformanceTable';
+import { ScionPortfolio } from '@/types';
 
 export default function Home() {
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
+  const [portfolio, setPortfolio] = useState<ScionPortfolio | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchRecentPosts() {
+    async function fetchData() {
+      setLoading(true);
       try {
-        const response = await fetch('/api/posts?limit=6');
-        const data = await response.json();
+        // 포스트 데이터 가져오기
+        const postsResponse = await fetch('/api/posts?limit=3');
+        const postsData = await postsResponse.json();
         
-        if (data.success) {
-          setRecentPosts(data.data || []);
-        } else {
-          console.error('Recent posts API error:', data.error);
-          setRecentPosts([]);
+        if (postsData.success) {
+          setRecentPosts(postsData.data || []);
         }
+
+        // 국민연금 데이터 가져오기
+        const portfolioResponse = await fetch('/api/scion-holdings?limit=5');
+        const portfolioData = await portfolioResponse.json();
+        
+        if (portfolioData.success) {
+          setPortfolio(portfolioData.data);
+        }
+        
       } catch (error) {
-        console.error('Failed to fetch recent posts:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchRecentPosts();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -51,12 +61,12 @@ export default function Home() {
       {/* Hero Section */}
       <section className="text-center py-16">
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-          우리아빠 피터린치 / 우리형 메르 Blog
+          요르의 투자 블로그
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
           니가 뭘 알아. 니가 뭘 아냐고.<br />
-          우리아빠 피터린치, 우리형 메르를 보유한 최모군이 선사하는 
-          프리미엄 투자 지식과 라이프스타일을 경험하세요.
+          요르가 전하는 날카로운 투자 인사이트와 
+          포트폴리오 분석을 만나보세요.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg">
@@ -89,7 +99,7 @@ export default function Home() {
 
         {recentPosts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recentPosts.map((post) => (
+            {recentPosts.slice(0, 3).map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
@@ -100,35 +110,70 @@ export default function Home() {
         )}
       </section>
 
-      {/* Scion 투자 현황 섹션 */}
-      <section className="py-16">
-        <ScionHoldings 
-          limit={8} 
-          showRefreshButton={true}
-          className="w-full"
-        />
-      </section>
+      {/* 핵심 기능 안내 */}
+      <section className="py-16 bg-muted/20 rounded-lg">
+        <div className="text-center mb-12">
+          <h3 className="text-2xl font-bold mb-4">주요 기능</h3>
+          <p className="text-muted-foreground">요르의 날카로운 투자 관점을 경험해보세요</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <h4 className="text-xl font-semibold">투자 인사이트</h4>
+            </div>
+            <p className="text-muted-foreground mb-4">
+              시장 동향과 투자 철학에 대한 깊이 있는 분석을 제공합니다.
+            </p>
+            <Button variant="outline" asChild className="w-full">
+              <Link href="/posts">포스트 보기</Link>
+            </Button>
+          </Card>
 
-      {/* 통계 섹션 */}
-      <section className="py-16 bg-muted/50 rounded-lg">
-        <div className="text-center">
-          <h3 className="text-2xl font-bold mb-8">블로그 현황</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <div className="text-3xl font-bold text-primary mb-2">101+</div>
-              <div className="text-muted-foreground">총 포스트</div>
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <BarChart3 className="h-6 w-6 text-primary" />
+              </div>
+              <h4 className="text-xl font-semibold">투자 전략 분석</h4>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-primary mb-2">3</div>
-              <div className="text-muted-foreground">주요 카테고리</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-primary mb-2">2025</div>
-              <div className="text-muted-foreground">운영 시작</div>
-            </div>
-          </div>
+            <p className="text-muted-foreground mb-4">
+              단순한 수익률이 아닌, <strong>진짜 투자 전략과 인사이트</strong>를 파헤칩니다. 집중도, 섹터 편중, 포지션 사이즈까지.
+            </p>
+            <Button variant="outline" asChild className="w-full">
+              <Link href="/investment">전략 분석 보기</Link>
+            </Button>
+          </Card>
         </div>
       </section>
+
+      {/* 국민연금 핵심 현황 */}
+      {portfolio && (
+        <section className="py-16">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold mb-2">국민연금 TOP 5 현황</h3>
+            <p className="text-muted-foreground">실시간 손익과 보유량 변화를 한눈에</p>
+          </div>
+          
+          <RealPerformanceTable 
+            holdings={portfolio.holdings} 
+            title="국민연금 실제 손익 현황"
+            limit={5}
+          />
+          
+          <div className="text-center mt-6">
+            <Button asChild>
+              <Link href="/investment">
+                전체 포트폴리오 분석 보기
+                <BarChart3 className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

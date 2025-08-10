@@ -14,9 +14,9 @@ export default function Header() {
           {/* 로고 */}
           <Link href="/" className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">P</span>
+              <span className="text-primary-foreground font-bold text-lg">Y</span>
             </div>
-            <span className="font-bold text-xl">우리아빠 피터린치 / 우리형 메르 Blog</span>
+            <span className="font-bold text-xl">요르의 투자 블로그</span>
           </Link>
 
           {/* 네비게이션 */}
