@@ -52,16 +52,31 @@ rm /home/ubuntu/package-lock.json
 ### 4단계: 서버 실행
 
 ```bash
-# ⚠️ 중요: Next.js는 기본적으로 localhost에서만 실행되므로 외부 접근을 위해 HOST 설정 필요
+# ⚠️ 중요: Next.js IPv6 바인딩 문제 해결을 위해 반드시 IPv4로 명시
 
-# 포트 3000에서 실행 (모든 네트워크 인터페이스에서 접근 가능)
-HOST=0.0.0.0 npm start
+# 방법 1: 환경변수로 IPv4 바인딩 (권장)
+HOST=0.0.0.0 npm start -- --hostname 0.0.0.0
 
-# 또는 특정 포트에서 실행
-HOST=0.0.0.0 npm start -- -p 8080
+# 방법 2: Next.js 설정으로 IPv4 바인딩
+npm start -- --hostname 0.0.0.0 --port 3000
 
 # 포트 80에서 실행 (sudo 필요)
-sudo HOST=0.0.0.0 npm start -- -p 80
+sudo HOST=0.0.0.0 npm start -- --hostname 0.0.0.0 --port 80
+```
+
+### 4-1단계: 백그라운드 실행 (터미널 종료 후에도 계속 실행)
+
+```bash
+# screen 사용 (권장 방법)
+screen -S meire-blog
+cd /home/ubuntu/meire-blog-platform
+HOST=0.0.0.0 npm start -- --hostname 0.0.0.0
+
+# 서버 시작 후 Ctrl+A, D로 detach
+# 나중에 재연결: screen -r meire-blog
+
+# 또는 nohup 사용
+nohup HOST=0.0.0.0 npm start -- --hostname 0.0.0.0 > server.log 2>&1 &
 ```
 
 ### 5단계: AWS 보안 그룹 설정
@@ -96,10 +111,19 @@ pm2 startup
 
 ### 외부 접속이 안 될 때
 1. **퍼블릭 IP 확인**: AWS 콘솔에서 실제 퍼블릭 IPv4 주소 확인
-2. **HOST 설정**: `HOST=0.0.0.0 npm start` 로 실행
-3. **보안 그룹**: 해당 포트가 0.0.0.0/0으로 열려있는지 확인
-4. **ufw 방화벽**: `sudo ufw allow [포트번호]`
-5. **간단 테스트**: `python3 -m http.server 3000` 으로 네트워크 확인
+2. **IPv4 바인딩 확인**: `sudo netstat -tlnp | grep :3000` 결과가 `0.0.0.0:3000`인지 확인
+   - `:::3000` (IPv6)이면 브라우저 접속 불가 → `--hostname 0.0.0.0` 추가 필요
+3. **올바른 실행 명령어**: `HOST=0.0.0.0 npm start -- --hostname 0.0.0.0`
+4. **보안 그룹**: 해당 포트가 0.0.0.0/0으로 열려있는지 확인
+5. **ufw 방화벽**: `sudo ufw allow [포트번호]`
+6. **내부 테스트**: `curl http://localhost:3000` (HTML이 나와야 함)
+7. **간단 네트워크 테스트**: `python3 -m http.server 3000` 으로 기본 연결 확인
+
+### 일반적인 문제와 해결책
+- **IPv6 바인딩 문제**: `:::3000` → `--hostname 0.0.0.0` 추가
+- **브라우저 캐시**: Ctrl+Shift+R 강제 새로고침 또는 시크릿 모드
+- **잘못된 IP**: 실제 퍼블릭 IP와 접속 IP가 다름
+- **screen 중복**: `screen -ls`로 확인 후 `screen -d [ID]`로 detach
 
 ### 권한 에러 발생 시
 ```bash
@@ -129,23 +153,38 @@ npm install typescript --save-dev
 3. API 라우트가 있으므로 Node.js 서버가 필요
 4. 보안 그룹 설정 없이는 외부 접속 불가
 
+## 🚀 한 번에 실행하기 (권장)
+
+**자동화 스크립트 사용**:
+```bash
+# EC2에서 한 번에 모든 설정 완료
+cd /home/ubuntu/meire-blog-platform
+chmod +x scripts/start-server.sh
+./scripts/start-server.sh
+```
+
+이 스크립트가 자동으로 처리하는 것들:
+- 의존성 설치
+- 기존 프로세스 정리  
+- 퍼블릭 IP 확인
+- 방화벽 설정
+- IPv4로 서버 시작
+- 접속 상태 확인
+
 ## 🔄 업데이트 방법
 
 새로운 코드가 있을 때:
 
 ```bash
-# 로컬에서 빌드 후 GitHub에 업로드
-npm run build
-git add .next -f
-git commit -m "Update build"
-git push
-
-# EC2에서 업데이트
+# 1. EC2에서 코드 업데이트
 cd /home/ubuntu/meire-blog-platform
 git pull
-rm -rf .next
-wget https://github.com/johnn8n/meire-blog-platform/raw/main/nextjs-build.zip -O ../nextjs-build.zip
+
+# 2. 새 빌드 파일 다운로드 (필요한 경우)
+wget https://github.com/yohan4477/meire-blog-platform/raw/main/nextjs-build.zip -O ../nextjs-build.zip
 unzip -o ../nextjs-build.zip
 chmod -R 755 .next/
-pm2 restart meire-blog
+
+# 3. 서버 재시작
+./scripts/start-server.sh
 ```
