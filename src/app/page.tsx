@@ -7,7 +7,10 @@ import PostCard from '@/components/blog/PostCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowRight, TrendingUp, BarChart3, BookOpen, MessageSquare } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import RealPerformanceTable from '@/components/investment/RealPerformanceTable';
+import StockPicker from '@/components/investment/StockPicker';
+import QuarterlyChart from '@/components/investment/QuarterlyChart';
 import { ScionPortfolio } from '@/types';
 
 export default function Home() {
@@ -19,8 +22,8 @@ export default function Home() {
     async function fetchData() {
       setLoading(true);
       try {
-        // 포스트 데이터 가져오기
-        const postsResponse = await fetch('/api/posts?limit=3');
+        // 포스트 데이터 가져오기 (메르 블로그 글용으로 6개)
+        const postsResponse = await fetch('/api/posts?limit=6');
         const postsData = await postsResponse.json();
         
         if (postsData.success) {
@@ -28,7 +31,7 @@ export default function Home() {
         }
 
         // 국민연금 데이터 가져오기
-        const portfolioResponse = await fetch('/api/scion-holdings?limit=5');
+        const portfolioResponse = await fetch('/api/scion-holdings?limit=10');
         const portfolioData = await portfolioResponse.json();
         
         if (portfolioData.success) {
@@ -110,61 +113,66 @@ export default function Home() {
         )}
       </section>
 
-      {/* 핵심 기능 안내 */}
+      {/* 메르 Pick */}
       <section className="py-16 bg-muted/20 rounded-lg">
         <div className="text-center mb-12">
-          <h3 className="text-2xl font-bold mb-4">주요 기능</h3>
-          <p className="text-muted-foreground">요르의 날카로운 투자 관점을 경험해보세요</p>
+          <h3 className="text-2xl font-bold mb-4">메르's Pick</h3>
+          <p className="text-muted-foreground">메르가 선택한 주목할 만한 종목과 투자 포인트</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <BookOpen className="h-6 w-6 text-primary" />
-              </div>
-              <h4 className="text-xl font-semibold">투자 인사이트</h4>
-            </div>
-            <p className="text-muted-foreground mb-4">
-              시장 동향과 투자 철학에 대한 깊이 있는 분석을 제공합니다.
-            </p>
-            <Button variant="outline" asChild className="w-full">
-              <Link href="/posts">포스트 보기</Link>
-            </Button>
-          </Card>
+        <StockPicker />
+      </section>
 
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-primary" />
-              </div>
-              <h4 className="text-xl font-semibold">투자 전략 분석</h4>
-            </div>
-            <p className="text-muted-foreground mb-4">
-              단순한 수익률이 아닌, <strong>진짜 투자 전략과 인사이트</strong>를 파헤칩니다. 집중도, 섹터 편중, 포지션 사이즈까지.
-            </p>
-            <Button variant="outline" asChild className="w-full">
-              <Link href="/investment">전략 분석 보기</Link>
-            </Button>
-          </Card>
+      {/* 메르 블로그 글 */}
+      <section className="py-16">
+        <div className="text-center mb-12">
+          <h3 className="text-2xl font-bold mb-4">메르 블로그 글</h3>
+          <p className="text-muted-foreground">메르의 투자 철학과 시장 분석이 담긴 블로그 포스트</p>
+        </div>
+        
+        {recentPosts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recentPosts.slice(0, 6).map((post) => (
+              <Card key={post.id} className="p-6 hover:shadow-lg transition-shadow">
+                <div className="mb-4">
+                  <Badge className="mb-2">{post.category || '일반'}</Badge>
+                  <h4 className="font-semibold mb-2 line-clamp-2">{post.title}</h4>
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {post.content.replace(/\n/g, ' ').substring(0, 150)}...
+                  </p>
+                </div>
+                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                  <span>{new Date(post.created_date).toLocaleDateString('ko-KR')}</span>
+                  <span>{Math.ceil(post.content.length / 300)}분 읽기</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground">블로그 글을 불러올 수 없습니다.</p>
+          </div>
+        )}
+
+        <div className="text-center mt-8">
+          <Button asChild>
+            <Link href="/posts">
+              모든 블로그 글 보기
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </section>
 
-      {/* 국민연금 핵심 현황 */}
+      {/* 국민연금 포트폴리오 추이 */}
       {portfolio && (
         <section className="py-16">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold mb-2">국민연금 TOP 5 현황</h3>
-            <p className="text-muted-foreground">실시간 손익과 보유량 변화를 한눈에</p>
-          </div>
-          
-          <RealPerformanceTable 
-            holdings={portfolio.holdings} 
-            title="국민연금 실제 손익 현황"
-            limit={5}
+          <QuarterlyChart 
+            holdings={portfolio.holdings}
+            totalValue={portfolio.totalValue}
           />
           
-          <div className="text-center mt-6">
+          <div className="text-center mt-8">
             <Button asChild>
               <Link href="/investment">
                 전체 포트폴리오 분석 보기

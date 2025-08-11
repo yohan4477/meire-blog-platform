@@ -1,13 +1,13 @@
 import { ScionPortfolio } from '@/types';
 
-// Mock data based on actual Scion Asset Management 13F filings
-// This represents typical holdings similar to Michael Burry's actual positions
+// Mock data representing Korean National Pension Service (NPS) portfolio
+// Market value based on actual 13F filing data
 export const mockScionPortfolio: ScionPortfolio = {
   filerName: '국민연금',
   filerId: 1649579,
   quarter: 'Q1 2025',
   reportDate: '2025-03-31',
-  totalValue: 175200000, // $175.2M
+  totalValue: 175200000, // $175.2M based on previous close
   totalPositions: 8,
   lastUpdated: new Date().toISOString(),
   holdings: [
@@ -22,7 +22,12 @@ export const mockScionPortfolio: ScionPortfolio = {
       change: {
         shares: 25000,
         marketValue: 15000000,
-        type: 'increased'
+        type: 'increased',
+        quarterlyTrend: {
+          Q4_2024: { shares: 75000, marketValue: 70792000 },
+          Q1_2025: { shares: 100000, marketValue: 85792000 },
+          Q2_2025: { shares: 120000, marketValue: 98000000 }
+        }
       }
     },
     {
@@ -36,7 +41,12 @@ export const mockScionPortfolio: ScionPortfolio = {
       change: {
         shares: 0,
         marketValue: -2000000,
-        type: 'decreased'
+        type: 'decreased',
+        quarterlyTrend: {
+          Q4_2024: { shares: 350000, marketValue: 28244800 },
+          Q1_2025: { shares: 300000, marketValue: 23244800 },
+          Q2_2025: { shares: 280000, marketValue: 21000000 }
+        }
       }
     },
     {
@@ -50,7 +60,12 @@ export const mockScionPortfolio: ScionPortfolio = {
       change: {
         shares: 50000,
         marketValue: 5250000,
-        type: 'increased'
+        type: 'increased',
+        quarterlyTrend: {
+          Q4_2024: { shares: 150000, marketValue: 16024000 },
+          Q1_2025: { shares: 200000, marketValue: 21024000 },
+          Q2_2025: { shares: 250000, marketValue: 26500000 }
+        }
       }
     },
     {

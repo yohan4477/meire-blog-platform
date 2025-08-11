@@ -69,14 +69,15 @@ export async function getStockQuote(symbol: string): Promise<StockQuote | null> 
       throw new Error('Missing price data in Yahoo Finance response');
     }
 
-    const currentPrice = meta.regularMarketPrice || meta.previousClose;
+    // For portfolio display - use market data as reference only
     const previousClose = meta.previousClose;
+    const currentPrice = meta.regularMarketPrice || previousClose;
     const change = currentPrice - previousClose;
     const changePercent = (change / previousClose) * 100;
 
     const stockQuote: StockQuote = {
       symbol: symbol.toUpperCase(),
-      price: currentPrice,
+      price: currentPrice, // Current market price for reference
       change: change,
       changePercent: changePercent,
       previousClose: previousClose,
@@ -154,67 +155,9 @@ export async function getMultipleStockQuotes(symbols: string[]): Promise<StockAp
   }
 }
 
-/**
- * Calculate portfolio performance metrics
- */
-export interface PortfolioPerformance {
-  symbol: string;
-  shares: number;
-  averageCost: number; // 평단가
-  currentPrice: number; // 현재가
-  marketValue: number; // 현재 시가총액
-  totalCost: number; // 총 매수금액
-  unrealizedPnL: number; // 미실현 손익
-  returnPercent: number; // 수익률 %
-  returnDollar: number; // 수익 금액
-}
-
-export function calculatePortfolioPerformance(
-  holdings: Array<{
-    name: string;
-    shares: number;
-    marketValue: number;
-    averageCost?: number;
-  }>,
-  stockQuotes: StockQuote[]
-): PortfolioPerformance[] {
-  const results: PortfolioPerformance[] = [];
-
-  for (const holding of holdings) {
-    // Find matching stock quote
-    const quote = stockQuotes.find(q => 
-      holding.name.includes(q.symbol) || 
-      q.symbol.includes(holding.name.split(' ')[0])
-    );
-
-    if (!quote) {
-      console.warn(`⚠️ No price data found for ${holding.name}`);
-      continue;
-    }
-
-    const currentPrice = quote.price;
-    const averageCost = holding.averageCost || (holding.marketValue / holding.shares);
-    const marketValue = holding.shares * currentPrice;
-    const totalCost = holding.shares * averageCost;
-    const unrealizedPnL = marketValue - totalCost;
-    const returnPercent = ((currentPrice - averageCost) / averageCost) * 100;
-    const returnDollar = unrealizedPnL;
-
-    results.push({
-      symbol: quote.symbol,
-      shares: holding.shares,
-      averageCost,
-      currentPrice,
-      marketValue,
-      totalCost,
-      unrealizedPnL,
-      returnPercent,
-      returnDollar
-    });
-  }
-
-  return results;
-}
+// Portfolio performance calculation removed
+// 13F filings don't include purchase price information
+// Only market value at filing date is available
 
 /**
  * Get cached stock quotes (for displaying last known prices)
@@ -244,4 +187,4 @@ export function clearPriceCache(): void {
 }
 
 // Export types
-export type { StockQuote, StockApiResponse, PortfolioPerformance };
+export type { StockQuote, StockApiResponse };

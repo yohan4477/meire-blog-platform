@@ -184,24 +184,5 @@ export interface StockApiResponse {
   cached?: boolean;
 }
 
-// Portfolio performance metrics with profit/loss calculation
-export interface PortfolioPerformance {
-  symbol: string;
-  shares: number;
-  averageCost: number; // 평단가
-  currentPrice: number; // 현재가
-  marketValue: number; // 현재 시가총액
-  totalCost: number; // 총 매수금액
-  unrealizedPnL: number; // 미실현 손익
-  returnPercent: number; // 수익률 %
-  returnDollar: number; // 수익 금액
-}
-
-// Enhanced holding with real-time price data
-export interface EnhancedHolding extends ScionHolding {
-  currentPrice?: number;
-  actualAveragePrice?: number; // 실제 평단가
-  profitLoss?: number;
-  profitLossPercent?: number;
-  lastUpdated?: string;
-}
+// Portfolio performance calculation removed - 13F filings don't include purchase prices
+// Only market value at filing date is available

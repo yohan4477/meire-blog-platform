@@ -147,7 +147,7 @@ export default function ScionHoldings({
           <div>
             <h3 className="text-xl font-semibold">국민연금 투자현황</h3>
             <p className="text-sm text-muted-foreground">
-              자금운용 글로벌 #1
+              13F 신고 기준 보유 현황 | 자금운용 글로벌 #1
             </p>
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function ScionHoldings({
       {/* Footer */}
       <div className="mt-6 pt-4 border-t text-center">
         <p className="text-xs text-muted-foreground">
-          데이터 제공: SEC EDGAR • 최근 업데이트: {new Date(portfolio.lastUpdated).toLocaleDateString('ko-KR')}
+          데이터 제공: SEC EDGAR 13F • 시가총액 기준 • 최근 업데이트: {new Date(portfolio.lastUpdated).toLocaleDateString('ko-KR')}
         </p>
       </div>
     </Card>

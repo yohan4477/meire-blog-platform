@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, BarChart3 } from 'lucide-react';
+import { Search, BarChart3, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -32,6 +32,13 @@ export default function Header() {
               className="text-sm font-medium hover:text-primary transition-colors"
             >
               포스트
+            </Link>
+            <Link 
+              href="/philosophy" 
+              className="text-sm font-medium hover:text-primary transition-colors flex items-center space-x-1"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>투자 철학</span>
             </Link>
             <Link 
               href="/investment" 
