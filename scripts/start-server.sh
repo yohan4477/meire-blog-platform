@@ -32,11 +32,12 @@ fi
 echo "🌐 퍼블릭 IP 주소 확인 중..."
 PUBLIC_IP=$(curl -s http://checkip.amazonaws.com/ || curl -s http://ipv4.icanhazip.com/)
 if [ ! -z "$PUBLIC_IP" ]; then
-    echo "✅ 퍼블릭 IP: $PUBLIC_IP"
-    echo "🌍 접속 주소: http://$PUBLIC_IP:3000"
+    echo "✅ 현재 퍼블릭 IP: $PUBLIC_IP"
+    echo "⚠️  재시작 시 IP가 변경될 수 있습니다!"
+    echo "🔧 IP 확인 명령어: curl http://checkip.amazonaws.com/"
 else
     echo "⚠️  퍼블릭 IP를 자동으로 확인할 수 없습니다."
-    echo "🔧 AWS Console에서 EC2 퍼블릭 IP를 확인해주세요."
+    echo "🔧 수동 확인: curl http://checkip.amazonaws.com/"
 fi
 
 # 6. 방화벽 설정 확인
@@ -82,9 +83,10 @@ echo "========================================="
 echo "🎉 서버 시작 완료!"
 echo ""
 if [ ! -z "$PUBLIC_IP" ]; then
-    echo "🌍 브라우저에서 접속하세요: http://$PUBLIC_IP:3000"
+    echo "🌍 브라우저에서 접속하세요: http://$PUBLIC_IP"
+    echo "⚠️  IP 변경 시: curl http://checkip.amazonaws.com/ 으로 새 IP 확인"
 else
-    echo "🌍 브라우저에서 접속하세요: http://[EC2-PUBLIC-IP]:3000"
+    echo "🌍 브라우저에서 접속하세요: http://[EC2-PUBLIC-IP]"
 fi
 echo ""
 echo "📋 유용한 명령어:"

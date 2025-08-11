@@ -81,21 +81,42 @@ nohup HOST=0.0.0.0 npm start -- --hostname 0.0.0.0 > server.log 2>&1 &
 
 ### 5단계: AWS 보안 그룹 설정
 
+⚠️ **중요**: 포트 8080이 보안 그룹에 추가되어 있어야 합니다!
+
 1. AWS Console → EC2 → Security Groups
-2. 해당 보안 그룹 선택
+2. 해당 보안 그룹 선택  
 3. Inbound rules → Edit inbound rules
 4. Add rule:
    - Type: Custom TCP
-   - Port: 8080 (또는 80)
+   - Port: 8080
    - Source: 0.0.0.0/0
+   
+**필수 포트 설정**:
+- Port 22 (SSH): 0.0.0.0/0
+- Port 80 (HTTP): 0.0.0.0/0  
+- Port 3000 (Next.js 기본): 0.0.0.0/0
+- Port 8080 (Next.js 대체): 0.0.0.0/0
+- Port 3306 (MySQL): 특정 IP 또는 0.0.0.0/0
 
-### 6단계: 접속 확인
+현재 보안 그룹에 포트 8080이 없으면 외부 접속이 불가능합니다!
 
-- 포트 3000: `http://[EC2-PUBLIC-IP]:3000` (예: http://13.209.18.57:3000)
-- 포트 8080: `http://[EC2-PUBLIC-IP]:8080`
-- 포트 80: `http://[EC2-PUBLIC-IP]`
+### 6단계: 접속 확인 및 IP 주소 확인
 
-**⚠️ 중요**: AWS 콘솔에서 실제 퍼블릭 IP 주소를 확인하세요!
+**⚠️ 매우 중요**: EC2 재시작 시 퍼블릭 IP가 변경됩니다!
+
+```bash
+# 현재 퍼블릭 IP 확인 (EC2에서 실행)
+curl http://checkip.amazonaws.com/
+```
+
+**접속 주소**:
+- 포트 80: `http://[현재-IP]` (예: http://54.180.203.167)
+- 포트 3000: `http://[현재-IP]:3000`
+
+**IP 변경 시 대응**:
+1. `curl http://checkip.amazonaws.com/` 으로 새 IP 확인
+2. 새 IP로 브라우저 접속
+3. 보안 그룹은 0.0.0.0/0이므로 변경 불필요
 
 ### 백그라운드 실행 (선택사항)
 
