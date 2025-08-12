@@ -1,36 +1,29 @@
-import mysql from 'mysql2/promise';
+import sqlite3 from 'sqlite3';
+import { open, Database } from 'sqlite';
+import { join } from 'path';
 
-const dbConfig = process.env.DATABASE_URL 
-  ? { uri: process.env.DATABASE_URL, ssl: { rejectUnauthorized: true } }
-  : {
-      host: 'localhost',
-      user: 'root',
-      password: '',
-      database: 'meire_blog',
-      charset: 'utf8mb4',
-      timezone: '+00:00'
-    };
+let db: Database<sqlite3.Database, sqlite3.Statement> | null = null;
 
-let connection: mysql.Connection | null = null;
-
-export async function getConnection(): Promise<mysql.Connection> {
-  if (!connection) {
-    connection = process.env.DATABASE_URL 
-      ? await mysql.createConnection(process.env.DATABASE_URL)
-      : await mysql.createConnection(dbConfig);
+export async function getConnection(): Promise<Database<sqlite3.Database, sqlite3.Statement>> {
+  if (!db) {
+    const dbPath = join(process.cwd(), 'database.db');
+    db = await open({
+      filename: dbPath,
+      driver: sqlite3.Database
+    });
   }
-  return connection;
+  return db;
 }
 
 export async function query<T = any>(sql: string, params?: any[]): Promise<T[]> {
   const conn = await getConnection();
-  const [rows] = await conn.execute(sql, params || []);
+  const rows = await conn.all(sql, params || []);
   return rows as T[];
 }
 
 export async function closeConnection(): Promise<void> {
-  if (connection) {
-    await connection.end();
-    connection = null;
+  if (db) {
+    await db.close();
+    db = null;
   }
 }

@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack --port 3003",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 3003",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -14,6 +14,7 @@
     "test:integration": "jest --testPathPattern=integration",
     "test:api": "jest --testPathPattern=api",
     "db:migrate": "node scripts/migrate.js",
+    "db:migrate-mysql": "node scripts/migrate-mysql-data.js",
     "db:seed": "node scripts/seed.js",
     "cache:clear": "node scripts/clear-cache.js",
     "health:check": "curl http://localhost:3000/api/gateway/health",
@@ -21,7 +22,13 @@
     "deploy:staging": "npm run build && npm run start:staging",
     "deploy:production": "npm run build && npm run start:production",
     "start:staging": "NODE_ENV=staging npm start",
-    "start:production": "NODE_ENV=production npm start"
+    "start:production": "NODE_ENV=production npm start",
+    "deploy-db": "bash scripts/deploy-database.sh",
+    "upload-db": "bash scripts/upload-to-s3.sh",
+    "backup-db": "bash scripts/backup-to-s3.sh",
+    "sync-ec2": "node scripts/sync-to-ec2.js",
+    "sync-recent": "node scripts/sync-to-ec2.js 6",
+    "sync-smart": "node scripts/smart-sync.js"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",
@@ -32,6 +39,8 @@
     "@tanstack/react-query": "^5.84.2",
     "@tanstack/react-query-devtools": "^5.84.2",
     "@types/mysql": "^2.15.27",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
@@ -45,6 +54,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-markdown": "^10.1.0",
+    "recharts": "^2.12.7",
     "redis": "^4.6.7",
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
@@ -52,9 +62,8 @@
     "sqlite3": "^5.1.7",
     "tailwind-merge": "^3.3.1",
     "uuid": "^9.0.1",
-    "zod": "^4.0.17",
     "ws": "^8.16.0",
-    "recharts": "^2.12.7"
+    "zod": "^4.0.17"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

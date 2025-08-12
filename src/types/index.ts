@@ -17,6 +17,49 @@ export interface BlogPost {
   blog_type?: 'main' | 'merry'; // 블로그 타입 구분
 }
 
+export interface PostData {
+  logNo: string | null;
+  title: string;
+  content: string;
+  category: string | null;
+  created_date: string;
+  url: string;
+}
+
+export interface CrawlerStats {
+  totalFound: number;
+  newPosts: number;
+  updatedPosts: number;
+  errors: number;
+  skippedOld: number;
+}
+
+export interface MerryTag {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
+export interface MerryComment {
+  id: number;
+  post_id: number;
+  author_name: string;
+  author_email?: string;
+  content: string;
+  parent_id?: number;
+  created_at: string;
+  updated_at: string;
+  is_deleted: boolean;
+}
+
+export interface MerryLike {
+  id: number;
+  post_id: number;
+  user_ip: string;
+  user_agent?: string;
+  created_at: string;
+}
+
 export interface PostFilters {
   category?: string;
   search?: string;

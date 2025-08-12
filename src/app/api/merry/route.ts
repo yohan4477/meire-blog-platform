@@ -27,7 +27,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       SELECT 
         p.*,
         GROUP_CONCAT(t.name) as tags
-      FROM posts p
+      FROM blog_posts p
       LEFT JOIN merry_post_tags pt ON p.id = pt.post_id
       LEFT JOIN merry_tags t ON pt.tag_id = t.id
       ${whereClause}
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }));
 
     // 총 개수 조회
-    const countQuery = `SELECT COUNT(*) as total FROM posts ${whereClause}`;
+    const countQuery = `SELECT COUNT(*) as total FROM blog_posts ${whereClause}`;
     const [{ total }] = await query<{ total: number }>(countQuery, params);
 
     return NextResponse.json({
@@ -94,8 +94,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 포스트 생성
     const [result] = await query(`
-      INSERT INTO posts (title, content, excerpt, category, author, blog_type, featured, created_date)
-      VALUES (?, ?, ?, ?, ?, 'merry', ?, NOW())
+      INSERT INTO blog_posts (title, content, excerpt, category, author, blog_type, featured, created_date)
+      VALUES (?, ?, ?, ?, ?, 'merry', ?, datetime('now'))
     `, [title, content, excerpt, category || null, '메르', featured]);
 
     const postId = (result as any).insertId;
