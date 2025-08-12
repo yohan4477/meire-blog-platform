@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { ScionPortfolio } from '@/types';
 import { 
@@ -9,7 +10,8 @@ import {
   Building2, 
   Calendar,
   Target,
-  BarChart3
+  BarChart3,
+  type LucideIcon
 } from 'lucide-react';
 
 interface PortfolioStatsProps {
@@ -17,9 +19,23 @@ interface PortfolioStatsProps {
   className?: string;
 }
 
-export default function PortfolioStats({ portfolio, className = "" }: PortfolioStatsProps) {
+interface StatItem {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  description: string;
+  color: string;
+  bgColor: string;
+}
+
+interface SecurityTypeData {
+  count: number;
+  value: number;
+}
+
+const PortfolioStats = React.memo(({ portfolio, className = "" }: PortfolioStatsProps) => {
   
-  const formatCurrency = (value: number): string => {
+  const formatCurrency = useMemo(() => (value: number): string => {
     if (value >= 1e9) {
       return `$${(value / 1e9).toFixed(2)}B`;
     }
@@ -27,25 +43,34 @@ export default function PortfolioStats({ portfolio, className = "" }: PortfolioS
       return `$${(value / 1e6).toFixed(1)}M`;
     }
     return `$${value.toLocaleString()}`;
-  };
+  }, []);
 
-  // Calculate portfolio statistics
-  const topHolding = portfolio.holdings[0];
-  const top5Weight = portfolio.holdings.slice(0, 5).reduce((sum, holding) => sum + holding.portfolioPercent, 0);
-  const averagePosition = portfolio.totalValue / portfolio.totalPositions;
-  
-  // Security type breakdown
-  const securityTypes = portfolio.holdings.reduce((acc, holding) => {
-    const type = holding.securityType;
-    if (!acc[type]) {
-      acc[type] = { count: 0, value: 0 };
-    }
-    acc[type].count++;
-    acc[type].value += holding.marketValue;
-    return acc;
-  }, {} as Record<string, { count: number; value: number }>);
+  // Calculate portfolio statistics with memoization
+  const portfolioMetrics = useMemo(() => {
+    const topHolding = portfolio.holdings[0];
+    const top5Weight = portfolio.holdings.slice(0, 5).reduce((sum, holding) => sum + holding.portfolioPercent, 0);
+    const averagePosition = portfolio.totalValue / portfolio.totalPositions;
+    
+    // Security type breakdown
+    const securityTypes = portfolio.holdings.reduce((acc, holding) => {
+      const type = holding.securityType;
+      if (!acc[type]) {
+        acc[type] = { count: 0, value: 0 };
+      }
+      acc[type].count++;
+      acc[type].value += holding.marketValue;
+      return acc;
+    }, {} as Record<string, SecurityTypeData>);
 
-  const stats = [
+    return {
+      topHolding,
+      top5Weight,
+      averagePosition,
+      securityTypes
+    };
+  }, [portfolio]);
+
+  const stats: StatItem[] = useMemo(() => [
     {
       icon: DollarSign,
       label: '총 포트폴리오 가치',
@@ -65,15 +90,15 @@ export default function PortfolioStats({ portfolio, className = "" }: PortfolioS
     {
       icon: Target,
       label: '최대 보유 종목',
-      value: topHolding ? topHolding.ticker : 'N/A',
-      description: topHolding ? `${topHolding.portfolioPercent.toFixed(1)}% 비중` : '',
+      value: portfolioMetrics.topHolding ? portfolioMetrics.topHolding.ticker : 'N/A',
+      description: portfolioMetrics.topHolding ? `${portfolioMetrics.topHolding.portfolioPercent.toFixed(1)}% 비중` : '',
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
     },
     {
       icon: BarChart3,
       label: 'Top 5 집중도',
-      value: `${top5Weight.toFixed(1)}%`,
+      value: `${portfolioMetrics.top5Weight.toFixed(1)}%`,
       description: '상위 5개 종목 비중',
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
@@ -81,7 +106,7 @@ export default function PortfolioStats({ portfolio, className = "" }: PortfolioS
     {
       icon: PieChart,
       label: '평균 포지션 크기',
-      value: formatCurrency(averagePosition),
+      value: formatCurrency(portfolioMetrics.averagePosition),
       description: '종목당 평균 투자액',
       color: 'text-teal-600',
       bgColor: 'bg-teal-50',
@@ -94,7 +119,7 @@ export default function PortfolioStats({ portfolio, className = "" }: PortfolioS
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
     },
-  ];
+  ], [portfolio, portfolioMetrics, formatCurrency]);
 
   return (
     <div className={className}>
@@ -129,7 +154,7 @@ export default function PortfolioStats({ portfolio, className = "" }: PortfolioS
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">증권 유형별 분석</h3>
         <div className="space-y-4">
-          {Object.entries(securityTypes)
+          {Object.entries(portfolioMetrics.securityTypes)
             .sort(([,a], [,b]) => b.value - a.value)
             .map(([type, data]) => {
               const percentage = (data.value / portfolio.totalValue * 100);
@@ -163,4 +188,8 @@ export default function PortfolioStats({ portfolio, className = "" }: PortfolioS
       </Card>
     </div>
   );
-}
+});
+
+PortfolioStats.displayName = 'PortfolioStats';
+
+export default PortfolioStats;

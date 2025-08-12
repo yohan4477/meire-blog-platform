@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useMemo, useCallback } from 'react';
 import { ScionHolding } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -17,14 +18,14 @@ interface HoldingsTableProps {
   className?: string;
 }
 
-export default function HoldingsTable({ 
+const HoldingsTable = React.memo(({ 
   holdings, 
   title = "포트폴리오 보유 종목",
   showRank = true,
   className = ""
-}: HoldingsTableProps) {
+}: HoldingsTableProps) => {
   
-  const formatCurrency = (value: number): string => {
+  const formatCurrency = useCallback((value: number): string => {
     if (value >= 1e9) {
       return `$${(value / 1e9).toFixed(2)}B`;
     }
@@ -35,13 +36,13 @@ export default function HoldingsTable({
       return `$${(value / 1e3).toFixed(1)}K`;
     }
     return `$${value.toLocaleString()}`;
-  };
+  }, []);
 
-  const formatNumber = (value: number): string => {
+  const formatNumber = useCallback((value: number): string => {
     return value.toLocaleString();
-  };
+  }, []);
 
-  const getChangeIcon = (change?: ScionHolding['change']) => {
+  const getChangeIcon = useCallback((change?: ScionHolding['change']) => {
     if (!change) return null;
     
     switch (change.type) {
@@ -72,9 +73,9 @@ export default function HoldingsTable({
       default:
         return <span className="text-xs text-muted-foreground">변화없음</span>;
     }
-  };
+  }, []);
 
-  const getChangeValue = (change?: ScionHolding['change']) => {
+  const getChangeValue = useCallback((change?: ScionHolding['change']) => {
     if (!change || !change.marketValue) return null;
     
     const isPositive = change.marketValue > 0;
@@ -86,7 +87,7 @@ export default function HoldingsTable({
         {sign}{formatCurrency(change.marketValue)}
       </div>
     );
-  };
+  }, [formatCurrency]);
 
   return (
     <Card className={`p-6 ${className}`}>
@@ -239,4 +240,8 @@ export default function HoldingsTable({
       </div>
     </Card>
   );
-}
+});
+
+HoldingsTable.displayName = 'HoldingsTable';
+
+export default HoldingsTable;
