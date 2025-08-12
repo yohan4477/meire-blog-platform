@@ -27,71 +27,61 @@ export default function MerryPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Mock 데이터 - 실제로는 API에서 가져올 데이터
+  // API에서 메르 블로그 데이터 가져오기
   useEffect(() => {
-    const mockPosts: MerryPost[] = [
-      {
-        id: 1,
-        title: '우리형 메르의 첫 번째 이야기',
-        content: '안녕하세요, 우리형 메르입니다. 이곳에서 다양한 이야기를 공유하려고 해요.',
-        excerpt: '메르의 첫 번째 포스트입니다. 앞으로 재미있는 이야기들을 많이 공유할 예정이에요.',
-        category: '일상',
-        author: '메르',
-        createdAt: '2025-01-10',
-        views: 156,
-        likes: 12,
-        comments: 3,
-        tags: ['소개', '첫글', '일상'],
-        featured: true
-      },
-      {
-        id: 2,
-        title: '투자에 대한 메르의 생각',
-        content: '최근 시장 상황에 대한 나의 관점을 공유해보려고 합니다.',
-        excerpt: '현재 시장 상황과 투자 전략에 대한 메르의 개인적인 견해를 담았습니다.',
-        category: '투자',
-        author: '메르',
-        createdAt: '2025-01-08',
-        views: 234,
-        likes: 18,
-        comments: 7,
-        tags: ['투자', '시장분석', '개인견해'],
-        featured: false
-      },
-      {
-        id: 3,
-        title: '메르의 독서 노트 - 피터 린치의 투자 철학',
-        content: '피터 린치의 "전설로 떠나는 월가의 영웅"을 읽고 느낀 점들을 정리해보았습니다.',
-        excerpt: '피터 린치의 투자 철학 중 인상 깊었던 부분들과 현재 시장에 적용 가능한 교훈들을 소개합니다.',
-        category: '독서',
-        author: '메르',
-        createdAt: '2025-01-05',
-        views: 187,
-        likes: 15,
-        comments: 5,
-        tags: ['독서', '피터린치', '투자철학', '책리뷰'],
-        featured: true
-      },
-      {
-        id: 4,
-        title: '메르의 주말 요리 도전기',
-        content: '주말에 도전해본 새로운 요리와 그 과정에서 있었던 에피소드들을 공유합니다.',
-        excerpt: '요리 초보 메르의 좌충우돌 요리 도전기! 실패와 성공이 공존하는 유쾌한 이야기입니다.',
-        category: '라이프스타일',
-        author: '메르',
-        createdAt: '2025-01-03',
-        views: 98,
-        likes: 8,
-        comments: 2,
-        tags: ['요리', '주말', '도전', '라이프'],
-        featured: false
-      }
-    ];
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/merry');
+        const result = await response.json();
 
-    setTimeout(() => {
-      setPosts(mockPosts);
-      setLoading(false);
-    }, 1000);
+        if (result.success && result.data) {
+          const apiPosts: MerryPost[] = result.data.map((post: any) => ({
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            excerpt: post.excerpt || '',
+            category: post.category || '일상',
+            author: post.author || '메르',
+            createdAt: new Date(post.created_date).toISOString().split('T')[0],
+            views: post.views || 0,
+            likes: post.likes || 0,
+            comments: post.comments_count || 0,
+            tags: post.tags || [],
+            featured: post.featured || false
+          }));
+          setPosts(apiPosts);
+        } else {
+          // API 실패 시 fallback 데이터
+          console.log('메르 블로그 API 실패, fallback 데이터 사용');
+          const fallbackPosts: MerryPost[] = [
+            {
+              id: 1,
+              title: '우리형 메르의 첫 번째 이야기',
+              content: '안녕하세요, 우리형 메르입니다. 이곳에서 다양한 이야기를 공유하려고 해요.',
+              excerpt: '메르의 첫 번째 포스트입니다. 앞으로 재미있는 이야기들을 많이 공유할 예정이에요.',
+              category: '일상',
+              author: '메르',
+              createdAt: '2025-01-10',
+              views: 156,
+              likes: 12,
+              comments: 3,
+              tags: ['소개', '첫글', '일상'],
+              featured: true
+            }
+          ];
+          setPosts(fallbackPosts);
+        }
+      } catch (error) {
+        console.error('메르 블로그 데이터 가져오기 실패:', error);
+        // 에러 시에도 fallback 데이터 사용
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
   }, []);
 
   const categories = ['all', '일상', '투자', '독서', '라이프스타일'];

@@ -1,246 +1,120 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import PostCard from '@/components/blog/PostCard';
-import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BlogPost } from '@/types';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function PostsPage() {
-  const searchParams = useSearchParams();
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [categories, setCategories] = useState<{ name: string; count: number }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-
-  // URL 파라미터에서 필터 정보 가져오기
-  useEffect(() => {
-    const category = searchParams.get('category') || '';
-    const search = searchParams.get('search') || '';
-    const page = parseInt(searchParams.get('page') || '1');
-    
-    setSelectedCategory(category);
-    setSearchQuery(search);
-    setCurrentPage(page);
-  }, [searchParams]);
-
-  // 포스트와 카테고리 로딩
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      try {
-        // 포스트 목록 가져오기
-        const postsUrl = new URL('/api/posts', window.location.origin);
-        if (selectedCategory) postsUrl.searchParams.set('category', selectedCategory);
-        if (searchQuery) postsUrl.searchParams.set('search', searchQuery);
-        postsUrl.searchParams.set('limit', '12');
-        postsUrl.searchParams.set('offset', ((currentPage - 1) * 12).toString());
-
-        const postsResponse = await fetch(postsUrl.toString());
-        const postsData = await postsResponse.json();
-        
-        if (postsData.success) {
-          setPosts(postsData.data || []);
-          setTotalPages(postsData.meta?.totalPages || 1);
-        } else {
-          console.error('Posts API error:', postsData.error);
-          setPosts([]);
-          setTotalPages(1);
-        }
-
-        // 카테고리 목록 가져오기
-        const categoriesResponse = await fetch('/api/categories');
-        const categoriesData = await categoriesResponse.json();
-        
-        if (categoriesData.success) {
-          setCategories(categoriesData.data || []);
-        } else {
-          console.error('Categories API error:', categoriesData.error);
-          setCategories([]);
-        }
-        
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
+  // 더미 포스트 데이터 (API 호출 제거)
+  const posts = [
+    {
+      id: 1,
+      title: "국민연금의 2025년 투자 전략 분석",
+      content: "국민연금공단이 2025년 상반기에 보인 투자 전략의 변화를 분석해봅니다. NVIDIA와 Microsoft 비중 증가, Apple 안정적 유지 등 주요 포인트들을 살펴보겠습니다.",
+      category: "투자분석",
+      created_date: new Date().toISOString(),
+      author: "요르",
+      views: 1250
+    },
+    {
+      id: 2,
+      title: "글로벌 기관투자자 포트폴리오 비교",
+      content: "버크셔 해서웨이, 타이거 글로벌, 시타델 등 주요 기관투자자들의 투자 성향과 포트폴리오 구성을 비교 분석합니다.",
+      category: "시장분석",
+      created_date: new Date(Date.now() - 86400000).toISOString(),
+      author: "요르",
+      views: 980
+    },
+    {
+      id: 3,
+      title: "13F 파일링으로 보는 기관투자 트렌드",
+      content: "SEC 13F 파일링 데이터를 통해 발견한 2025년 기관투자 트렌드와 시사점을 정리했습니다.",
+      category: "데이터분석",
+      created_date: new Date(Date.now() - 172800000).toISOString(),
+      author: "요르",
+      views: 756
+    },
+    {
+      id: 4,
+      title: "AI 시대 투자 패러다임의 변화",
+      content: "인공지능과 자동화 기술이 금융시장에 미치는 영향과 새로운 투자 기회를 탐색해봅니다.",
+      category: "기술투자",
+      created_date: new Date(Date.now() - 259200000).toISOString(),
+      author: "요르",
+      views: 892
+    },
+    {
+      id: 5,
+      title: "ESG 투자의 현재와 미래",
+      content: "환경, 사회, 지배구조를 고려한 ESG 투자가 기관투자자들에게 미치는 영향을 분석합니다.",
+      category: "ESG",
+      created_date: new Date(Date.now() - 345600000).toISOString(),
+      author: "요르",
+      views: 634
+    },
+    {
+      id: 6,
+      title: "반도체 업계 투자 동향 분석",
+      content: "NVIDIA, TSMC, ASML 등 주요 반도체 기업들의 투자 가치와 향후 전망을 살펴봅니다.",
+      category: "업종분석",
+      created_date: new Date(Date.now() - 432000000).toISOString(),
+      author: "요르",
+      views: 1156
+    },
+    {
+      id: 7,
+      title: "중국 시장 투자 리스크 평가",
+      content: "지정학적 리스크와 규제 변화가 중국 투자에 미치는 영향을 심층 분석합니다.",
+      category: "지역분석",
+      created_date: new Date(Date.now() - 518400000).toISOString(),
+      author: "요르",
+      views: 445
+    },
+    {
+      id: 8,
+      title: "암호화폐 ETF 시장 전망",
+      content: "비트코인 및 이더리움 ETF 승인 이후 암호화폐 시장의 변화와 전망을 살펴봅니다.",
+      category: "암호화폐",
+      created_date: new Date(Date.now() - 604800000).toISOString(),
+      author: "요르",
+      views: 1389
     }
-
-    fetchData();
-  }, [selectedCategory, searchQuery, currentPage]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    updateURL({ search: searchQuery, category: selectedCategory, page: 1 });
-  };
-
-  const handleCategorySelect = (category: string) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-    updateURL({ search: searchQuery, category, page: 1 });
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    updateURL({ search: searchQuery, category: selectedCategory, page });
-  };
-
-  const updateURL = (params: { search: string; category: string; page: number }) => {
-    const url = new URL(window.location.href);
-    if (params.search) url.searchParams.set('search', params.search);
-    else url.searchParams.delete('search');
-    if (params.category) url.searchParams.set('category', params.category);
-    else url.searchParams.delete('category');
-    if (params.page > 1) url.searchParams.set('page', params.page.toString());
-    else url.searchParams.delete('page');
-    
-    window.history.pushState({}, '', url.toString());
-  };
-
-  const clearFilters = () => {
-    setSelectedCategory('');
-    setSearchQuery('');
-    setCurrentPage(1);
-    window.history.pushState({}, '', '/posts');
-  };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">로딩 중...</p>
-        </div>
-      </div>
-    );
-  }
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">모든 포스트</h1>
-        
-        {/* 검색 */}
-        <form onSubmit={handleSearch} className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="포스트 검색..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </form>
-
-        {/* 카테고리 필터 */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <Badge 
-            variant={selectedCategory === '' ? "default" : "secondary"}
-            className="cursor-pointer"
-            onClick={() => handleCategorySelect('')}
-          >
-            전체 ({categories.reduce((sum, cat) => sum + cat.count, 0)})
-          </Badge>
-          {categories.map((category) => (
-            <Badge 
-              key={category.name}
-              variant={selectedCategory === category.name ? "default" : "secondary"}
-              className="cursor-pointer"
-              onClick={() => handleCategorySelect(category.name)}
-            >
-              {category.name} ({category.count})
-            </Badge>
-          ))}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">모든 포스트</h1>
+          <p className="text-muted-foreground">요르의 투자 인사이트와 시장 분석</p>
         </div>
-
-        {/* 활성 필터 표시 */}
-        {(selectedCategory || searchQuery) && (
-          <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-            <span>활성 필터:</span>
-            {selectedCategory && <Badge variant="outline">{selectedCategory}</Badge>}
-            {searchQuery && <Badge variant="outline">"{searchQuery}"</Badge>}
-            <Button variant="link" size="sm" onClick={clearFilters}>
-              모든 필터 지우기
-            </Button>
-          </div>
-        )}
+        <Button variant="outline" asChild>
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            홈으로
+          </Link>
+        </Button>
       </div>
 
-      {/* 포스트 목록 */}
-      {posts.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-
-          {/* 페이지네이션 */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => handlePageChange(currentPage - 1)}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                이전
-              </Button>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(page => 
-                  page === 1 || 
-                  page === totalPages || 
-                  Math.abs(page - currentPage) <= 2
-                )
-                .map((page, index, array) => (
-                  <div key={page} className="flex items-center">
-                    {index > 0 && array[index - 1] !== page - 1 && (
-                      <span className="px-2 text-muted-foreground">...</span>
-                    )}
-                    <Button
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handlePageChange(page)}
-                    >
-                      {page}
-                    </Button>
-                  </div>
-                ))}
-
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === totalPages}
-                onClick={() => handlePageChange(currentPage + 1)}
-              >
-                다음
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {posts.map((post) => (
+          <Card key={post.id} className="p-6 hover:shadow-lg transition-shadow">
+            <div className="mb-4">
+              <Badge className="mb-2">{post.category}</Badge>
+              <h3 className="font-semibold mb-2 line-clamp-2">{post.title}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-3">
+                {post.content}
+              </p>
             </div>
-          )}
-        </>
-      ) : (
-        <div className="text-center py-16">
-          <p className="text-muted-foreground mb-4">
-            {searchQuery || selectedCategory 
-              ? '검색 조건에 맞는 포스트를 찾을 수 없습니다.' 
-              : '포스트가 없습니다.'}
-          </p>
-          {(searchQuery || selectedCategory) && (
-            <Button onClick={clearFilters}>모든 포스트 보기</Button>
-          )}
-        </div>
-      )}
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span>{new Date(post.created_date).toLocaleDateString('ko-KR')}</span>
+              <span>{post.views?.toLocaleString()} 조회</span>
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

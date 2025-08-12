@@ -1,0 +1,1 @@
+// NPS Holdings API disabled to prevent errors

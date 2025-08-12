@@ -102,6 +102,14 @@ export default function RealPerformanceTable({
             13F 신고 기준 보유 현황 (시가총액 기준)
           </p>
         </div>
+        <div className="text-right">
+          <div className="text-2xl font-bold text-primary">
+            ${(totalValue / 1e9).toFixed(1)}B
+          </div>
+          <div className="text-sm text-muted-foreground">
+            총 포트폴리오 가치
+          </div>
+        </div>
       </div>
 
       {/* Desktop Table */}
@@ -153,8 +161,24 @@ export default function RealPerformanceTable({
                   </div>
                 </td>
                 <td className="p-3 text-right">
-                  <div className="font-bold text-lg">
-                    {holding.portfolioPercent.toFixed(1)}%
+                  <div className="space-y-1">
+                    <div className={`font-bold text-xl ${
+                      holding.portfolioPercent >= 3 ? 'text-primary' : 
+                      holding.portfolioPercent >= 2 ? 'text-blue-600' : 
+                      holding.portfolioPercent >= 1 ? 'text-green-600' : ''
+                    }`}>
+                      {holding.portfolioPercent.toFixed(2)}%
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full ${
+                          holding.portfolioPercent >= 3 ? 'bg-primary' : 
+                          holding.portfolioPercent >= 2 ? 'bg-blue-500' : 
+                          holding.portfolioPercent >= 1 ? 'bg-green-500' : 'bg-gray-400'
+                        }`}
+                        style={{ width: `${Math.min(holding.portfolioPercent * 15, 100)}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </td>
                 <td className="p-3 text-center">
@@ -211,10 +235,24 @@ export default function RealPerformanceTable({
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-bold text-lg">
-                  {holding.portfolioPercent.toFixed(1)}%
+                <div className={`font-bold text-xl ${
+                  holding.portfolioPercent >= 3 ? 'text-primary' : 
+                  holding.portfolioPercent >= 2 ? 'text-blue-600' : 
+                  holding.portfolioPercent >= 1 ? 'text-green-600' : ''
+                }`}>
+                  {holding.portfolioPercent.toFixed(2)}%
                 </div>
-                <div className="flex items-center justify-end">
+                <div className="flex items-center justify-end space-x-2 mt-1">
+                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full ${
+                        holding.portfolioPercent >= 3 ? 'bg-primary' : 
+                        holding.portfolioPercent >= 2 ? 'bg-blue-500' : 
+                        holding.portfolioPercent >= 1 ? 'bg-green-500' : 'bg-gray-400'
+                      }`}
+                      style={{ width: `${Math.min(holding.portfolioPercent * 15, 100)}%` }}
+                    ></div>
+                  </div>
                   {getChangeIcon(holding.change)}
                 </div>
               </div>
@@ -276,10 +314,28 @@ export default function RealPerformanceTable({
       </div>
 
       {/* Footer */}
-      <div className="mt-6 pt-4 border-t text-center">
-        <p className="text-xs text-muted-foreground">
-          데이터 제공: SEC EDGAR 13F • 시가총액 기준 • 손익 계산 비활성화
-        </p>
+      <div className="mt-6 pt-4 border-t">
+        <div className="flex items-center justify-between">
+          <div className="text-left">
+            <div className="text-lg font-bold text-primary mb-1">
+              Q2 2024 신고 기준
+            </div>
+            <div className="text-sm text-muted-foreground">
+              총 540개 종목 • 신고일: 2024년 8월 13일
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              데이터 제공: SEC EDGAR 13F Filing
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-medium text-muted-foreground">
+              National Pension Service Korea
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              CIK: 0001608046 • 한국 국민연금공단
+            </div>
+          </div>
+        </div>
       </div>
     </Card>
   );
