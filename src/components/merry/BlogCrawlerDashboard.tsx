@@ -30,7 +30,9 @@ export default function BlogCrawlerDashboard({ className }: CrawlerDashboardProp
   const [settings, setSettings] = useState({
     maxPages: 10,
     delayRange: [1, 2] as [number, number],
-    autoSchedule: false
+    autoSchedule: false,
+    year2024Only: true,
+    maxPosts: 10
   });
 
   const addLog = (message: string) => {
@@ -42,7 +44,7 @@ export default function BlogCrawlerDashboard({ className }: CrawlerDashboardProp
     if (isRunning) return;
     
     setIsRunning(true);
-    addLog('메르 블로그 크롤링 시작...');
+    addLog(settings.year2024Only ? '2024년 메르 블로그 크롤링 시작...' : '메르 블로그 크롤링 시작...');
     
     try {
       const response = await fetch('/api/merry/crawler', {
@@ -52,7 +54,9 @@ export default function BlogCrawlerDashboard({ className }: CrawlerDashboardProp
         },
         body: JSON.stringify({
           maxPages: settings.maxPages,
-          delayRange: settings.delayRange
+          delayRange: settings.delayRange,
+          year2024: settings.year2024Only,
+          maxPosts: settings.maxPosts
         }),
       });
 
@@ -130,7 +134,7 @@ export default function BlogCrawlerDashboard({ className }: CrawlerDashboardProp
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* 크롤링 컨트롤 */}
             <div className="space-y-2">
               <label className="text-sm font-medium">크롤링 제어</label>
@@ -212,6 +216,41 @@ export default function BlogCrawlerDashboard({ className }: CrawlerDashboardProp
                   step="0.1"
                   disabled={isRunning}
                 />
+              </div>
+            </div>
+
+            {/* 2024년 설정 */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">크롤링 옵션</label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={settings.year2024Only}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      year2024Only: e.target.checked
+                    }))}
+                    disabled={isRunning}
+                    className="rounded"
+                  />
+                  2024년 포스트만
+                </label>
+                {settings.year2024Only && (
+                  <input
+                    type="number"
+                    value={settings.maxPosts}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      maxPosts: parseInt(e.target.value) || 10
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    min="1"
+                    max="50"
+                    disabled={isRunning}
+                    placeholder="최대 포스트 수"
+                  />
+                )}
               </div>
             </div>
 

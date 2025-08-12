@@ -128,6 +128,76 @@ export class BlogCrawler {
   }
 
   /**
+   * 제목 중복 여부 판단 (강화된 로직)
+   */
+  private shouldSkipDuplicateTitle(text: string, title: string, lineIndex: number): boolean {
+    // 첫 3줄 내에서만 중복 검사
+    if (lineIndex >= 3) return false;
+    
+    // 1. 완전히 같은 경우
+    if (text === title) return true;
+    
+    // 2. 공백과 특수문자 제거 후 비교
+    const normalizeText = (str: string) => str.replace(/[\s\u200b\u00a0]/g, '').toLowerCase();
+    if (normalizeText(text) === normalizeText(title)) return true;
+    
+    // 3. 제목이 본문 텍스트에 완전히 포함되어 있는 경우 (첫 2줄만)
+    if (lineIndex < 2 && text.includes(title) && text.length < title.length * 1.5) return true;
+    
+    // 4. 본문 텍스트가 제목에 완전히 포함되어 있는 경우 (첫 2줄만)  
+    if (lineIndex < 2 && title.includes(text) && text.length > 5) return true;
+    
+    // 5. 유사도가 매우 높은 경우 (편집 거리 기반)
+    if (lineIndex < 2 && this.calculateSimilarity(text, title) > 0.8) return true;
+    
+    return false;
+  }
+  
+  /**
+   * 두 문자열의 유사도 계산 (0-1 사이 값)
+   */
+  private calculateSimilarity(str1: string, str2: string): number {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const editDistance = this.levenshteinDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+  }
+  
+  /**
+   * 레벤슈타인 거리 계산
+   */
+  private levenshteinDistance(str1: string, str2: string): number {
+    const matrix: number[][] = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    
+    return matrix[str2.length][str1.length];
+  }
+
+  /**
    * 포스트의 카테고리 정보 추출
    */
   async extractCategory(logNo: string): Promise<string | null> {
@@ -200,11 +270,11 @@ export class BlogCrawler {
       paragraphs.each((_, elem) => {
         const text = $(elem).text().trim();
         if (text && !['​', '\u200b', '﻿', ' ', '\t', '\n'].includes(text)) {
-          // 첫 번째 단락이 제목과 완전히 같으면 건너뛰기
-          if (contentLines.length === 0 && text === title) {
-            return; // jQuery each에서 continue와 같은 효과
+          // 제목 중복 제거 로직 강화
+          const shouldSkip = this.shouldSkipDuplicateTitle(text, title, contentLines.length);
+          if (!shouldSkip) {
+            contentLines.push(text);
           }
-          contentLines.push(text);
         }
       });
       
@@ -358,6 +428,119 @@ export class BlogCrawler {
       this.stats.errors++;
       return false;
     }
+  }
+
+  /**
+   * 2024년 포스트 10개만 크롤링
+   */
+  async crawl2024Posts(maxPosts: number = 10): Promise<CrawlerStats> {
+    console.log(`=== ${this.config.blogId} 2024년 블로그 크롤링 시작 ===`);
+    console.log(`목표: 2024년 포스트 최대 ${maxPosts}개`);
+    console.log('');
+    
+    const allPosts: Array<{log_no: string, url: string, title_preview: string}> = [];
+    const found2024Posts: Array<{log_no: string, url: string, title_preview: string}> = [];
+    let page = 1;
+    let consecutiveNon2024Count = 0;
+    const maxConsecutiveNon2024 = 5; // 연속으로 5페이지 2024년 글이 없으면 중단
+    
+    // 2024년 글을 찾을 때까지 페이지 탐색
+    while (found2024Posts.length < maxPosts && page <= 50 && consecutiveNon2024Count < maxConsecutiveNon2024) {
+      console.log(`[PAGE ${page}] 2024년 포스트 검색 중...`);
+      
+      const pagePosts = await this.getPostListFromPage(page);
+      
+      if (pagePosts.length === 0) {
+        console.log(`페이지 ${page}에서 포스트를 찾을 수 없음. 검색 종료.`);
+        break;
+      }
+      
+      let page2024Count = 0;
+      
+      // 각 포스트의 날짜 확인
+      for (const postInfo of pagePosts) {
+        const postData = await this.extractPostContent(postInfo.url);
+        
+        if (postData && postData.created_date) {
+          const postYear = new Date(postData.created_date).getFullYear();
+          
+          if (postYear === 2024) {
+            found2024Posts.push(postInfo);
+            page2024Count++;
+            console.log(`✅ 2024년 포스트 발견 (${found2024Posts.length}/${maxPosts}): ${postData.title}`);
+            
+            if (found2024Posts.length >= maxPosts) {
+              break;
+            }
+          }
+        }
+        
+        // 포스트 간 짧은 대기
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      if (page2024Count === 0) {
+        consecutiveNon2024Count++;
+        console.log(`⚠️ 페이지 ${page}에서 2024년 포스트 없음 (연속 ${consecutiveNon2024Count}회)`);
+      } else {
+        consecutiveNon2024Count = 0; // 2024년 글을 찾으면 카운터 리셋
+      }
+      
+      page++;
+      
+      // 페이지 간 대기
+      const waitTime = Math.random() * (1.5 - 0.8) + 0.8;
+      await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+    }
+    
+    this.stats.totalFound = found2024Posts.length;
+    console.log(`\n총 2024년 포스트 ${found2024Posts.length}개 발견`);
+    
+    if (found2024Posts.length === 0) {
+      console.log('2024년 포스트를 찾지 못했습니다.');
+      return this.stats;
+    }
+    
+    // 각 포스트 내용 추출 및 저장
+    console.log('\n[EXTRACT] 2024년 포스트 내용 추출 및 저장 시작...');
+    
+    for (let i = 0; i < found2024Posts.length; i++) {
+      const postInfo = found2024Posts[i];
+      
+      // 프로그레스 바 계산
+      const progress = Math.floor(((i + 1) / found2024Posts.length) * 100);
+      const barLength = 30;
+      const filledLength = Math.floor(barLength * (i + 1) / found2024Posts.length);
+      const bar = '#'.repeat(filledLength) + '-'.repeat(barLength - filledLength);
+      
+      console.log(`\n[${i + 1}/${found2024Posts.length}] [${bar}] ${progress}%`);
+      console.log(`처리 중: ${postInfo.title_preview}`);
+      
+      // 포스트 내용 추출 (이미 한 번 추출했지만 다시 추출해서 저장)
+      const postData = await this.extractPostContent(postInfo.url);
+      
+      if (postData && new Date(postData.created_date).getFullYear() === 2024) {
+        // DB에 저장
+        const success = await this.savePostToDb(postData);
+        
+        if (success) {
+          console.log(`SUCCESS: 2024년 포스트 저장 완료 - ${postData.title}`);
+        } else {
+          console.log(`ERROR: 저장 실패`);
+        }
+      } else {
+        console.log(`ERROR: 추출 실패 또는 2024년 아님`);
+      }
+      
+      // 요청 간 대기 (서버 부하 방지)
+      if (i < found2024Posts.length - 1) {
+        const waitTime = Math.random() * (1.5 - 0.8) + 0.8;
+        await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+      }
+    }
+    
+    this.printStats();
+    return this.stats;
   }
 
   /**

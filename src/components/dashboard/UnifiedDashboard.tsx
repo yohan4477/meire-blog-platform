@@ -37,14 +37,6 @@ interface DashboardStats {
   workflowsRunning: number;
 }
 
-interface SystemHealth {
-  status: 'healthy' | 'warning' | 'error';
-  lastUpdate: string;
-  issues: Array<{
-    type: 'warning' | 'error';
-    message: string;
-  }>;
-}
 
 interface QuickAction {
   id: string;
@@ -58,7 +50,6 @@ interface QuickAction {
 
 export default function UnifiedDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
@@ -73,7 +64,6 @@ export default function UnifiedDashboard() {
     try {
       await Promise.all([
         loadDashboardStats(),
-        loadSystemHealth()
       ]);
       setLastRefresh(new Date());
     } catch (error) {
@@ -102,32 +92,6 @@ export default function UnifiedDashboard() {
     }
   };
 
-  const loadSystemHealth = async () => {
-    try {
-      const response = await fetch('/api/agent-workflows?action=health');
-      const result = await response.json();
-      
-      if (result.success) {
-        setHealth({
-          status: 'healthy',
-          lastUpdate: new Date().toISOString(),
-          issues: []
-        });
-      } else {
-        setHealth({
-          status: 'warning',
-          lastUpdate: new Date().toISOString(),
-          issues: [{ type: 'warning', message: '일부 에이전트 연결 불안정' }]
-        });
-      }
-    } catch (error) {
-      setHealth({
-        status: 'error',
-        lastUpdate: new Date().toISOString(),
-        issues: [{ type: 'error', message: '시스템 연결 실패' }]
-      });
-    }
-  };
 
   const setupQuickActions = () => {
     setQuickActions([
@@ -220,23 +184,6 @@ export default function UnifiedDashboard() {
     return formatCurrency(value);
   };
 
-  const getHealthStatusColor = (status: string) => {
-    switch (status) {
-      case 'healthy': return 'text-green-600 bg-green-50';
-      case 'warning': return 'text-yellow-600 bg-yellow-50';
-      case 'error': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
-    }
-  };
-
-  const getHealthStatusIcon = (status: string) => {
-    switch (status) {
-      case 'healthy': return <CheckCircle className="h-4 w-4" />;
-      case 'warning': return <AlertTriangle className="h-4 w-4" />;
-      case 'error': return <AlertTriangle className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
-    }
-  };
 
   if (loading && !stats) {
     return (
@@ -253,18 +200,6 @@ export default function UnifiedDashboard() {
           </div>
         </div>
 
-        {/* 시스템 상태 스켈레톤 */}
-        <Card className="border-l-4">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <Skeleton className="h-5 w-5 rounded-full" />
-              <div className="flex-1">
-                <Skeleton className="h-5 w-32 mb-1" />
-                <Skeleton className="h-4 w-48" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* 주요 지표 스켈레톤 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -358,32 +293,6 @@ export default function UnifiedDashboard() {
         </div>
       </div>
 
-      {/* 시스템 상태 표시 */}
-      {health && (
-        <Card className={`${getHealthStatusColor(health.status)} border-l-4 ${
-          health.status === 'healthy' ? 'border-l-green-500' :
-          health.status === 'warning' ? 'border-l-yellow-500' : 'border-l-red-500'
-        }`}>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              {getHealthStatusIcon(health.status)}
-              <div className="flex-1">
-                <h3 className="font-medium">
-                  시스템 상태: {health.status === 'healthy' ? '정상' : 
-                              health.status === 'warning' ? '주의' : '오류'}
-                </h3>
-                {health.issues.length > 0 && (
-                  <ul className="text-sm mt-1 space-y-1">
-                    {health.issues.map((issue, index) => (
-                      <li key={index}>• {issue.message}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* 주요 지표 */}
       {stats && (

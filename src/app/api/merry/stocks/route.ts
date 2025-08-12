@@ -1,165 +1,162 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/database';
+import fs from 'fs';
+import path from 'path';
 
-export async function GET(request: NextRequest) {
+// 캐시 저장소
+let stocksCache: {
+  data: any[];
+  timestamp: number;
+} | null = null;
+
+const CACHE_TTL = 12 * 60 * 60 * 1000; // 12시간 (밀리초)
+
+// 실제 주가 데이터를 가져오는 함수
+async function getStockPrice(ticker: string, market: string) {
   try {
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '5');
-    const page = parseInt(searchParams.get('page') || '1');
-    const offset = (page - 1) * limit;
+    // Yahoo Finance에서 실제 가격 가져오기
+    const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
+    const symbol = isKoreanStock ? `${ticker}.KS` : ticker;
+    
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${Math.floor(Date.now() / 1000) - 86400}&period2=${Math.floor(Date.now() / 1000)}&interval=1d`,
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      }
+    );
 
-    // 메르가 언급한 주요 종목 데이터 (언급 횟수 기반)
-    const stockData = [
+    if (response.ok) {
+      const data = await response.json();
+      const result = data.chart?.result?.[0];
+      
+      if (result?.meta) {
+        const currentPrice = result.meta.regularMarketPrice;
+        const previousClose = result.meta.chartPreviousClose || result.meta.regularMarketPreviousClose;
+        const currency = result.meta.currency;
+        
+        if (currentPrice && previousClose) {
+          const changeAmount = currentPrice - previousClose;
+          const changePercent = ((changeAmount / previousClose) * 100).toFixed(2);
+          const changeSign = changeAmount >= 0 ? '+' : '';
+          
+          return {
+            current: isKoreanStock ? Math.round(currentPrice) : parseFloat(currentPrice.toFixed(2)),
+            currency: currency === 'KRW' ? 'KRW' : 'USD',
+            change: `${changeSign}${changePercent}%`
+          };
+        }
+      }
+    }
+    
+    // API 실패 시 null 반환 (모의 데이터 사용하지 않음)
+    console.warn(`⚠️ Failed to fetch real price for ${ticker}, using null`);
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching price for ${ticker}:`, error);
+    return null;
+  }
+}
+
+// 종목 데이터 로드 함수 (캐시 적용)
+async function loadStocksData(): Promise<any[]> {
+  const now = Date.now();
+  
+  // 캐시가 유효한 경우 캐시 데이터 반환
+  if (stocksCache && (now - stocksCache.timestamp) < CACHE_TTL) {
+    console.log('📦 Using cached stocks data');
+    return stocksCache.data;
+  }
+  
+  console.log('🔄 Loading fresh stocks data from file');
+  
+  // 실제 종목 데이터 로드
+  const dataPath = path.join(process.cwd(), 'data', 'stock-mentions-count.json');
+  let stockData = [];
+  
+  try {
+    const fileContent = fs.readFileSync(dataPath, 'utf8');
+    stockData = JSON.parse(fileContent);
+  } catch (error) {
+    console.error('종목 데이터 파일 읽기 실패, fallback 데이터 사용');
+    // fallback 데이터
+    stockData = [
       { 
         ticker: 'TSLA', 
         name: '테슬라', 
         market: 'NASDAQ',
-        mentions: 42,
+        postCount: 42,
         firstMention: '2024-12-20',
         lastMention: '2025-08-09',
         sentiment: 'positive',
         tags: ['전기차', 'AI', '자율주행'],
-        description: '일론 머스크가 이끄는 전기차 및 에너지 기업'
-      },
-      { 
-        ticker: '005930', 
-        name: '삼성전자', 
-        market: 'KOSPI',
-        mentions: 35,
-        firstMention: '2024-12-25',
-        lastMention: '2025-08-09',
-        sentiment: 'neutral',
-        tags: ['반도체', 'HBM', '파운드리'],
-        description: '글로벌 반도체 및 전자제품 제조 기업'
-      },
-      { 
-        ticker: '042660', 
-        name: '한화오션', 
-        market: 'KOSPI',
-        mentions: 29,
-        firstMention: '2024-12-28',
-        lastMention: '2025-08-11',
-        sentiment: 'positive',
-        tags: ['조선업', 'LNG선', '방위산업'],
-        description: '대형 선박 및 해양플랜트 건조 기업'
-      },
-      { 
-        ticker: 'AAPL', 
-        name: '애플', 
-        market: 'NASDAQ',
-        mentions: 26,
-        firstMention: '2024-12-22',
-        lastMention: '2025-08-09',
-        sentiment: 'neutral',
-        tags: ['빅테크', '아이폰', '워런버핏'],
-        description: '세계 최대 시가총액 IT 기업'
-      },
-      { 
-        ticker: '010140', 
-        name: '삼성중공업', 
-        market: 'KOSPI',
-        mentions: 26,
-        firstMention: '2024-12-26',
-        lastMention: '2025-07-31',
-        sentiment: 'positive',
-        tags: ['조선업', 'LNG선', '해양플랜트'],
-        description: '조선 및 해양플랜트 전문 기업'
-      },
-      { 
-        ticker: 'NVDA', 
-        name: '엔비디아', 
-        market: 'NASDAQ',
-        mentions: 22,
-        firstMention: '2024-12-28',
-        lastMention: '2025-08-09',
-        sentiment: 'positive',
-        tags: ['AI', 'GPU', '반도체'],
-        description: 'AI 시대를 이끄는 GPU 선도 기업'
-      },
-      { 
-        ticker: '329180', 
-        name: 'HD현대중공업', 
-        market: 'KOSPI',
-        mentions: 20,
-        firstMention: '2025-01-05',
-        lastMention: '2025-08-11',
-        sentiment: 'positive',
-        tags: ['조선업', 'LNG선', '군함'],
-        description: '세계 최대 조선소 운영 기업'
-      },
-      { 
-        ticker: '000660', 
-        name: 'SK하이닉스', 
-        market: 'KOSPI',
-        mentions: 15,
-        firstMention: '2025-01-10',
-        lastMention: '2025-07-29',
-        sentiment: 'positive',
-        tags: ['메모리반도체', 'HBM', 'AI메모리'],
-        description: '메모리 반도체 전문 기업'
-      },
-      { 
-        ticker: 'BRK.B', 
-        name: '버크셔해서웨이', 
-        market: 'NYSE',
-        mentions: 15,
-        firstMention: '2025-02-10',
-        lastMention: '2025-07-26',
-        sentiment: 'positive',
-        tags: ['워런버핏', '투자회사', '가치투자'],
-        description: '워런 버핏의 투자 지주회사'
-      },
-      { 
-        ticker: 'TSM', 
-        name: 'TSMC', 
-        market: 'NYSE',
-        mentions: 14,
-        firstMention: '2025-02-15',
-        lastMention: '2025-08-06',
-        sentiment: 'neutral',
-        tags: ['파운드리', '반도체', '대만'],
-        description: '세계 최대 반도체 파운드리 기업'
-      },
-      { 
-        ticker: '8058.T', 
-        name: '미쓰비시상사', 
-        market: 'TSE',
-        mentions: 13,
-        firstMention: '2025-03-01',
-        lastMention: '2025-07-06',
-        sentiment: 'positive',
-        tags: ['종합상사', '일본', '워런버핏'],
-        description: '일본 5대 종합상사 중 하나'
-      },
-      { 
-        ticker: 'PLTR', 
-        name: '팔란티어', 
-        market: 'NYSE',
-        mentions: 8,
-        firstMention: '2025-03-15',
-        lastMention: '2025-08-05',
-        sentiment: 'positive',
-        tags: ['빅데이터', 'AI', '국방'],
-        description: '빅데이터 분석 플랫폼 기업'
+        description: '일론 머스크가 이끄는 전기차 및 에너지 기업',
+        recentPosts: []
       }
     ];
+  }
+
+  // 주가 정보 추가
+  for (let stock of stockData) {
+    const priceData = await getStockPrice(stock.ticker, stock.market);
+    
+    if (priceData) {
+      stock.currentPrice = priceData.current;
+      stock.currency = priceData.currency;
+      stock.priceChange = priceData.change;
+    } else {
+      // 실제 가격을 가져올 수 없는 경우
+      stock.currentPrice = null;
+      stock.currency = stock.market === 'KOSPI' || stock.market === 'KOSDAQ' ? 'KRW' : 'USD';
+      stock.priceChange = null;
+    }
+    
+    // mentions를 postCount로 변경
+    if (stock.postCount) {
+      stock.mentions = stock.postCount;
+    }
+  }
+
+  // 캐시 업데이트
+  stocksCache = {
+    data: stockData,
+    timestamp: now
+  };
+  
+  console.log(`✅ Cached ${stockData.length} stocks data for 12 hours`);
+  return stockData;
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const page = parseInt(searchParams.get('page') || '1');
+    const tag = searchParams.get('tag');
+    const market = searchParams.get('market');
+    const sentiment = searchParams.get('sentiment');
+    const offset = (page - 1) * limit;
+
+    // 캐시된 종목 데이터 로드
+    let stockData = await loadStocksData();
+
+    // 필터링
+    if (tag) {
+      stockData = stockData.filter(stock => 
+        stock.tags && stock.tags.some(t => t.includes(tag))
+      );
+    }
+    
+    if (market && market !== 'all') {
+      stockData = stockData.filter(stock => stock.market === market);
+    }
+    
+    if (sentiment && sentiment !== 'all') {
+      stockData = stockData.filter(stock => stock.sentiment === sentiment);
+    }
 
     // 페이지네이션 적용
     const paginatedStocks = stockData.slice(offset, offset + limit);
-    
-    // 최근 언급된 포스트 정보 추가
-    for (const stock of paginatedStocks) {
-      const recentPosts = await query(`
-        SELECT id, log_no, title, created_date, excerpt
-        FROM blog_posts
-        WHERE blog_type = 'merry' 
-          AND (title LIKE ? OR content LIKE ?)
-        ORDER BY created_date DESC
-        LIMIT 3
-      `, [`%${stock.name}%`, `%${stock.name}%`]);
-      
-      stock['recentPosts'] = recentPosts;
-    }
 
     return NextResponse.json({
       success: true,

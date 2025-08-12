@@ -19,6 +19,14 @@ const UnifiedDashboard = dynamic(
   }
 );
 
+const MerryStockPicks = dynamic(
+  () => import('@/components/merry/MerryStockPicks'),
+  { 
+    loading: () => <Skeleton className="h-96 w-full" />,
+    ssr: false 
+  }
+);
+
 function DashboardSkeleton() {
   return (
     <div className="space-y-4">
@@ -179,8 +187,8 @@ export default function Home() {
               요르의 투자 플랫폼
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-6 sm:mb-8 px-4">
-              니가 뭘 알아. 니가 뭘 아냐고<br className="hidden sm:inline" />
-              <span className="sm:hidden"> </span>AI 에이전트가 분석하는 국민연금, 기관투자자 포트폴리오 분석 플랫폼
+              니가 뭘 알아. 니가 뭘 아냐고.<br />
+              AI 에이전트가 분석하는 국민연금, 기관투자자 포트폴리오 분석 플랫폼
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center max-w-3xl mx-auto">
               <Button asChild size="lg" className="w-full sm:w-auto">
@@ -203,6 +211,13 @@ export default function Home() {
               </Button>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* 메르's Pick - 주목할 종목 (상단 배치) */}
+      <section className="bg-gray-50 border-b">
+        <div className="container mx-auto px-4 py-6">
+          <MerryStockPicks />
         </div>
       </section>
 

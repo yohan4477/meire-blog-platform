@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import BlogCrawler from '@/lib/blog-crawler';
+import { BlogCrawler } from '@/lib/blog-crawler';
 import { ApiResponse, CrawlerStats } from '@/types';
 
 /**
@@ -10,9 +10,9 @@ import { ApiResponse, CrawlerStats } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const { maxPages = 10, delayRange = [1, 2] } = await request.json();
+    const { maxPages = 10, delayRange = [1, 2], year2024 = false, maxPosts = 10 } = await request.json();
 
-    console.log(`메르 블로그 크롤링 시작 - maxPages: ${maxPages}`);
+    console.log(`메르 블로그 크롤링 시작 - ${year2024 ? '2024년 포스트' : '최근 포스트'}, maxPages: ${maxPages}`);
 
     const crawler = new BlogCrawler({
       blogId: 'ranto28',
@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     });
 
-    const stats = await crawler.crawlRecentPosts();
+    // 2024년 포스트 크롤링 또는 일반 크롤링 선택
+    const stats = year2024 
+      ? await crawler.crawl2024Posts(maxPosts)
+      : await crawler.crawlRecentPosts();
 
     const response: ApiResponse<CrawlerStats> = {
       success: true,
