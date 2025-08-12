@@ -53,7 +53,7 @@ export default function MerryPage() {
           setPosts(apiPosts);
         } else {
           // API 실패 시 fallback 데이터
-          console.log('메르 블로그 API 실패, fallback 데이터 사용');
+          console.warn('메르 블로그 API 실패, fallback 데이터 사용');
           const fallbackPosts: MerryPost[] = [
             {
               id: 1,

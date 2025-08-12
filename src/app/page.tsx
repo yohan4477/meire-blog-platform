@@ -1,13 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowRight, TrendingUp, BarChart3, User, Newspaper, Brain, Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import UnifiedDashboard from '@/components/dashboard/UnifiedDashboard';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// 동적 import로 성능 최적화
+const UnifiedDashboard = dynamic(
+  () => import('@/components/dashboard/UnifiedDashboard'),
+  { 
+    loading: () => <DashboardSkeleton />,
+    ssr: false 
+  }
+);
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-8 w-64" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-32" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [loading, setLoading] = useState(false);

@@ -810,7 +810,7 @@ const analysisReports: { [key: string]: any } = {
 
 export default function AnalysisDetailPage() {
   const params = useParams();
-  const slug = params?.slug as string;
+  const slug = params?.['slug'] as string;
   
   const report = analysisReports[slug];
 

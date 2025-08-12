@@ -14,7 +14,7 @@ import {
   PieChart, 
   Activity,
   Plus,
-  Refresh,
+  RotateCw,
   Target,
   Award,
   BarChart3
@@ -115,7 +115,7 @@ export default function PortfolioDashboard({ portfolioId, userId }: PortfolioDas
             onClick={handleUpdatePrices}
             disabled={loading}
           >
-            <Refresh className="h-4 w-4 mr-2" />
+            <RotateCw className="h-4 w-4 mr-2" />
             Update Prices
           </Button>
           <Button 

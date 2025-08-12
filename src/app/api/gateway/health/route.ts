@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 데이터베이스 상태 확인 (간단한 ping)
-    let databaseStatus = { connected: false, error: null };
+    let databaseStatus: { connected: boolean; error: string | null } = { connected: false, error: null };
     try {
       // 실제 구현에서는 데이터베이스 연결 상태 확인
       databaseStatus = { connected: true, error: null };
