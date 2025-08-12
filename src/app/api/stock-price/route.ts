@@ -13,17 +13,26 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log(`📈 Fetching stock price for: ${ticker} (${period})`);
+    console.log(`📈 Fetching fresh stock price for: ${ticker} (${period}) at ${new Date().toISOString()}`);
 
     // 실제 주식 가격 데이터 조회
     const priceData = await fetchStockPriceData(ticker, period);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       ticker,
       period,
-      prices: priceData
+      prices: priceData,
+      fetchedAt: new Date().toISOString()
     });
+
+    // 캐시 비활성화 헤더 추가
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    response.headers.set('Surrogate-Control', 'no-store');
+
+    return response;
 
   } catch (error) {
     console.error('주식 가격 API 오류:', error);

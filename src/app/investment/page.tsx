@@ -4,8 +4,42 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BarChart3, TrendingUp, PieChart } from 'lucide-react';
 import Link from 'next/link';
+import AdvancedPerformanceChart, { PerformanceDataPoint } from '@/components/charts/AdvancedPerformanceChart';
+
+// 샘플 주식 데이터 생성
+const generateStockData = (): PerformanceDataPoint[] => {
+  const data: PerformanceDataPoint[] = [];
+  const startDate = new Date('2024-07-01');
+  let baseValue = 100000000; // 1억원 시작
+
+  for (let i = 0; i < 180; i++) { // 6개월 데이터
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + i);
+    
+    // 랜덤 변동성이 있는 주식 데이터
+    const dailyReturn = (Math.random() - 0.5) * 4; // -2% ~ +2%
+    const newValue = baseValue * (1 + dailyReturn / 100);
+    
+    data.push({
+      date: date.toISOString().split('T')[0],
+      portfolioValue: newValue,
+      dailyReturn: dailyReturn,
+      cumulativeReturn: ((newValue - 100000000) / 100000000) * 100,
+      benchmark: newValue * (0.95 + Math.random() * 0.1), // 벤치마크
+      volume: Math.floor(Math.random() * 1000000) + 500000,
+      volatility: Math.random() * 3 + 1,
+      sharpeRatio: Math.random() * 2 + 0.5,
+    });
+    
+    baseValue = newValue;
+  }
+  
+  return data;
+};
 
 export default function InvestmentPage() {
+  const stockData = generateStockData();
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
@@ -84,6 +118,43 @@ export default function InvestmentPage() {
               </div>
             </div>
           ))}
+        </div>
+      </Card>
+
+      {/* 개선된 주식 차트 */}
+      <div className="mb-8">
+        <AdvancedPerformanceChart 
+          data={stockData}
+          title="포트폴리오 성과 분석 - 개선된 줌 기능"
+          showBenchmark={true}
+          showVolume={true}
+          showMetrics={true}
+          height={500}
+        />
+      </div>
+
+      {/* 줌 기능 설명 */}
+      <Card className="p-6 mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <h3 className="text-lg font-bold mb-4 text-blue-900">🔍 새로운 줌 기능 사용법</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="font-semibold mb-2 text-blue-800">드래그 줌</h4>
+            <ul className="space-y-1 text-sm text-blue-700">
+              <li>• 줌 아이콘 클릭 후 차트에서 드래그하여 범위 선택</li>
+              <li>• 선택한 구간으로 자동 줌인</li>
+              <li>• Y축 범위도 선택 구간에 맞게 자동 조정</li>
+              <li>• 성과 지표도 줌된 구간 기준으로 재계산</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2 text-blue-800">편의 기능</h4>
+            <ul className="space-y-1 text-sm text-blue-700">
+              <li>• 줌 아웃: 이전 상태로 단계별 되돌리기</li>
+              <li>• 줌 초기화: 전체 구간으로 한번에 복원</li>
+              <li>• 시간 범위 버튼: 빠른 기간별 조회 (1D, 1W, 1M 등)</li>
+              <li>• 실시간 피드백: 줌 상태 및 데이터 범위 표시</li>
+            </ul>
+          </div>
         </div>
       </Card>
 

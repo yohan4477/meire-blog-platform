@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { CacheControls } from '@/components/ui/cache-controls';
 
 // 동적 import로 차트 컴포넌트 최적화
 const StockPriceChart = dynamic(
@@ -202,7 +203,9 @@ export default function StockDetailPage() {
               </div>
             </div>
             
-            <div className="text-right">
+            <div className="flex items-start gap-4">
+              <CacheControls />
+              <div className="text-right">
               <div className="text-2xl font-bold mb-1">
                 {stock.currency === 'USD' ? '$' : '₩'}{stock.currentPrice?.toLocaleString()}
                 <span className={`ml-2 text-lg ${stock.priceChange?.startsWith('+') ? 'text-green-500' : stock.priceChange?.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
@@ -210,6 +213,7 @@ export default function StockDetailPage() {
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">현재가</p>
+              </div>
             </div>
           </div>
         </CardHeader>

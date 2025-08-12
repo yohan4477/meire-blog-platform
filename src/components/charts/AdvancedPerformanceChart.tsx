@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import {
   ComposedChart,
   Line,
@@ -12,7 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  Brush,
+  ReferenceArea,
   Legend,
 } from 'recharts';
 import { Card } from '@/components/ui/card';
@@ -26,6 +26,10 @@ import {
   BarChart3,
   LineChart,
   AreaChart,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Move,
 } from 'lucide-react';
 
 export interface PerformanceDataPoint {
@@ -52,6 +56,19 @@ interface AdvancedPerformanceChartProps {
 type ChartType = 'line' | 'area' | 'composed';
 type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL';
 
+interface ZoomState {
+  left?: string | number;
+  right?: string | number;
+  refAreaLeft?: string | number;
+  refAreaRight?: string | number;
+  isZooming?: boolean;
+}
+
+interface YAxisRange {
+  min: number;
+  max: number;
+}
+
 const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
   data,
   title = '포트폴리오 성과 분석',
@@ -64,6 +81,12 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
   const [chartType, setChartType] = useState<ChartType>('composed');
   const [timeRange, setTimeRange] = useState<TimeRange>('1M');
   const [showTooltipDetails, setShowTooltipDetails] = useState(true);
+  
+  // 줌 상태 관리
+  const [zoomState, setZoomState] = useState<ZoomState>({});
+  const [isCustomZoom, setIsCustomZoom] = useState(false);
+  const [dragMode, setDragMode] = useState<'zoom' | 'pan'>('zoom');
+  const zoomHistory = useRef<ZoomState[]>([]);
 
   // 시간 범위에 따른 데이터 필터링
   const filteredData = useMemo(() => {
@@ -99,15 +122,131 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
     return data.filter(point => new Date(point.date) >= startDate);
   }, [data, timeRange]);
 
-  // 성과 메트릭 계산
-  const performanceMetrics = useMemo(() => {
-    if (!filteredData.length) return null;
+  // 줌이 적용된 최종 데이터
+  const zoomedData = useMemo(() => {
+    if (!isCustomZoom || !zoomState.left || !zoomState.right) {
+      return filteredData;
+    }
 
-    const firstValue = filteredData[0]?.portfolioValue || 0;
-    const lastValue = filteredData[filteredData.length - 1]?.portfolioValue || 0;
+    const leftIndex = typeof zoomState.left === 'number' ? zoomState.left : 0;
+    const rightIndex = typeof zoomState.right === 'number' ? zoomState.right : filteredData.length - 1;
+    
+    return filteredData.slice(leftIndex, rightIndex + 1);
+  }, [filteredData, isCustomZoom, zoomState]);
+
+  // Y축 범위 자동 계산
+  const yAxisRange = useMemo((): YAxisRange => {
+    if (!zoomedData.length) return { min: 0, max: 100 };
+
+    const values = zoomedData.flatMap(d => [
+      d.portfolioValue,
+      showBenchmark ? d.benchmark : null,
+    ]).filter((val): val is number => val !== null);
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const padding = (max - min) * 0.05; // 5% 패딩
+
+    return {
+      min: Math.max(0, min - padding),
+      max: max + padding,
+    };
+  }, [zoomedData, showBenchmark]);
+
+  // 줌 핸들러들
+  const handleMouseDown = useCallback((e: any) => {
+    if (dragMode !== 'zoom' || !e) return;
+    
+    const { activeLabel } = e;
+    if (activeLabel) {
+      setZoomState(prev => ({
+        ...prev,
+        refAreaLeft: activeLabel,
+        refAreaRight: activeLabel,
+        isZooming: true,
+      }));
+    }
+  }, [dragMode]);
+
+  const handleMouseMove = useCallback((e: any) => {
+    if (!zoomState.isZooming || !e) return;
+    
+    const { activeLabel } = e;
+    if (activeLabel && activeLabel !== zoomState.refAreaLeft) {
+      setZoomState(prev => ({
+        ...prev,
+        refAreaRight: activeLabel,
+      }));
+    }
+  }, [zoomState.isZooming, zoomState.refAreaLeft]);
+
+  const handleMouseUp = useCallback(() => {
+    if (!zoomState.isZooming) return;
+
+    const { refAreaLeft, refAreaRight } = zoomState;
+    
+    if (refAreaLeft && refAreaRight && refAreaLeft !== refAreaRight) {
+      // 현재 줌 상태를 히스토리에 저장
+      zoomHistory.current.push({ left: zoomState.left, right: zoomState.right });
+      
+      const leftIndex = filteredData.findIndex(d => d.date === refAreaLeft);
+      const rightIndex = filteredData.findIndex(d => d.date === refAreaRight);
+      
+      const actualLeft = Math.min(leftIndex, rightIndex);
+      const actualRight = Math.max(leftIndex, rightIndex);
+      
+      if (actualLeft >= 0 && actualRight >= 0) {
+        setZoomState({
+          left: actualLeft,
+          right: actualRight,
+        });
+        setIsCustomZoom(true);
+      }
+    }
+    
+    setZoomState(prev => ({
+      ...prev,
+      refAreaLeft: undefined,
+      refAreaRight: undefined,
+      isZooming: false,
+    }));
+  }, [zoomState, filteredData]);
+
+  const resetZoom = useCallback(() => {
+    setZoomState({});
+    setIsCustomZoom(false);
+    zoomHistory.current = [];
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    if (zoomHistory.current.length > 0) {
+      const prevZoom = zoomHistory.current.pop();
+      if (prevZoom) {
+        setZoomState(prevZoom);
+        if (!prevZoom.left && !prevZoom.right) {
+          setIsCustomZoom(false);
+        }
+      }
+    } else {
+      resetZoom();
+    }
+  }, [resetZoom]);
+
+  // 시간 범위 변경시 줌 초기화
+  const handleTimeRangeChange = useCallback((range: TimeRange) => {
+    setTimeRange(range);
+    resetZoom();
+  }, [resetZoom]);
+
+  // 성과 메트릭 계산 (줌된 데이터 기준)
+  const performanceMetrics = useMemo(() => {
+    if (!zoomedData.length) return null;
+
+    const firstValue = zoomedData[0]?.portfolioValue || 0;
+    const lastValue = zoomedData[zoomedData.length - 1]?.portfolioValue || 0;
     const totalReturn = ((lastValue - firstValue) / firstValue) * 100;
 
-    const returns = filteredData.map(d => d.dailyReturn).filter(r => r !== undefined);
+    const returns = zoomedData.map(d => d.dailyReturn).filter(r => r !== undefined);
     const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
     const volatility = Math.sqrt(
       returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length
@@ -115,7 +254,7 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
 
     const sharpeRatio = avgReturn / volatility || 0;
 
-    const maxDrawdown = calculateMaxDrawdown(filteredData);
+    const maxDrawdown = calculateMaxDrawdown(zoomedData);
     const winRate = (returns.filter(r => r > 0).length / returns.length) * 100;
 
     return {
@@ -126,7 +265,7 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
       maxDrawdown: maxDrawdown.toFixed(2),
       winRate: winRate.toFixed(1),
     };
-  }, [filteredData]);
+  }, [zoomedData]);
 
   // Custom Tooltip Component
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -166,7 +305,13 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
   const chartComponents = {
     line: (
       <ResponsiveContainer width="100%" height={height}>
-        <ComposedChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+        <ComposedChart 
+          data={zoomedData} 
+          margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey="date"
@@ -175,6 +320,7 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
           />
           <YAxis
             yAxisId="left"
+            domain={[yAxisRange.min, yAxisRange.max]}
             tickFormatter={(value) => `₩${(value / 1000).toFixed(0)}K`}
             stroke="hsl(var(--foreground))"
           />
@@ -186,6 +332,19 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
+          
+          {/* 줌 선택 영역 */}
+          {zoomState.refAreaLeft && zoomState.refAreaRight && (
+            <ReferenceArea
+              yAxisId="left"
+              x1={zoomState.refAreaLeft}
+              x2={zoomState.refAreaRight}
+              strokeOpacity={0.3}
+              fillOpacity={0.1}
+              fill="hsl(var(--primary))"
+              stroke="hsl(var(--primary))"
+            />
+          )}
           <Line
             yAxisId="left"
             type="monotone"
@@ -221,7 +380,13 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
     ),
     area: (
       <ResponsiveContainer width="100%" height={height}>
-        <ComposedChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+        <ComposedChart 
+          data={zoomedData} 
+          margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey="date"
@@ -230,6 +395,7 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
           />
           <YAxis
             yAxisId="left"
+            domain={[yAxisRange.min, yAxisRange.max]}
             tickFormatter={(value) => `₩${(value / 1000).toFixed(0)}K`}
             stroke="hsl(var(--foreground))"
           />
@@ -241,6 +407,19 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
+          
+          {/* 줌 선택 영역 */}
+          {zoomState.refAreaLeft && zoomState.refAreaRight && (
+            <ReferenceArea
+              yAxisId="left"
+              x1={zoomState.refAreaLeft}
+              x2={zoomState.refAreaRight}
+              strokeOpacity={0.3}
+              fillOpacity={0.1}
+              fill="hsl(var(--primary))"
+              stroke="hsl(var(--primary))"
+            />
+          )}
           <Area
             yAxisId="left"
             type="monotone"
@@ -276,7 +455,13 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
     ),
     composed: (
       <ResponsiveContainer width="100%" height={height}>
-        <ComposedChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+        <ComposedChart 
+          data={zoomedData} 
+          margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey="date"
@@ -285,6 +470,7 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
           />
           <YAxis
             yAxisId="left"
+            domain={[yAxisRange.min, yAxisRange.max]}
             tickFormatter={(value) => `₩${(value / 1000).toFixed(0)}K`}
             stroke="hsl(var(--foreground))"
           />
@@ -296,6 +482,19 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
+          
+          {/* 줌 선택 영역 */}
+          {zoomState.refAreaLeft && zoomState.refAreaRight && (
+            <ReferenceArea
+              yAxisId="left"
+              x1={zoomState.refAreaLeft}
+              x2={zoomState.refAreaRight}
+              strokeOpacity={0.3}
+              fillOpacity={0.1}
+              fill="hsl(var(--primary))"
+              stroke="hsl(var(--primary))"
+            />
+          )}
           
           {/* Volume bars at the bottom */}
           {showVolume && (
@@ -387,6 +586,44 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
             </Button>
           </div>
           
+          {/* Zoom controls */}
+          <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              variant={dragMode === 'zoom' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setDragMode('zoom')}
+              title="드래그로 줌"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={dragMode === 'pan' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setDragMode('pan')}
+              title="드래그로 이동"
+            >
+              <Move className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={zoomOut}
+              disabled={!isCustomZoom && zoomHistory.current.length === 0}
+              title="줌 아웃"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetZoom}
+              disabled={!isCustomZoom}
+              title="줌 초기화"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </div>
+          
           {/* Time range selector */}
           <div className="flex items-center gap-1">
             {(['1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'] as TimeRange[]).map((range) => (
@@ -394,7 +631,7 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
                 key={range}
                 variant={timeRange === range ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setTimeRange(range)}
+                onClick={() => handleTimeRangeChange(range)}
               >
                 {range}
               </Button>
@@ -443,13 +680,23 @@ const AdvancedPerformanceChart: React.FC<AdvancedPerformanceChartProps> = ({
         <div className="flex items-center gap-2">
           <Calendar className="h-3 w-3" />
           <span>
-            {filteredData.length > 0 && 
-              `${new Date(filteredData[0]?.date).toLocaleDateString('ko-KR')} - ${new Date(filteredData[filteredData.length - 1]?.date).toLocaleDateString('ko-KR')}`
+            {zoomedData.length > 0 && 
+              `${new Date(zoomedData[0]?.date).toLocaleDateString('ko-KR')} - ${new Date(zoomedData[zoomedData.length - 1]?.date).toLocaleDateString('ko-KR')}`
             }
           </span>
+          {isCustomZoom && (
+            <Badge variant="secondary" className="ml-2">
+              줌 적용됨
+            </Badge>
+          )}
         </div>
         <div>
-          총 {filteredData.length}개 데이터 포인트
+          총 {zoomedData.length}개 데이터 포인트
+          {isCustomZoom && (
+            <span className="ml-2 text-primary">
+              (전체 {filteredData.length}개 중)
+            </span>
+          )}
         </div>
       </div>
     </Card>
