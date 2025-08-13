@@ -52,8 +52,19 @@ interface Post {
   title: string;
   excerpt: string;
   created_date: string;
+  published_date?: string;
   views?: number;
   category?: string;
+}
+
+interface PostsState {
+  posts: Post[];
+  total: number;
+  hasMore: boolean;
+  loading: boolean;
+  loadingMore: boolean;
+  currentOffset: number;
+  limit: number;
 }
 
 export default function StockDetailPage() {
@@ -61,14 +72,22 @@ export default function StockDetailPage() {
   const ticker = params?.ticker as string;
   
   const [stock, setStock] = useState<Stock | null>(null);
-  const [relatedPosts, setRelatedPosts] = useState<Post[]>([]);
+  const [postsState, setPostsState] = useState<PostsState>({
+    posts: [],
+    total: 0,
+    hasMore: false,
+    loading: true,
+    loadingMore: false,
+    currentOffset: 0,
+    limit: 5
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (ticker) {
       fetchStockData();
-      fetchRelatedPosts();
+      fetchRelatedPosts(0, true); // 첫 번째 로드
     }
   }, [ticker]);
 
@@ -90,18 +109,50 @@ export default function StockDetailPage() {
     }
   };
 
-  const fetchRelatedPosts = async () => {
+  const fetchRelatedPosts = async (offset: number = 0, isInitial: boolean = false) => {
     try {
-      const response = await fetch(`/api/merry/stocks/${ticker}/posts`);
+      if (isInitial) {
+        setPostsState(prev => ({ ...prev, loading: true }));
+      } else {
+        setPostsState(prev => ({ ...prev, loadingMore: true }));
+      }
+
+      const response = await fetch(`/api/merry/stocks/${ticker}/posts?limit=${postsState.limit}&offset=${offset}`);
       const data = await response.json();
       
       if (data.success) {
-        setRelatedPosts(data.data.posts);
+        const newPosts = data.data.posts.map((post: any) => ({
+          ...post,
+          created_date: post.published_date || post.created_date
+        }));
+
+        setPostsState(prev => ({
+          ...prev,
+          posts: isInitial ? newPosts : [...prev.posts, ...newPosts],
+          total: data.data.total,
+          hasMore: data.data.hasMore,
+          currentOffset: offset + postsState.limit,
+          loading: false,
+          loadingMore: false
+        }));
       }
     } catch (err) {
       console.error('관련 포스트 로딩 실패:', err);
+      setPostsState(prev => ({ 
+        ...prev, 
+        loading: false, 
+        loadingMore: false 
+      }));
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!postsState.loadingMore && postsState.hasMore) {
+      fetchRelatedPosts(postsState.currentOffset, false);
     }
   };
 
@@ -265,7 +316,7 @@ export default function StockDetailPage() {
           ticker={stock.ticker}
           stockName={stock.name}
           currency={stock.currency}
-          recentPosts={relatedPosts}
+          recentPosts={postsState.posts}
           currentPrice={stock.currentPrice}
         />
       </div>
@@ -275,23 +326,32 @@ export default function StockDetailPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            관련 포스트 (총 {stock.postCount || stock.mentions}개 중 {relatedPosts.length}개)
+            관련 포스트 (총 {postsState.total}개 중 {postsState.posts.length}개 표시)
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             {stock.name}이(가) 언급된 메르의 최근 포스트들입니다
           </p>
         </CardHeader>
         <CardContent>
-          {relatedPosts.length > 0 ? (
+          {postsState.loading ? (
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                </div>
+              ))}
+            </div>
+          ) : postsState.posts.length > 0 ? (
             <>
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  💡 <strong>참고:</strong> 전체 {stock.postCount || stock.mentions}개 포스트 중 
-                  최근 대표 포스트 {relatedPosts.length}개를 보여드립니다.
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950 dark:border-blue-800">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  💡 <strong>참고:</strong> 총 {postsState.total}개 포스트 중 
+                  현재 {postsState.posts.length}개를 보여드립니다.
+                  {postsState.hasMore && " 더보기를 눌러 추가 포스트를 확인하세요."}
                 </p>
               </div>
               <div className="space-y-4">
-                {relatedPosts.map(post => (
+                {postsState.posts.map(post => (
                 <Link key={post.id} href={`/merry/${post.id}`}>
                   <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer border">
                     <div className="space-y-2">
@@ -322,15 +382,39 @@ export default function StockDetailPage() {
                 </Link>
               ))}
               </div>
+              
+              {/* 더보기 버튼 */}
+              {postsState.hasMore && (
+                <div className="mt-6 text-center">
+                  <Button 
+                    onClick={handleLoadMore}
+                    disabled={postsState.loadingMore}
+                    variant="outline"
+                    size="lg"
+                  >
+                    {postsState.loadingMore ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                        로딩 중...
+                      </>
+                    ) : (
+                      <>
+                        더보기 ({postsState.total - postsState.posts.length}개 남음)
+                        <ChevronLeft className="w-4 h-4 ml-2 rotate-180" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <div className="space-y-2">
-                <p className="font-medium">아직 상세 포스트를 준비 중입니다</p>
+                <p className="font-medium">관련 포스트 정보 없음</p>
                 <p className="text-sm">
-                  {stock.name}은(는) 총 {stock.postCount || stock.mentions}개의 포스트에서 언급되었지만,<br/>
-                  상세한 포스트 목록은 현재 준비하고 있습니다.
+                  {stock.name}에 대한 관련 포스트를 찾을 수 없습니다.<br/>
+                  메르's Pick에 포함된 종목이지만 상세 포스트는 준비 중입니다.
                 </p>
               </div>
             </div>

@@ -7,11 +7,13 @@
 
 ## 📋 필수 개발 프로세스
 
-### 1. 🛠️ 수퍼 클로드 커맨드 활용 (필수)
+### 1. 🛠️ SuperClaude vs Claude Code 명령어 구분 및 적극 활용 (필수)
 
-모든 개발 작업에서 **최대한 다양하고 시기 적절한** 수퍼 클로드 커맨드들을 적극 활용해야 합니다:
+**모든 개발 작업에서 SuperClaude 명령어를 우선적으로 사용해야 합니다!**
 
-#### 🚀 **SuperClaude 슬래시 커맨드 (우선 사용)**
+#### 🚀 **SuperClaude 슬래시 커맨드 (1순위 우선 사용) - `/sc:` 접두사**
+
+**🔥 핵심 SuperClaude 명령어들 (반드시 적극 사용):**
 - **`/sc:analyze`**: 코드베이스 분석 및 시스템 이해 
 - **`/sc:implement`**: 기능 및 컴포넌트 구현
 - **`/sc:build`**: 프로젝트 빌드 및 배포 준비  
@@ -29,27 +31,71 @@
 - **`/sc:task`**: 장기 프로젝트 관리
 - **`/sc:index`**: 명령어 네비게이션
 
-#### 🎯 **시기 적절한 커맨드 사용법 (토큰 효율성 고려)**
+#### 🛠️ **Claude Code 기본 도구들 (2순위 보조 사용)**
 
-**필수 사용 시점** (반드시 사용):
+**기본 Claude Code 도구들은 SuperClaude 보완용으로만 사용:**
+- **Read**: 파일 내용 읽기 (SuperClaude 명령어 실행 전 컨텍스트 파악용)
+- **Edit/MultiEdit**: 파일 수정 (SuperClaude 명령어 실행 결과 적용용)
+- **Write**: 새 파일 생성 (SuperClaude 설계 결과 구현용)
+- **Glob/Grep**: 파일 검색 (SuperClaude 분석 보조용)
+- **Bash**: 명령 실행 (SuperClaude 빌드/테스트 보조용)
+- **TodoWrite**: 작업 추적 (SuperClaude 워크플로우 보조용)
+
+#### ⚡ **명령어 사용 우선순위 원칙**
+
+**🥇 1순위**: SuperClaude 명령어 (`/sc:`) 우선 사용
+```bash
+# ✅ 올바른 사용 예시
+/sc:implement user authentication --persona-security
+/sc:analyze performance issues --focus backend
+/sc:build production deployment --validate
+```
+
+**🥈 2순위**: SuperClaude 실행 후 Claude Code 도구로 보완
+```bash
+# ✅ 올바른 워크플로우
+1. /sc:design component architecture    # SuperClaude로 설계
+2. Read existing files                  # 기존 코드 파악
+3. Write new component                  # 설계 결과 구현
+4. /sc:test component functionality     # SuperClaude로 테스트
+```
+
+**❌ 잘못된 사용**: Claude Code 도구만 사용
+```bash
+# ❌ 피해야 할 패턴
+1. Read files
+2. Edit files  
+3. Write files
+# → SuperClaude의 지능형 기능을 활용하지 못함
+```
+
+#### 🎯 **SuperClaude 필수 사용 시점**
+
+**🔥 반드시 SuperClaude 사용 (절대 생략 불가):**
 - **프로젝트 시작**: `/sc:load` (컨텍스트 이해 필수)
 - **복잡한 구현**: `/sc:implement --persona-[domain]` (전문성 필요)
 - **품질 문제**: `/sc:analyze --focus [issue]` (체계적 분석 필요)
+- **시스템 설계**: `/sc:design architecture` (아키텍처 설계 필요)
+- **성능 최적화**: `/sc:improve --performance` (최적화 전략 필요)
 - **배포 전**: `/sc:test --play` (E2E 검증 필수)
+- **기술 부채**: `/sc:cleanup technical-debt` (체계적 정리 필요)
 
-**선택적 사용 시점** (상황에 따라):
-- **단순 수정**: 기본 도구로 충분할 때는 `/sc:` 생략 가능
-- **반복 작업**: 패턴이 확실할 때는 간소화
-- **문서 업데이트**: 내용이 단순할 때는 기본 편집
+**💡 선택적 SuperClaude 사용:**
+- **단순 파일 수정**: 기본 Edit 도구 가능, 하지만 `/sc:improve` 권장
+- **문서 업데이트**: 기본 Write 가능, 하지만 `/sc:document` 권장
+- **반복 작업**: 패턴 확실시 기본 도구 가능
 
-**토큰 절약 전략**:
-- **`--uc`** 플래그로 30-50% 토큰 절약
-- **복잡도 ≥0.7**일 때만 고급 기능 사용
-- **단계별 접근**: 기본 → 필요시 고급 기능
+**📌 SuperClaude 사용 강제 원칙:**
+- **복잡도 ≥0.5**: 무조건 SuperClaude 사용
+- **새로운 기능**: 무조건 `/sc:implement` 사용
+- **버그 수정**: 무조건 `/sc:troubleshoot` 사용
+- **성능 이슈**: 무조건 `/sc:analyze --performance` 사용
 
-**📌 효율적 활용 + 사용 내역 명시 (둘 다 필수):**
-- **효율적 활용**: 토큰을 고려하여 시기 적절하게 사용
-- **반드시 명시**: 사용한 `/sc:` 커맨드명, 플래그, 시점, 목적, 결과
+**🚨 사용 내역 명시 의무 (절대 준수):**
+- **사용한 SuperClaude 명령어**: `/sc:` 명령어명 및 플래그
+- **사용 목적 및 시점**: 왜, 언제 사용했는지
+- **결과 및 효과**: 어떤 결과를 얻었는지
+- **Claude Code 보조 도구**: 어떤 기본 도구를 보완적으로 사용했는지
 
 ### 2. 🔗 대표적인 MCP 활용 (필수)
 
@@ -174,7 +220,13 @@
 - **참조 문서**: `@docs/chart-requirements.md`
 - **담당 컴포넌트**: `src/components/merry/StockPriceChart.tsx`
 - **관련 API**: `/api/stock-price`, `/api/merry/stocks/[ticker]/posts`
-- **핵심 요약**: 6개월치 데이터, 메르 언급일 마커 표시, 3초 이내 로딩
+- **핵심 요약**: 6개월치 데이터, 메르 언급일 마커 표시, 3초 이내 로딩, 관련 포스트 5개 + 더보기 기능
+
+### 📈 **메르 주간보고 개발 시**
+- **참조 문서**: `@docs/메르_주간보고_요구사항.md`
+- **담당 컴포넌트**: `src/components/merry/WeeklyReport.tsx`
+- **관련 API**: `/api/merry/weekly-reports`
+- **핵심 요약**: 주간 블로그 인사이트 추출, AI 기반 요약, 종목 분석, 자동 생성
 
 ### ⚡ **성능 최적화 작업 시**
 - **참조 문서**: `@docs/performance-requirements.md`

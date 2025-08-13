@@ -178,35 +178,35 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="bg-white border-b">
+      <section className="bg-card border-b">
         <div className="container mx-auto px-4 py-8 sm:py-12">
           <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">
               요르의 투자 플랫폼
             </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-6 sm:mb-8 px-4">
-              니가 뭘 알아. 니가 뭘 아냐고.<br />
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-6 sm:mb-8 px-4 break-keep">
+              니가 뭘 알어. 니가 뭘 아냐고.<br />
               AI 에이전트가 분석하는 국민연금, 기관투자자 포트폴리오 분석 플랫폼
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center max-w-3xl mx-auto">
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-                <Link href="/financial-curation">
-                  🤖 AI 금융 큐레이션
-                  <Brain className="ml-2 h-4 w-4" />
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center max-w-4xl mx-auto px-2">
+              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base">
+                <Link href="/financial-curation" className="flex items-center justify-center">
+                  <span className="truncate">🤖 AI 금융 큐레이션</span>
+                  <Brain className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-                <Link href="/investment">
-                  국민연금 분석
-                  <BarChart3 className="ml-2 h-4 w-4" />
+              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base">
+                <Link href="/investment" className="flex items-center justify-center">
+                  <span className="truncate">국민연금 분석</span>
+                  <BarChart3 className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-                <Link href="/agent-workflows">
-                  에이전트 관리
-                  <Brain className="ml-2 h-4 w-4" />
+              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base">
+                <Link href="/agent-workflows" className="flex items-center justify-center">
+                  <span className="truncate">에이전트 관리</span>
+                  <Brain className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>
             </div>
@@ -215,7 +215,7 @@ export default function Home() {
       </section>
 
       {/* 메르's Pick - 주목할 종목 (상단 배치) */}
-      <section className="bg-gray-50 border-b">
+      <section className="bg-muted/50 border-b">
         <div className="container mx-auto px-4 py-6">
           <MerryStockPicks />
         </div>
@@ -225,17 +225,21 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
-            <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-2 py-2">
-              <span className="hidden sm:inline">📊 </span>대시보드
+            <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
+              <span className="hidden sm:inline">📊 </span>
+              <span className="truncate">대시보드</span>
             </TabsTrigger>
-            <TabsTrigger value="insights" className="text-xs sm:text-sm px-2 py-2">
-              <span className="hidden sm:inline">🤖 </span>AI 인사이트
+            <TabsTrigger value="insights" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
+              <span className="hidden sm:inline">🤖 </span>
+              <span className="truncate">AI 인사이트</span>
             </TabsTrigger>
-            <TabsTrigger value="posts" className="text-xs sm:text-sm px-2 py-2">
-              <span className="hidden sm:inline">📈 </span>투자 분석
+            <TabsTrigger value="posts" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
+              <span className="hidden sm:inline">📈 </span>
+              <span className="truncate">투자 분석</span>
             </TabsTrigger>
-            <TabsTrigger value="merry" className="text-xs sm:text-sm px-2 py-2">
-              <span className="hidden sm:inline">🎭 </span>메르 블로그
+            <TabsTrigger value="merry" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
+              <span className="hidden sm:inline">🎭 </span>
+              <span className="truncate">메르 블로그</span>
             </TabsTrigger>
           </TabsList>
 
@@ -245,7 +249,7 @@ export default function Home() {
 
           <TabsContent value="insights" className="mt-6 space-y-6">
             {/* AI 금융 큐레이션 섹션 */}
-            <div className="bg-white rounded-lg p-6">
+            <div className="bg-card rounded-lg p-6">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-3xl font-bold">🤖 AI 금융 큐레이션</h2>
@@ -334,7 +338,7 @@ export default function Home() {
 
           <TabsContent value="posts" className="mt-6 space-y-6">
             {/* 최근 포스트 */}
-            <div className="bg-white rounded-lg p-6">
+            <div className="bg-card rounded-lg p-6">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl font-bold">📈 최근 투자 분석</h2>
                 <Button variant="ghost" asChild>
@@ -427,7 +431,7 @@ export default function Home() {
 
           <TabsContent value="merry" className="mt-6 space-y-6">
             {/* 메르 블로그 최신 포스트 */}
-            <div className="bg-white rounded-lg p-6">
+            <div className="bg-card rounded-lg p-6">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl font-bold">🎭 메르 블로그</h2>
                 <Button variant="ghost" asChild>

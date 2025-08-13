@@ -134,17 +134,26 @@ export default function MerryStockPicks() {
         {stocks.map((stock, index) => (
           <Link key={stock.ticker} href={`/merry/stocks/${stock.ticker}`}>
             <div className="group p-4 rounded-lg border bg-card hover:bg-accent/50 transition-all cursor-pointer">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+              {/* 최다 언급 배지를 종목 위에 배치 */}
+              {index === 0 && (
+                <div className="mb-2">
+                  <Badge variant="default" className="text-xs bg-gradient-to-r from-yellow-500 to-orange-500">
+                    🏆 최근 3개월 최다 언급
+                  </Badge>
+                </div>
+              )}
+              
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="font-semibold text-base sm:text-lg group-hover:text-primary transition-colors truncate">
                       {stock.name}
                     </h3>
                     {getSentimentIcon(stock.sentiment)}
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs flex-shrink-0">
                       {stock.ticker}
                     </Badge>
-                    <Badge className={`text-xs ${getMarketColor(stock.market)}`}>
+                    <Badge className={`text-xs flex-shrink-0 ${getMarketColor(stock.market)}`}>
                       {stock.market}
                     </Badge>
                   </div>
@@ -152,13 +161,17 @@ export default function MerryStockPicks() {
                     {stock.description}
                   </p>
                 </div>
-                <div className="text-right ml-4">
-                  <div className="text-sm font-bold mb-1">
+                
+                {/* 가격 정보를 별도 행으로 분리 (모바일에서) */}
+                <div className="flex flex-col sm:text-right sm:min-w-0 sm:ml-4">
+                  <div className="text-sm font-bold mb-1 flex flex-col sm:flex-row sm:items-center gap-1">
                     {stock.currentPrice !== null ? (
                       <>
-                        {stock.currency === 'USD' ? '$' : '₩'}{stock.currentPrice?.toLocaleString()}
+                        <span className="truncate">
+                          {stock.currency === 'USD' ? '$' : '₩'}{stock.currentPrice?.toLocaleString()}
+                        </span>
                         {stock.priceChange && (
-                          <span className={`ml-1 text-xs ${stock.priceChange?.startsWith('+') ? 'text-green-500' : stock.priceChange?.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
+                          <span className={`text-xs flex-shrink-0 ${stock.priceChange?.startsWith('+') ? 'text-green-500' : stock.priceChange?.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
                             {stock.priceChange}
                           </span>
                         )}
@@ -170,13 +183,13 @@ export default function MerryStockPicks() {
                     )}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Hash className="w-3 h-3" />
-                    {stock.postCount || stock.mentions}개 포스트
+                    <Hash className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{stock.postCount || stock.mentions}개 포스트</span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 mt-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3">
                 <div className="flex gap-1 flex-wrap">
                   {stock.tags.slice(0, 3).map(tag => (
                     <Badge key={tag} variant="secondary" className="text-xs">
@@ -184,19 +197,11 @@ export default function MerryStockPicks() {
                     </Badge>
                   ))}
                 </div>
-                <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
                   <Calendar className="w-3 h-3" />
-                  최근: {new Date(stock.lastMention).toLocaleDateString('ko-KR')}
+                  <span className="truncate">최근: {new Date(stock.lastMention).toLocaleDateString('ko-KR')}</span>
                 </div>
               </div>
-
-              {index === 0 && (
-                <div className="mt-2 pt-2 border-t">
-                  <Badge variant="default" className="text-xs bg-gradient-to-r from-yellow-500 to-orange-500">
-                    🏆 최근 3개월 최다 언급
-                  </Badge>
-                </div>
-              )}
             </div>
           </Link>
         ))}

@@ -142,7 +142,7 @@ class StockDB {
           s.last_mentioned_date as lastMention,
           s.first_mentioned_date as firstMention,
           'positive' as sentiment,
-          s.sector as description
+          s.sector
         FROM stocks s
         WHERE s.is_merry_mentioned = 1
         ORDER BY s.last_mentioned_date DESC
@@ -151,21 +151,50 @@ class StockDB {
         if (err) {
           reject(err);
         } else {
+          // 회사별 실제 설명 매핑
+          const companyDescriptions = {
+            'TSLA': '전기차와 자율주행 기술의 글로벌 선도기업, 에너지 저장 및 태양광 사업도 운영',
+            '005930': '세계 최대 반도체 메모리 제조사이자 스마트폰, 디스플레이 등 다양한 IT 제품 생산',
+            'AAPL': '아이폰, 맥, 아이패드 등을 제조하는 세계 최대 기술 기업',
+            'MSFT': '윈도우 운영체제와 오피스 소프트웨어, 클라우드 서비스를 제공하는 글로벌 IT 기업',
+            'GOOGL': '구글 검색엔진과 유튜브, 안드로이드를 운영하는 인터넷 서비스 기업',
+            'AMZN': '전자상거래와 클라우드 컴퓨팅(AWS)을 주력으로 하는 글로벌 기업',
+            'META': '페이스북, 인스타그램, 왓츠앱을 운영하는 소셜미디어 플랫폼 기업',
+            'NVDA': 'GPU와 AI 칩 분야의 글로벌 리더, 자율주행과 데이터센터용 프로세서 제조',
+            '한와시스템': '방산 및 항공우주 분야의 종합 시스템 통합 업체',
+            '한화오션': '해양플랜트, 선박건조, 해상풍력 등 해양 에너지 솔루션 전문기업'
+          };
+          
           // 데이터 형식 변환
-          const formatted = (rows || []).map(row => ({
-            ticker: row.ticker,
-            name: row.nameKr || row.name,
-            market: row.market || 'NASDAQ',
-            currency: row.currency || 'USD',
-            postCount: row.postCount || 0,
-            firstMention: row.firstMention,
-            lastMention: row.lastMention,
-            sentiment: row.sentiment || 'neutral',
-            tags: [],
-            description: row.description || '',
-            recentPosts: [],
-            mentions: row.postCount || 0
-          }));
+          const formatted = (rows || []).map(row => {
+            const ticker = row.ticker;
+            const name = row.nameKr || row.name;
+            let description = companyDescriptions[ticker] || companyDescriptions[name];
+            
+            // 회사 설명이 없으면 기본 설명 생성
+            if (!description) {
+              if (row.sector) {
+                description = `${row.sector} 분야의 주요 기업`;
+              } else {
+                description = `${name}의 사업 정보`;
+              }
+            }
+            
+            return {
+              ticker: row.ticker,
+              name: name,
+              market: row.market || 'NASDAQ',
+              currency: row.currency || 'USD',
+              postCount: row.postCount || 0,
+              firstMention: row.firstMention,
+              lastMention: row.lastMention,
+              sentiment: row.sentiment || 'neutral',
+              tags: [],
+              description: description,
+              recentPosts: [],
+              mentions: row.postCount || 0
+            };
+          });
           resolve(formatted);
         }
       });
@@ -216,24 +245,46 @@ class StockDB {
     });
   }
 
-  // 관련 포스트 가져오기
-  async getRelatedPosts(ticker, limit = 10) {
+  // 관련 포스트 가져오기 (페이지네이션 지원)
+  async getRelatedPosts(ticker, limit = 5, offset = 0) {
     if (!this.isConnected) await this.connect();
     
     return new Promise((resolve, reject) => {
-      this.db.all(`
-        SELECT p.id, p.title, p.excerpt, p.published_date
+      // 전체 포스트 수 먼저 조회
+      this.db.get(`
+        SELECT COUNT(*) as total
         FROM posts p
         JOIN post_mentions pm ON p.id = pm.post_id
         WHERE pm.ticker = ?
-        ORDER BY p.published_date DESC
-        LIMIT ?
-      `, [ticker, limit], (err, rows) => {
+      `, [ticker], (err, countResult) => {
         if (err) {
           reject(err);
-        } else {
-          resolve(rows || []);
+          return;
         }
+        
+        const total = countResult?.total || 0;
+        
+        // 포스트 목록 조회
+        this.db.all(`
+          SELECT p.id, p.title, p.excerpt, p.published_date
+          FROM posts p
+          JOIN post_mentions pm ON p.id = pm.post_id
+          WHERE pm.ticker = ?
+          ORDER BY p.published_date DESC
+          LIMIT ? OFFSET ?
+        `, [ticker, limit, offset], (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({
+              posts: rows || [],
+              total: total,
+              hasMore: (offset + limit) < total,
+              limit: limit,
+              offset: offset
+            });
+          }
+        });
       });
     });
   }

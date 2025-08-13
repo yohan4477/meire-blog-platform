@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+const StockDB = require('@/lib/stock-db-sqlite3');
 
 export async function GET(
   request: NextRequest,
@@ -9,17 +10,31 @@ export async function GET(
   try {
     const resolvedParams = await params;
     const ticker = resolvedParams.ticker;
-    console.log(`🔍 Fetching posts related to ticker: ${ticker}`);
+    
+    // URL 파라미터에서 페이지네이션 정보 추출
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '5');
+    const offset = parseInt(searchParams.get('offset') || '0');
+    
+    console.log(`🔍 Fetching posts for ${ticker}, limit: ${limit}, offset: ${offset}`);
 
-    // 먼저 메르 포스트 데이터베이스에서 해당 종목이 언급된 포스트들을 찾기
-    const relatedPosts = await findPostsByTicker(ticker);
+    // 먼저 SQLite 데이터베이스에서 관련 포스트 조회 (페이지네이션 지원)
+    let result = await findPostsByTickerFromDB(ticker, limit, offset);
+    
+    // SQLite에서 결과가 없으면 JSON 파일에서 fallback 조회
+    if (result.total === 0) {
+      result = await findPostsByTickerFromJSON(ticker, limit, offset);
+    }
 
     return NextResponse.json({
       success: true,
       data: {
         ticker,
-        posts: relatedPosts,
-        total: relatedPosts.length
+        posts: result.posts,
+        total: result.total,
+        hasMore: result.hasMore,
+        limit: result.limit,
+        offset: result.offset
       }
     });
 
@@ -32,9 +47,29 @@ export async function GET(
   }
 }
 
-async function findPostsByTicker(ticker: string): Promise<any[]> {
+async function findPostsByTickerFromDB(ticker: string, limit: number, offset: number) {
   try {
-    // 먼저 stock-mentions-count.json 파일에서 해당 종목의 recentPosts 확인
+    const stockDB = new StockDB();
+    const result = await stockDB.getRelatedPosts(ticker, limit, offset);
+    stockDB.close();
+    
+    console.log(`📝 Found ${result.total} total posts for ${ticker} from database (showing ${result.posts.length})`);
+    return result;
+  } catch (error) {
+    console.error('데이터베이스 조회 실패:', error);
+    return {
+      posts: [],
+      total: 0,
+      hasMore: false,
+      limit,
+      offset
+    };
+  }
+}
+
+async function findPostsByTickerFromJSON(ticker: string, limit: number, offset: number) {
+  try {
+    // JSON 파일에서 해당 종목의 recentPosts 확인
     const dataPath = path.join(process.cwd(), 'data', 'merry-stocks-clean.json');
     
     if (fs.existsSync(dataPath)) {
@@ -43,70 +78,50 @@ async function findPostsByTicker(ticker: string): Promise<any[]> {
       
       const stock = stockData.find((s: any) => s.ticker === ticker);
       if (stock && stock.recentPosts && stock.recentPosts.length > 0) {
-        console.log(`📝 Found ${stock.recentPosts.length} recent posts for ${ticker} from JSON file`);
-        
-        // recentPosts 데이터를 API 형식에 맞게 변환
-        return stock.recentPosts.map((post: any) => ({
+        const allPosts = stock.recentPosts.map((post: any) => ({
           id: post.id,
           title: post.title,
           excerpt: post.excerpt || extractExcerpt(post.title, ticker),
-          created_date: post.created_date || post.date,
+          published_date: post.created_date || post.date,
           views: post.views || 0,
           category: post.category || '투자분석'
         }));
+        
+        const total = allPosts.length;
+        const posts = allPosts.slice(offset, offset + limit);
+        const hasMore = (offset + limit) < total;
+        
+        console.log(`📝 Found ${total} total posts for ${ticker} from JSON file (showing ${posts.length})`);
+        
+        return {
+          posts,
+          total,
+          hasMore,
+          limit,
+          offset
+        };
       }
     }
 
-    // JSON 파일에 데이터가 없으면 SQLite 데이터베이스 시도
-    const dbPath = path.join(process.cwd(), 'database.db');
-    
-    if (!fs.existsSync(dbPath)) {
-      console.error('데이터베이스 파일이 존재하지 않습니다:', dbPath);
-      // CLAUDE.md 원칙: Dummy data 사용 금지, 실제 데이터 없으면 빈 배열
-      console.log(`⚠️ No database file found for ${ticker}, returning empty array`);
-      return [];
-    }
-
-    try {
-      // better-sqlite3 동적 import 시도
-      const Database = (await import('better-sqlite3')).default;
-      const db = Database(dbPath, { readonly: true });
-      
-      // 메르 블로그 포스트에서 해당 ticker가 언급된 포스트들을 찾기
-      const posts = db.prepare(`
-        SELECT id, title, content, created_date, views, category
-        FROM merry_posts 
-        WHERE content LIKE ? OR title LIKE ?
-        ORDER BY created_date DESC
-        LIMIT 20
-      `).all(`%${ticker}%`, `%${ticker}%`);
-
-      db.close();
-
-      // 결과 가공
-      const processedPosts = posts.map((post: any) => ({
-        id: post.id,
-        title: post.title,
-        excerpt: extractExcerpt(post.content, ticker),
-        created_date: post.created_date,
-        views: post.views || 0,
-        category: post.category || '일반'
-      }));
-
-      console.log(`📝 Found ${processedPosts.length} posts mentioning ${ticker} from database`);
-      return processedPosts;
-    } catch (dbError) {
-      console.error('데이터베이스 조회 실패:', dbError);
-      // CLAUDE.md 원칙: Dummy data 사용 금지, 실제 데이터 없으면 빈 배열
-      console.log(`⚠️ Database query failed for ${ticker}, returning empty array`);
-      return [];
-    }
+    // JSON 파일에 데이터가 없으면 빈 결과 반환
+    console.log(`⚠️ No posts found for ${ticker} in JSON file`);
+    return {
+      posts: [],
+      total: 0,
+      hasMore: false,
+      limit,
+      offset
+    };
 
   } catch (error) {
-    console.error('종목별 포스트 조회 실패:', error);
-    // CLAUDE.md 원칙: Dummy data 사용 금지, 실제 데이터 없으면 빈 배열
-    console.log(`⚠️ Error occurred while fetching posts for ${ticker}, returning empty array`);
-    return [];
+    console.error('JSON 파일 조회 실패:', error);
+    return {
+      posts: [],
+      total: 0,
+      hasMore: false,
+      limit,
+      offset
+    };
   }
 }
 
