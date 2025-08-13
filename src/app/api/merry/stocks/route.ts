@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+const StockDB = require('../../../../lib/stock-db-sqlite3.js');
 
 // 캐시 저장소
 let stocksCache: {
@@ -90,7 +91,7 @@ async function loadStocksData(): Promise<any[]> {
         lastMention: '2025-08-09',
         sentiment: 'positive',
         tags: ['전기차', 'AI', '자율주행'],
-        description: '일론 머스크가 이끄는 전기차 및 에너지 기업',
+        description: '일론 머스크가 이끄는 전기차와 자율주행 기술의 글로벌 선도기업',
         recentPosts: []
       }
     ];
