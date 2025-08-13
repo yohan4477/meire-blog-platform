@@ -140,6 +140,13 @@ export async function GET(request: NextRequest) {
     // 캐시된 종목 데이터 로드
     let stockData = await loadStocksData();
 
+    // 최근 언급 순서로 정렬 (CLAUDE.md 요구사항: 메르's Pick - 최근 언급 순서)
+    stockData.sort((a, b) => {
+      const dateA = new Date(a.lastMention).getTime();
+      const dateB = new Date(b.lastMention).getTime();
+      return dateB - dateA; // 내림차순 (최근 날짜가 먼저)
+    });
+
     // 필터링
     if (tag) {
       stockData = stockData.filter(stock => 

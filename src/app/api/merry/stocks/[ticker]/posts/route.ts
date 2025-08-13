@@ -62,7 +62,9 @@ async function findPostsByTicker(ticker: string): Promise<any[]> {
     
     if (!fs.existsSync(dbPath)) {
       console.error('데이터베이스 파일이 존재하지 않습니다:', dbPath);
-      return getMockRelatedPosts(ticker);
+      // CLAUDE.md 원칙: Dummy data 사용 금지, 실제 데이터 없으면 빈 배열
+      console.log(`⚠️ No database file found for ${ticker}, returning empty array`);
+      return [];
     }
 
     try {
@@ -95,12 +97,16 @@ async function findPostsByTicker(ticker: string): Promise<any[]> {
       return processedPosts;
     } catch (dbError) {
       console.error('데이터베이스 조회 실패:', dbError);
-      return getMockRelatedPosts(ticker);
+      // CLAUDE.md 원칙: Dummy data 사용 금지, 실제 데이터 없으면 빈 배열
+      console.log(`⚠️ Database query failed for ${ticker}, returning empty array`);
+      return [];
     }
 
   } catch (error) {
     console.error('종목별 포스트 조회 실패:', error);
-    return getMockRelatedPosts(ticker);
+    // CLAUDE.md 원칙: Dummy data 사용 금지, 실제 데이터 없으면 빈 배열
+    console.log(`⚠️ Error occurred while fetching posts for ${ticker}, returning empty array`);
+    return [];
   }
 }
 
@@ -123,55 +129,5 @@ function extractExcerpt(content: string, ticker: string): string {
   return excerpt;
 }
 
-function getMockRelatedPosts(ticker: string): any[] {
-  // 개발/테스트용 모의 데이터
-  const mockPosts: Record<string, any[]> = {
-    '005930': [
-      {
-        id: 1,
-        title: '삼성전자의 AI 반도체 전략 분석',
-        excerpt: '삼성전자가 AI 반도체 시장에서 어떤 전략을 펼치고 있는지 분석해봤습니다...',
-        created_date: '2025-08-10T00:00:00Z',
-        views: 1205,
-        category: '기업분석'
-      },
-      {
-        id: 2,
-        title: '국민연금의 삼성전자 투자 비중 변화',
-        excerpt: '국민연금이 삼성전자에 대한 투자 비중을 조정하고 있다는 소식이...',
-        created_date: '2025-08-08T00:00:00Z',
-        views: 892,
-        category: '투자분석'
-      }
-    ],
-    'TSLA': [
-      {
-        id: 3,
-        title: '테슬라의 자율주행 기술, 정말 완전할까?',
-        excerpt: '테슬라의 FSD가 점점 발전하고 있지만 여전히 한계가 있어 보입니다...',
-        created_date: '2025-08-09T00:00:00Z',
-        views: 1543,
-        category: '기술분석'
-      },
-      {
-        id: 4,
-        title: '일론 머스크의 트위터 발언이 테슬라 주가에 미치는 영향',
-        excerpt: '일론 머스크의 트위터(X) 발언들이 테슬라 주가에 어떤 영향을 미치는지...',
-        created_date: '2025-08-07T00:00:00Z',
-        views: 967,
-        category: '시장분석'
-      }
-    ]
-  };
-
-  return mockPosts[ticker] || [
-    {
-      id: 999,
-      title: `${ticker} 관련 포스트 준비 중`,
-      excerpt: '해당 종목에 대한 메르의 분석 포스트를 준비하고 있습니다...',
-      created_date: new Date().toISOString(),
-      views: 0,
-      category: '준비중'
-    }
-  ];
-}
+// CLAUDE.md 원칙: Dummy data 절대 금지 - 해당 함수 제거
+// 실제 데이터가 없으면 빈 배열을 반환하여 "정보 없음" 표시

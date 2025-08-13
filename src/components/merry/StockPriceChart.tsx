@@ -167,12 +167,8 @@ export default function StockPriceChart({
         }
       }
 
-      // 실제 데이터가 없으면 빈 배열로 설정
-      if (chartData.length === 0) {
-        setPriceData([]);
-      } else {
-        setPriceData(chartData);
-      }
+      // CLAUDE.md 원칙: 실제 데이터만 사용, dummy data 금지
+      setPriceData(chartData); // 빈 배열이든 실제 데이터든 그대로 설정
       setLoading(false);
     } catch (error) {
       console.error('가격 데이터 로딩 실패:', error);
@@ -442,6 +438,7 @@ export default function StockPriceChart({
     );
   }
 
+  // CLAUDE.md 원칙: 실제 데이터 없으면 "정보 없음" 명확히 표시
   if (priceData.length === 0) {
     return (
       <Card className="w-full">
@@ -457,8 +454,11 @@ export default function StockPriceChart({
             <div className="space-y-2">
               <p className="text-lg font-medium">가격 정보 없음</p>
               <p className="text-sm">
-                현재 {stockName}({ticker})의 가격 정보를<br />
-                가져올 수 없습니다.
+                {stockName}({ticker})의 6개월치 가격 데이터가<br/>
+                아직 준비되지 않았습니다.
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                메르가 언급한 종목만 차트 데이터를 제공합니다.
               </p>
             </div>
           </div>

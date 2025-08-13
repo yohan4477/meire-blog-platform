@@ -124,11 +124,8 @@ async function findAllPostsByTicker(ticker: string, period: string): Promise<any
           }
         });
 
-        // 2. 모의 데이터로 6개월간 분산된 포스트 생성 (실제 데이터가 부족할 경우)
-        if (allPosts.length < 10) {
-          const additionalPosts = generateAdditionalPostsForPeriod(ticker, stock.name, periodDays, allPosts.length);
-          allPosts.push(...additionalPosts);
-        }
+        // 실제 데이터만 사용 - CLAUDE.md 원칙: dummy data 절대 금지
+        console.log(`📊 Using only real data: ${allPosts.length} posts found for ${ticker}`);
       }
     }
 
@@ -149,47 +146,8 @@ async function findAllPostsByTicker(ticker: string, period: string): Promise<any
   }
 }
 
-function generateAdditionalPostsForPeriod(ticker: string, stockName: string, periodDays: number, existingCount: number): any[] {
-  const posts = [];
-  const now = Date.now();
-  const dayMs = 24 * 60 * 60 * 1000;
-
-  // 6개월간 분산하여 포스트 생성 (10-15개 정도)
-  const targetPosts = Math.max(10, Math.min(15, Math.floor(periodDays / 10)));
-  const postsToGenerate = targetPosts - existingCount;
-
-  if (postsToGenerate <= 0) return posts;
-
-  const postTemplates = [
-    `${stockName} 주가 분석 및 전망`,
-    `${stockName} 실적 발표 후 시장 반응`,
-    `${stockName} 관련 업계 동향 분석`,
-    `${stockName} 기술적 분석 업데이트`,
-    `${stockName} 투자 포인트 정리`,
-    `${stockName} 경쟁사 대비 우위 요소`,
-    `${stockName} 글로벌 시장에서의 위치`,
-    `${stockName} 최근 뉴스와 주가 영향`,
-    `${stockName} 장기 투자 관점에서의 평가`,
-    `${stockName} 단기 차트 분석`
-  ];
-
-  for (let i = 0; i < postsToGenerate; i++) {
-    const daysAgo = Math.floor((periodDays / postsToGenerate) * (i + 1));
-    const postDate = new Date(now - (daysAgo * dayMs));
-    const templateIndex = i % postTemplates.length;
-
-    posts.push({
-      id: 1000 + existingCount + i,
-      title: postTemplates[templateIndex],
-      excerpt: `${stockName}에 대한 메르의 분석과 투자 의견을 확인해보세요. 최근 시장 동향과 함께...`,
-      created_date: postDate.getTime(),
-      views: Math.floor(Math.random() * 1000) + 100,
-      category: '투자분석'
-    });
-  }
-
-  return posts;
-}
+// CLAUDE.md 원칙: Dummy data 절대 금지 - 해당 함수 제거
+// 실제 데이터가 없으면 빈 배열 반환하여 "정보 없음" 표시
 
 function extractExcerpt(content: string, ticker: string): string {
   if (!content) return '';

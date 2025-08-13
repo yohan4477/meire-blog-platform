@@ -191,7 +191,7 @@ export default function Home() {
               AI 에이전트가 분석하는 국민연금, 기관투자자 포트폴리오 분석 플랫폼
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center max-w-3xl mx-auto">
-              <Button asChild size="lg" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
                 <Link href="/financial-curation">
                   🤖 AI 금융 큐레이션
                   <Brain className="ml-2 h-4 w-4" />
