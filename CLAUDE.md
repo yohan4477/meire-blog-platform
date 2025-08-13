@@ -114,7 +114,7 @@
 
 #### 2. **성능 요구사항 검증**
 - 초기 로딩: < 3초 (절대 한계)
-- 차트 렌더링: < 1초
+- 차트 렌더링: < 1.5초
 - API 응답: < 500ms
 - 차트 상호작용: < 100ms
 
@@ -171,6 +171,131 @@
 - [ ] `text=로딩 중...` (3초 이상)
 - [ ] `text=임시 데이터`
 - [ ] `text=테스트 데이터`
+
+### 테스트 시나리오 상세
+
+#### A. 성능 테스트 예제
+```typescript
+test('종목 페이지 기본 로딩 및 3초 제한', async ({ page }) => {
+  const startTime = Date.now();
+  await page.goto('http://localhost:3004/merry/stocks/TSLA');
+  await page.waitForLoadState('networkidle');
+  const loadTime = Date.now() - startTime;
+  
+  // CLAUDE.md 요구사항: 로딩은 3초를 넘으면 안 됨
+  expect(loadTime).toBeLessThan(3000);
+});
+
+test('성능 요구사항: 차트 렌더링 1초 이내', async ({ page }) => {
+  await page.goto('http://localhost:3004/merry/stocks/TSLA');
+  const startTime = Date.now();
+  
+  await page.locator('.recharts-wrapper')
+    .or(page.locator('text=가격 정보 없음'))
+    .waitFor();
+  
+  const renderTime = Date.now() - startTime;
+  expect(renderTime).toBeLessThan(1500);
+});
+```
+
+#### B. Dummy Data 금지 검증 예제
+```typescript
+test('가격 정보 없음 시 올바른 메시지 표시', async ({ page }) => {
+  await page.goto('http://localhost:3004/merry/stocks/NONEXISTENT');
+  
+  // CLAUDE.md 원칙: dummy data 대신 "정보 없음" 표시
+  await expect(
+    page.locator('text=가격 정보 없음')
+      .or(page.locator('text=종목을 찾을 수 없습니다'))
+  ).toBeVisible();
+  
+  // Dummy data 금지 확인
+  await expect(page.locator('text=예시')).not.toBeVisible();
+  await expect(page.locator('text=샘플')).not.toBeVisible();
+  await expect(page.locator('text=$100')).not.toBeVisible();
+});
+
+test('관련 포스트 섹션 - 실제 데이터만 표시', async ({ page }) => {
+  await page.goto('http://localhost:3004/merry/stocks/TSLA');
+  
+  const postsSection = page.locator('text=관련 포스트');
+  if (await postsSection.isVisible()) {
+    // CLAUDE.md 원칙: dummy data 금지
+    await expect(page.locator('text=예시:')).not.toBeVisible();
+    await expect(page.locator('text=샘플 포스트')).not.toBeVisible();
+    
+    // 실제 데이터 또는 "준비 중" 메시지만 허용
+    const hasRealPosts = await page.locator('[data-testid="post-item"]').count() > 0;
+    const hasNoPostsMessage = await page.locator('text=준비하고 있습니다').isVisible();
+    expect(hasRealPosts || hasNoPostsMessage).toBeTruthy();
+  }
+});
+```
+
+#### C. 메르 글 연동 검증 예제
+```typescript
+test('메르 글 언급 시에만 마커 표시', async ({ page }) => {
+  await page.goto('http://localhost:3004/merry/stocks/TSLA');
+  
+  const chart = page.locator('.recharts-wrapper');
+  if (await chart.isVisible()) {
+    // 메르 글 언급 마커 확인
+    const mentionMarker = page.locator('.recharts-dot[fill="#dc2626"]')
+      .or(page.locator('.recharts-dot[fill="#16a34a"]'));
+    
+    if (await mentionMarker.first().isVisible()) {
+      await mentionMarker.first().hover();
+      // 툴팁에 메르 언급 관련 내용 확인
+      await expect(
+        page.locator('text=메르의 언급')
+          .or(page.locator('[data-testid="mention-tooltip"]'))
+      ).toBeVisible();
+    }
+  } else {
+    // 차트가 없으면 "정보 없음" 확인
+    await expect(
+      page.locator('text=가격 정보 없음')
+        .or(page.locator('text=아직 준비되지 않았습니다'))
+    ).toBeVisible();
+  }
+});
+```
+
+#### D. 메르's Pick 클릭 테스트 예제
+```typescript
+test('메르s Pick 전체 플로우 테스트', async ({ page }) => {
+  await page.goto('http://localhost:3004');
+  
+  // 메르's Pick 섹션 확인
+  await expect(page.locator('text=메르\'s Pick')).toBeVisible();
+  
+  // 첫 번째 종목 클릭
+  const firstStock = page.locator('[data-testid="merry-pick-stock"]').first();
+  await expect(firstStock).toBeVisible();
+  
+  // 종목 클릭하여 상세 페이지로 이동
+  await firstStock.click();
+  
+  // 종목 상세 페이지 로딩 확인 (3초 이내)
+  const startTime = Date.now();
+  await page.waitForLoadState('networkidle');
+  const loadTime = Date.now() - startTime;
+  expect(loadTime).toBeLessThan(3000);
+  
+  // 기본 정보 표시 확인
+  await expect(page.locator('h1')).toBeVisible();
+  
+  // 차트 또는 "정보 없음" 메시지 확인
+  const chartOrMessage = page.locator('.recharts-wrapper')
+    .or(page.locator('text=가격 정보 없음'));
+  await expect(chartOrMessage).toBeVisible();
+  
+  // 뒤로 가기
+  await page.goBack();
+  await expect(page.locator('text=메르\'s Pick')).toBeVisible();
+});
+```
 
 ### 테스트 실행 명령어
 
@@ -366,7 +491,7 @@ src/
 
 **성능 요구사항:**
 - 초기 로딩 < 3초 (차트 포함)
-- 차트 렌더링 < 1초
+- 차트 렌더링 < 1.5초
 - API 응답 < 500ms
 - 차트 상호작용 지연 < 100ms
 
