@@ -436,7 +436,6 @@ src/
    - 업데이트 경로: `C:\Users\y\Documents\Obsidian\Product-Planning\Engineering-Checklists\`
    - 업데이트할 파일들:
      - `메르_블로그_플랫폼_개발가이드.md` (CLAUDE.md 복사)
-     - `메르_블로그_테스트_요구사항.md` (TEST_REQUIREMENTS.md 복사)
      - `메르_블로그_플랫폼_YYYY-MM-DD_업데이트.md` (당일 작업 요약)
 
 2. **문서 동기화 규칙**
@@ -611,7 +610,6 @@ git push
 
 # 옵시디언 동기화 (반드시 실행)
 cp CLAUDE.md "C:\Users\y\Documents\Obsidian\Product-Planning\Engineering-Checklists\메르_블로그_플랫폼_개발가이드.md"
-cp TEST_REQUIREMENTS.md "C:\Users\y\Documents\Obsidian\Product-Planning\Engineering-Checklists\메르_블로그_테스트_요구사항.md"
 # 당일 작업 요약 문서 생성
 ```
 
