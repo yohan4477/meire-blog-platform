@@ -35,7 +35,7 @@ export async function GET(
 async function findPostsByTicker(ticker: string): Promise<any[]> {
   try {
     // 먼저 stock-mentions-count.json 파일에서 해당 종목의 recentPosts 확인
-    const dataPath = path.join(process.cwd(), 'data', 'stock-mentions-count.json');
+    const dataPath = path.join(process.cwd(), 'data', 'merry-stocks-clean.json');
     
     if (fs.existsSync(dataPath)) {
       const fileContent = fs.readFileSync(dataPath, 'utf8');

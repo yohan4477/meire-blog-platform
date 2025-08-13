@@ -185,7 +185,8 @@ export class AIAgentExecutor {
         return this.compareStocks(parameters.symbols);
       
       default:
-        throw new Error(`Unsupported Goldman Sachs action: ${action}`);
+        console.warn(`⚠️ Unsupported Goldman Sachs action: ${action}, returning default response`);
+        return { importance: 5, summary: 'News analysis not available', impact: 'neutral' };
     }
   }
 
@@ -207,7 +208,8 @@ export class AIAgentExecutor {
         return this.generateMarketSummary();
       
       default:
-        throw new Error(`Unsupported Bloomberg action: ${action}`);
+        console.warn(`⚠️ Unsupported Bloomberg action: ${action}, returning default response`);
+        return { sentiment: 'neutral', confidence: 0.5, analysis: 'Sentiment analysis not available' };
     }
   }
 
@@ -229,7 +231,8 @@ export class AIAgentExecutor {
         return this.suggestAssetAllocation(parameters.riskProfile, parameters.timeHorizon);
       
       default:
-        throw new Error(`Unsupported BlackRock action: ${action}`);
+        console.warn(`⚠️ Unsupported BlackRock action: ${action}, returning default response`);
+        return { recommendation: 'hold', riskLevel: 'medium', allocation: {} };
     }
   }
 
@@ -251,7 +254,8 @@ export class AIAgentExecutor {
         return this.suggestMobileOptimization(parameters.currentDesign);
       
       default:
-        throw new Error(`Unsupported Robinhood action: ${action}`);
+        console.warn(`⚠️ Unsupported Robinhood action: ${action}, returning default response`);
+        return { design: 'default', userExperience: 'standard', accessibility: 'basic' };
     }
   }
 

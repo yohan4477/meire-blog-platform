@@ -69,15 +69,16 @@ async function loadStocksData(): Promise<any[]> {
     return stocksCache.data;
   }
   
-  console.log('🔄 Loading fresh stocks data from file');
+  console.log('🔄 Loading fresh stocks data from SQLite DB');
   
-  // 실제 종목 데이터 로드
-  const dataPath = path.join(process.cwd(), 'data', 'stock-mentions-count.json');
+  // DB에서 메르's Pick 데이터 로드
+  const stockDB = new StockDB();
   let stockData = [];
   
   try {
-    const fileContent = fs.readFileSync(dataPath, 'utf8');
-    stockData = JSON.parse(fileContent);
+    // 메르가 언급한 종목들을 최근 언급일 기준으로 가져오기
+    stockData = await stockDB.getMerryPickStocks(10);
+    console.log(`✅ DB에서 ${stockData.length}개 종목 로드 완료`);
   } catch (error) {
     console.error('종목 데이터 파일 읽기 실패, fallback 데이터 사용');
     // fallback 데이터

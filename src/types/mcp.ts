@@ -23,11 +23,13 @@ export async function mcp__memory__create_entities(params: { entities: MCPEntity
   // 실제 구현에서는 MCP memory 서버와 통신
   console.log('MCP Memory: Creating entities:', params.entities.length);
   
-  // 시뮬레이션: 로컬 스토리지나 캐시에 저장
+  // 시뮬레이션: 로컬 스토리지나 캐시에 저장 (클라이언트만)
   try {
-    const existingEntities = JSON.parse(localStorage.getItem('mcp_entities') || '[]');
-    const updatedEntities = [...existingEntities, ...params.entities];
-    localStorage.setItem('mcp_entities', JSON.stringify(updatedEntities));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const existingEntities = JSON.parse(localStorage.getItem('mcp_entities') || '[]');
+      const updatedEntities = [...existingEntities, ...params.entities];
+      localStorage.setItem('mcp_entities', JSON.stringify(updatedEntities));
+    }
   } catch (error) {
     console.warn('Could not store entities in localStorage:', error);
   }

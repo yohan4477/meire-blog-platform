@@ -126,6 +126,52 @@ class StockDB {
     });
   }
 
+  // 메르's Pick 종목 가져오기 (최근 언급 순)
+  async getMerryPickStocks(limit = 10) {
+    if (!this.isConnected) await this.connect();
+    
+    return new Promise((resolve, reject) => {
+      this.db.all(`
+        SELECT 
+          s.ticker,
+          s.company_name as name,
+          s.company_name_kr as nameKr,
+          s.market,
+          s.currency,
+          s.mention_count as postCount,
+          s.last_mentioned_date as lastMention,
+          s.first_mentioned_date as firstMention,
+          'positive' as sentiment,
+          s.sector as description
+        FROM stocks s
+        WHERE s.is_merry_mentioned = 1
+        ORDER BY s.last_mentioned_date DESC
+        LIMIT ?
+      `, [limit], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          // 데이터 형식 변환
+          const formatted = (rows || []).map(row => ({
+            ticker: row.ticker,
+            name: row.nameKr || row.name,
+            market: row.market || 'NASDAQ',
+            currency: row.currency || 'USD',
+            postCount: row.postCount || 0,
+            firstMention: row.firstMention,
+            lastMention: row.lastMention,
+            sentiment: row.sentiment || 'neutral',
+            tags: [],
+            description: row.description || '',
+            recentPosts: [],
+            mentions: row.postCount || 0
+          }));
+          resolve(formatted);
+        }
+      });
+    });
+  }
+
   // 모든 메르 언급 종목 목록 가져오기
   async getMerryMentionedStocks(limit = 10) {
     if (!this.isConnected) await this.connect();
@@ -142,6 +188,47 @@ class StockDB {
         ORDER BY s.last_mentioned_date DESC
         LIMIT ?
       `, [limit], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows || []);
+        }
+      });
+    });
+  }
+
+  // 개별 종목 정보 가져오기
+  async getStockByTicker(ticker) {
+    if (!this.isConnected) await this.connect();
+    
+    return new Promise((resolve, reject) => {
+      this.db.get(`
+        SELECT *
+        FROM stocks
+        WHERE ticker = ?
+      `, [ticker], (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      });
+    });
+  }
+
+  // 관련 포스트 가져오기
+  async getRelatedPosts(ticker, limit = 10) {
+    if (!this.isConnected) await this.connect();
+    
+    return new Promise((resolve, reject) => {
+      this.db.all(`
+        SELECT p.id, p.title, p.excerpt, p.published_date
+        FROM posts p
+        JOIN post_mentions pm ON p.id = pm.post_id
+        WHERE pm.ticker = ?
+        ORDER BY p.published_date DESC
+        LIMIT ?
+      `, [ticker, limit], (err, rows) => {
         if (err) {
           reject(err);
         } else {
