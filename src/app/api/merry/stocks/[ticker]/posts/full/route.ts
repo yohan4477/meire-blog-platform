@@ -53,84 +53,110 @@ export async function GET(
 
 async function findAllPostsByTicker(ticker: string, period: string): Promise<any[]> {
   try {
-    // 먼저 stock-mentions-count.json에서 기본 정보 확인
-    const dataPath = path.join(process.cwd(), 'data', 'stock-mentions-count.json');
-    const allPosts: any[] = [];
+    // SQLite 데이터베이스에서 시간 범위별 포스트 조회 (우선순위)
+    const StockDB = require('@/lib/stock-db-sqlite3');
+    let allPosts: any[] = [];
     
-    if (fs.existsSync(dataPath)) {
-      const fileContent = fs.readFileSync(dataPath, 'utf8');
-      const stockData = JSON.parse(fileContent);
+    try {
+      const stockDB = new StockDB();
       
-      const stock = stockData.find((s: any) => s.ticker === ticker);
-      if (stock) {
-        console.log(`📊 Found stock ${ticker} with ${stock.postCount} total mentions`);
-        
-        // recentPosts를 먼저 추가
-        if (stock.recentPosts && stock.recentPosts.length > 0) {
-          allPosts.push(...stock.recentPosts.map((post: any) => ({
-            id: post.id,
-            title: post.title,
-            excerpt: post.excerpt || extractExcerpt(post.title, ticker),
-            created_date: post.created_date,
-            views: post.views || 0,
-            category: post.category || '투자분석'
-          })));
-        }
-
-        // 6개월 범위 계산
-        const sixMonthsAgo = new Date();
-        const periodDays = period === '6mo' ? 180 : period === '1y' ? 365 : 180;
-        sixMonthsAgo.setDate(sixMonthsAgo.getDate() - periodDays);
-        const sixMonthsAgoTimestamp = sixMonthsAgo.getTime();
-
-        console.log(`📅 Looking for posts from ${sixMonthsAgo.toISOString()} to now (${periodDays} days)`);
-
-        // 더 많은 포스트를 찾기 위해 추가 데이터 소스 확인
-        // 1. 다른 주식 데이터에서도 해당 ticker가 언급된 포스트 찾기
-        stockData.forEach((otherStock: any) => {
-          if (otherStock.recentPosts) {
-            otherStock.recentPosts.forEach((post: any) => {
-              // 중복 방지
-              const alreadyExists = allPosts.some(p => p.id === post.id);
-              if (!alreadyExists) {
-                // 포스트 내용에서 현재 ticker 언급 확인
-                const mentionsTicker = post.title?.toLowerCase().includes(ticker.toLowerCase()) ||
-                                     post.excerpt?.toLowerCase().includes(ticker.toLowerCase()) ||
-                                     (ticker === '005930' && (
-                                       post.title?.toLowerCase().includes('삼성전자') ||
-                                       post.excerpt?.toLowerCase().includes('삼성전자')
-                                     )) ||
-                                     (ticker === 'TSLA' && (
-                                       post.title?.toLowerCase().includes('테슬라') ||
-                                       post.excerpt?.toLowerCase().includes('테슬라')
-                                     ));
-
-                if (mentionsTicker) {
-                  // 6개월 범위 내 체크
-                  const postDate = new Date(post.created_date);
-                  if (postDate.getTime() >= sixMonthsAgoTimestamp) {
-                    allPosts.push({
-                      id: post.id,
-                      title: post.title,
-                      excerpt: post.excerpt || extractExcerpt(post.title, ticker),
-                      created_date: post.created_date,
-                      views: post.views || 0,
-                      category: post.category || '투자분석'
-                    });
-                  }
-                }
-              }
-            });
+      // 시간 범위 계산
+      const periodDays = period === '1mo' ? 30 : period === '3mo' ? 90 : 180; // 1M=30일, 3M=90일, 6M=180일
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - periodDays);
+      const startTimestamp = Math.floor(startDate.getTime() / 1000); // Unix timestamp
+      
+      console.log(`📅 Looking for posts from ${startDate.toISOString()} to now (${periodDays} days)`);
+      
+      // 주식명 매핑
+      const tickerToNameMap = {
+        '005930': '삼성전자',
+        'TSLA': '테슬라',
+        'AAPL': '애플',
+        'NVDA': '엔비디아',
+        'INTC': '인텔',
+        'TSMC': 'TSMC',
+        '042660': '한화오션',
+        '267250': 'HD현대'
+      };
+      
+      const stockName = tickerToNameMap[ticker] || ticker;
+      const searchTerms = [ticker, stockName];
+      
+      // 시간 범위별 DB 쿼리 실행
+      const whereClause = searchTerms.map(() => '(title LIKE ? OR content LIKE ? OR excerpt LIKE ?)').join(' OR ');
+      const searchParams = [];
+      searchTerms.forEach(term => {
+        const pattern = `%${term}%`;
+        searchParams.push(pattern, pattern, pattern);
+      });
+      
+      // DB 연결 및 쿼리
+      await stockDB.connect();
+      
+      const dbPosts = await new Promise((resolve, reject) => {
+        stockDB.db.all(`
+          SELECT id, title, excerpt, created_date, views, category, blog_type
+          FROM blog_posts
+          WHERE (${whereClause}) AND created_date >= ?
+          ORDER BY created_date DESC
+        `, [...searchParams, startTimestamp], (err, rows) => {
+          if (err) {
+            console.error('DB query failed:', err);
+            reject(err);
+          } else {
+            resolve(rows || []);
           }
         });
-
-        // 실제 데이터만 사용 - CLAUDE.md 원칙: dummy data 절대 금지
-        console.log(`📊 Using only real data: ${allPosts.length} posts found for ${ticker}`);
+      });
+      
+      allPosts = dbPosts.map((post: any) => ({
+        id: post.id,
+        title: post.title,
+        excerpt: post.excerpt || extractExcerpt(post.title, ticker),
+        created_date: post.created_date,
+        views: post.views || 0,
+        category: post.category || '투자분석'
+      }));
+      
+      stockDB.close();
+      
+      console.log(`📊 Found ${allPosts.length} posts for ${ticker}/${stockName} in last ${periodDays} days from DB`);
+      
+    } catch (dbError) {
+      console.error('Database query failed, falling back to JSON:', dbError);
+      
+      // DB 실패시 JSON 파일 fallback (기존 로직)
+      const dataPath = path.join(process.cwd(), 'data', 'stock-mentions-count.json');
+      
+      if (fs.existsSync(dataPath)) {
+        const fileContent = fs.readFileSync(dataPath, 'utf8');
+        const stockData = JSON.parse(fileContent);
+        
+        const stock = stockData.find((s: any) => s.ticker === ticker);
+        if (stock && stock.recentPosts) {
+          // 시간 범위 필터링
+          const periodDays = period === '1mo' ? 30 : period === '3mo' ? 90 : 180;
+          const cutoffDate = new Date();
+          cutoffDate.setDate(cutoffDate.getDate() - periodDays);
+          const cutoffTimestamp = cutoffDate.getTime();
+          
+          allPosts = stock.recentPosts
+            .filter((post: any) => {
+              const postDate = new Date(post.created_date);
+              return postDate.getTime() >= cutoffTimestamp;
+            })
+            .map((post: any) => ({
+              id: post.id,
+              title: post.title,
+              excerpt: post.excerpt || extractExcerpt(post.title, ticker),
+              created_date: post.created_date,
+              views: post.views || 0,
+              category: post.category || '투자분석'
+            }));
+        }
       }
     }
-
-    // 날짜순 정렬 (최신순)
-    allPosts.sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
 
     // 중복 제거 (ID 기준)
     const uniquePosts = allPosts.filter((post, index, self) => 

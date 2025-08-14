@@ -10,7 +10,7 @@ test.describe('종목 페이지 요구사항 테스트', () => {
   test.beforeEach(async ({ page }) => {
     // 개발 서버가 실행 중인지 확인
     await page.goto('http://localhost:3004');
-    await expect(page).toHaveTitle(/Meire Blog/i);
+    await expect(page).toHaveTitle(/요르의 투자 블로그|Meire Blog/i);
   });
 
   test('TSLA 종목 페이지 로딩 및 기본 정보 표시', async ({ page }) => {
@@ -87,7 +87,7 @@ test.describe('종목 페이지 요구사항 테스트', () => {
     await page.goto('http://localhost:3004/merry/stocks/TSLA');
     await page.waitForSelector('.recharts-wrapper');
     
-    // 차트에서 파란색 빈 원(메르 언급 마커) 확인
+    // 차트에서 파란색 빈 원(메르 언급 마커) 확인 (작은 크기)
     const blueMarkers = page.locator('circle[stroke="#2563eb"][fill="none"]');
     const markerCount = await blueMarkers.count();
     console.log(`📍 Found ${markerCount} post markers on chart`);
@@ -106,7 +106,7 @@ test.describe('종목 페이지 요구사항 테스트', () => {
     await page.goto('http://localhost:3004/merry/stocks/TSLA');
     await page.waitForSelector('.recharts-wrapper');
     
-    // 파란색 빈 원 마커 클릭
+    // 파란색 빈 원 마커 클릭 (작은 크기)
     const blueMarkers = page.locator('circle[stroke="#2563eb"][fill="none"]');
     const markerCount = await blueMarkers.count();
     

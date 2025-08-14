@@ -64,8 +64,9 @@ export default function StockPriceChart({
   const fetchAllPostsAndGenerateChart = async () => {
     try {
       // 선택된 기간에 따른 포스트 가져오기
-      const period = timeRange.toLowerCase(); // 6M -> 6m
+      const period = timeRange.toLowerCase().replace('m', 'mo'); // 6M -> 6mo
       const cacheBuster = Date.now();
+      console.log(`📅 Fetching posts for period: ${timeRange} (API: ${period})`);
       const response = await fetch(`/api/merry/stocks/${ticker}/posts/full?period=${period}&t=${cacheBuster}`, {
         cache: 'no-store'
       });
@@ -73,7 +74,7 @@ export default function StockPriceChart({
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          console.log(`📊 Loaded ${data.data.posts.length} posts for ${ticker} chart`);
+          console.log(`📊 Loaded ${data.data.posts.length} posts for ${ticker} chart (${timeRange} period)`);
           setAllPosts(data.data.posts);
           // 포스트 로드 후 차트 생성
           await generatePriceHistory(data.data.posts);
@@ -608,7 +609,18 @@ export default function StockPriceChart({
                 tickFormatter={(value) => formatPrice(value)}
                 className="text-xs"
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip 
+                content={<CustomTooltip />}
+                animationDuration={150}
+                animationEasing="ease-out"
+                allowEscapeViewBox={{ x: false, y: true }}
+                offset={10}
+                cursor={{ stroke: '#2563eb', strokeWidth: 1, strokeDasharray: '3 3' }}
+                wrapperStyle={{ 
+                  zIndex: 1000,
+                  pointerEvents: 'none'
+                }}
+              />
               <Legend />
               <Line 
                 type="monotone" 
@@ -620,27 +632,49 @@ export default function StockPriceChart({
                   // 언급된 날짜만 파란색 빈 원으로 표시 (클릭 가능)
                   if (payload.postTitle && !payload.isCurrentPrice) {
                     return (
-                      <circle 
-                        cx={cx} 
-                        cy={cy} 
-                        r={8} 
-                        fill="none" 
-                        stroke="#2563eb" 
-                        strokeWidth={3}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => handleMarkerClick(payload)}
-                      />
+                      <g>
+                        {/* 투명한 더 큰 영역으로 호버 영역 확대 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={12} 
+                          fill="transparent" 
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => handleMarkerClick(payload)}
+                        />
+                        {/* 실제 보이는 마커 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={5} 
+                          fill="none" 
+                          stroke="#2563eb" 
+                          strokeWidth={2}
+                          style={{ cursor: 'pointer', pointerEvents: 'none' }}
+                        />
+                      </g>
                     );
                   }
                   // 현재가만 초록색 점으로 표시
                   if (payload.isCurrentPrice) {
-                    return <circle cx={cx} cy={cy} r={6} fill="#16a34a" stroke="#ffffff" strokeWidth={2} />;
+                    return (
+                      <g>
+                        <circle cx={cx} cy={cy} r={10} fill="transparent" />
+                        <circle cx={cx} cy={cy} r={6} fill="#16a34a" stroke="#ffffff" strokeWidth={2} />
+                      </g>
+                    );
                   }
                   // 언급되지 않은 일반 날짜는 점 표시 안함 (곡선만)
                   return null;
                 }}
                 dotSize={0}
-                activeDot={{ r: 8, fill: '#1d4ed8', stroke: '#ffffff', strokeWidth: 2 }}
+                activeDot={{ 
+                  r: 12, 
+                  fill: '#1d4ed8', 
+                  stroke: '#ffffff', 
+                  strokeWidth: 2,
+                  style: { filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }
+                }}
                 name="주가"
               />
               {zoomState.refAreaLeft && zoomState.refAreaRight && (
