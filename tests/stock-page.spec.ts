@@ -87,9 +87,9 @@ test.describe('종목 페이지 요구사항 테스트', () => {
     await page.goto('http://localhost:3004/merry/stocks/TSLA');
     await page.waitForSelector('.recharts-wrapper');
     
-    // 차트에서 빨간 점(메르 언급 마커) 확인
-    const redMarkers = page.locator('circle[fill="#dc2626"]');
-    const markerCount = await redMarkers.count();
+    // 차트에서 파란색 빈 원(메르 언급 마커) 확인
+    const blueMarkers = page.locator('circle[stroke="#2563eb"][fill="none"]');
+    const markerCount = await blueMarkers.count();
     console.log(`📍 Found ${markerCount} post markers on chart`);
     
     // 최소 1개 이상의 마커가 있어야 함
@@ -97,7 +97,7 @@ test.describe('종목 페이지 요구사항 테스트', () => {
     
     // 마커에 마우스 hover 시 툴팁 표시
     if (markerCount > 0) {
-      await redMarkers.first().hover();
+      await blueMarkers.first().hover();
       await expect(page.locator('text=메르의 언급')).toBeVisible();
     }
   });
@@ -106,12 +106,12 @@ test.describe('종목 페이지 요구사항 테스트', () => {
     await page.goto('http://localhost:3004/merry/stocks/TSLA');
     await page.waitForSelector('.recharts-wrapper');
     
-    // 빨간 마커 클릭
-    const redMarkers = page.locator('circle[fill="#dc2626"]');
-    const markerCount = await redMarkers.count();
+    // 파란색 빈 원 마커 클릭
+    const blueMarkers = page.locator('circle[stroke="#2563eb"][fill="none"]');
+    const markerCount = await blueMarkers.count();
     
     if (markerCount > 0) {
-      await redMarkers.first().click();
+      await blueMarkers.first().click();
       
       // Sheet 팝업이 열리는지 확인
       await expect(page.locator('text=메르의 포스트 상세정보')).toBeVisible();

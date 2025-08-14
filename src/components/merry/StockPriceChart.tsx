@@ -112,7 +112,9 @@ export default function StockPriceChart({
         console.log(`🎯 Using ${postsToUse.length} posts for chart markers`);
         
         if (postsToUse && postsToUse.length > 0) {
-          postsToUse.forEach((post) => {
+          console.log(`🎯 Processing ${postsToUse.length} posts for chart markers`);
+          
+          postsToUse.forEach((post, index) => {
             let mentionDate: Date;
             if (typeof post.created_date === 'number') {
               mentionDate = new Date(post.created_date);
@@ -120,15 +122,55 @@ export default function StockPriceChart({
               mentionDate = new Date(post.created_date);
             }
             
-            const dateStr = mentionDate.toISOString().split('T')[0];
-            const matchingPoint = chartData.find(p => p.date === dateStr);
+            const postDateStr = mentionDate.toISOString().split('T')[0];
+            console.log(`📅 Post ${index + 1}: "${post.title.substring(0, 30)}..." on ${postDateStr}`);
+            
+            // 정확한 날짜 매칭을 먼저 시도
+            let matchingPoint = chartData.find(p => p.date === postDateStr);
+            
+            // 정확한 매칭이 없으면 가장 가까운 날짜 찾기 (±7일 범위)
+            if (!matchingPoint) {
+              const postTime = mentionDate.getTime();
+              const dayMs = 24 * 60 * 60 * 1000;
+              
+              let closestPoint = null;
+              let closestDistance = Infinity;
+              
+              chartData.forEach(point => {
+                const pointTime = new Date(point.date).getTime();
+                const distance = Math.abs(pointTime - postTime);
+                
+                // 7일 이내에서 가장 가까운 점 찾기
+                if (distance < 7 * dayMs && distance < closestDistance) {
+                  closestDistance = distance;
+                  closestPoint = point;
+                }
+              });
+              
+              matchingPoint = closestPoint;
+              if (matchingPoint) {
+                console.log(`🔗 Matched post "${post.title.substring(0, 30)}..." (${postDateStr}) to chart point (${matchingPoint.date})`);
+              }
+            } else {
+              console.log(`✅ Exact match for post "${post.title.substring(0, 30)}..." on ${postDateStr}`);
+            }
             
             if (matchingPoint) {
               // 해당 날짜의 데이터 포인트에 언급 정보 추가
-              matchingPoint.postTitle = post.title;
-              matchingPoint.postId = post.id;
+              if (!matchingPoint.postTitle) {
+                matchingPoint.postTitle = post.title;
+                matchingPoint.postId = post.id;
+              } else {
+                // 여러 포스트가 같은 날짜에 있으면 제목 합치기
+                matchingPoint.postTitle = `${matchingPoint.postTitle} | ${post.title}`;
+              }
+            } else {
+              console.log(`⚠️ No matching chart point found for post "${post.title.substring(0, 30)}..." (${postDateStr})`);
             }
           });
+          
+          const markersCount = chartData.filter(p => p.postTitle && !p.isCurrentPrice).length;
+          console.log(`📊 Total markers created: ${markersCount} out of ${postsToUse.length} posts`);
         }
 
         // 현재가 추가/업데이트
@@ -575,16 +617,16 @@ export default function StockPriceChart({
                 strokeWidth={2}
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
-                  // 언급된 날짜만 빨간 점으로 표시 (클릭 가능)
+                  // 언급된 날짜만 파란색 빈 원으로 표시 (클릭 가능)
                   if (payload.postTitle && !payload.isCurrentPrice) {
                     return (
                       <circle 
                         cx={cx} 
                         cy={cy} 
                         r={8} 
-                        fill="#dc2626" 
-                        stroke="#ffffff" 
-                        strokeWidth={2}
+                        fill="none" 
+                        stroke="#2563eb" 
+                        strokeWidth={3}
                         style={{ cursor: 'pointer' }}
                         onClick={() => handleMarkerClick(payload)}
                       />
