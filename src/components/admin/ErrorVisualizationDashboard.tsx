@@ -79,8 +79,8 @@ export default function ErrorVisualizationDashboard() {
       const data = await response.json();
       
       if (data.success) {
-        setErrors(data.errors || []);
-        setStats(data.stats || { total: 0, new: 0, investigating: 0, fixed: 0, ignored: 0 });
+        setErrors(data.data?.errors || []);
+        setStats(data.data?.stats || { total: 0, new: 0, investigating: 0, fixed: 0, ignored: 0 });
       }
     } catch (error) {
       console.error('에러 데이터 로딩 실패:', error);
