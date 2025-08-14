@@ -14,6 +14,20 @@ interface PricePoint {
   postTitle?: string;
   postId?: number;
   isCurrentPrice?: boolean;
+  sentiments?: {
+    sentiment: string;
+    score: number;
+    confidence: number;
+    keywords: any;
+    context: string;
+  }[];
+  posts?: {
+    id: number;
+    title: string;
+    excerpt: string;
+    views: number;
+    date: number;
+  }[];
 }
 
 interface StockPriceChartProps {
@@ -33,6 +47,7 @@ export default function StockPriceChart({
 }: StockPriceChartProps) {
   const [priceData, setPriceData] = useState<PricePoint[]>([]);
   const [allPosts, setAllPosts] = useState<any[]>([]);
+  const [sentimentData, setSentimentData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [yAxisDomain, setYAxisDomain] = useState<[number, number] | null>(null);
   const [zoomState, setZoomState] = useState<{
@@ -67,17 +82,35 @@ export default function StockPriceChart({
       const period = timeRange.toLowerCase().replace('m', 'mo'); // 6M -> 6mo
       const cacheBuster = Date.now();
       console.log(`📅 Fetching posts for period: ${timeRange} (API: ${period})`);
-      const response = await fetch(`/api/merry/stocks/${ticker}/posts/full?period=${period}&t=${cacheBuster}`, {
-        cache: 'no-store'
-      });
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          console.log(`📊 Loaded ${data.data.posts.length} posts for ${ticker} chart (${timeRange} period)`);
-          setAllPosts(data.data.posts);
+      // 포스트와 감정 분석 데이터를 병렬로 가져오기
+      const [postsResponse, sentimentResponse] = await Promise.all([
+        fetch(`/api/merry/stocks/${ticker}/posts/full?period=${period}&t=${cacheBuster}`, {
+          cache: 'no-store'
+        }),
+        fetch(`/api/merry/stocks/${ticker}/sentiments?period=${period}&t=${cacheBuster}`, {
+          cache: 'no-store'
+        })
+      ]);
+      
+      if (postsResponse.ok) {
+        const postsData = await postsResponse.json();
+        if (postsData.success) {
+          console.log(`📊 Loaded ${postsData.data.posts.length} posts for ${ticker} chart (${timeRange} period)`);
+          setAllPosts(postsData.data.posts);
+          
+          // 감정 분석 데이터 처리
+          if (sentimentResponse.ok) {
+            const sentimentDataResponse = await sentimentResponse.json();
+            console.log(`🎯 Loaded sentiment data for ${ticker}:`, sentimentDataResponse);
+            setSentimentData(sentimentDataResponse);
+          } else {
+            console.warn('감정 분석 데이터 로딩 실패');
+            setSentimentData(null);
+          }
+          
           // 포스트 로드 후 차트 생성
-          await generatePriceHistory(data.data.posts);
+          await generatePriceHistory(postsData.data.posts);
           return;
         }
       }
@@ -161,9 +194,27 @@ export default function StockPriceChart({
               if (!matchingPoint.postTitle) {
                 matchingPoint.postTitle = post.title;
                 matchingPoint.postId = post.id;
+                
+                // 감정 분석 데이터 추가
+                const postDateStr = matchingPoint.date;
+                if (sentimentData && sentimentData.sentimentByDate && sentimentData.sentimentByDate[postDateStr]) {
+                  matchingPoint.sentiments = sentimentData.sentimentByDate[postDateStr].sentiments;
+                  matchingPoint.posts = sentimentData.sentimentByDate[postDateStr].posts;
+                  console.log(`🎯 Added sentiment data to marker on ${postDateStr}:`, matchingPoint.sentiments);
+                }
               } else {
                 // 여러 포스트가 같은 날짜에 있으면 제목 합치기
                 matchingPoint.postTitle = `${matchingPoint.postTitle} | ${post.title}`;
+                
+                // 감정 분석 데이터도 합치기
+                const postDateStr = matchingPoint.date;
+                if (sentimentData && sentimentData.sentimentByDate && sentimentData.sentimentByDate[postDateStr]) {
+                  if (!matchingPoint.sentiments) matchingPoint.sentiments = [];
+                  if (!matchingPoint.posts) matchingPoint.posts = [];
+                  
+                  matchingPoint.sentiments = [...matchingPoint.sentiments, ...sentimentData.sentimentByDate[postDateStr].sentiments];
+                  matchingPoint.posts = [...matchingPoint.posts, ...sentimentData.sentimentByDate[postDateStr].posts];
+                }
               }
             } else {
               console.log(`⚠️ No matching chart point found for post "${post.title.substring(0, 30)}..." (${postDateStr})`);
@@ -333,15 +384,45 @@ export default function StockPriceChart({
             {formatPrice(payload[0].value)}
           </p>
           {data.postTitle && !data.isCurrentPrice && (
-            <div className="mt-2 p-2 bg-red-50 rounded border-l-2 border-red-400">
-              <p className="text-xs font-medium text-red-700 mb-1">📝 메르의 언급</p>
-              <p className="text-sm text-red-600 line-clamp-2">
+            <div className="mt-2 p-2 bg-blue-50 rounded border-l-2 border-blue-400">
+              <p className="text-xs font-medium text-blue-700 mb-1">📝 메르의 언급</p>
+              <p className="text-sm text-blue-600 line-clamp-2">
                 {data.postTitle}
               </p>
+              
+              {/* 감정 분석 정보 표시 */}
+              {data.sentiments && data.sentiments.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-blue-200">
+                  <p className="text-xs font-medium text-gray-700 mb-1">🎯 감정 분석</p>
+                  {data.sentiments.slice(0, 2).map((sentiment, index) => {
+                    const sentimentColor = sentiment.sentiment === 'positive' ? 'text-green-600' :
+                                         sentiment.sentiment === 'negative' ? 'text-red-600' : 'text-gray-600';
+                    const sentimentIcon = sentiment.sentiment === 'positive' ? '😊' :
+                                        sentiment.sentiment === 'negative' ? '😟' : '😐';
+                    
+                    return (
+                      <div key={index} className="flex items-center justify-between text-xs mb-1">
+                        <span className={`${sentimentColor} font-medium`}>
+                          {sentimentIcon} {sentiment.sentiment}
+                        </span>
+                        <span className="text-gray-500">
+                          신뢰도: {(sentiment.confidence * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {data.sentiments.length > 2 && (
+                    <p className="text-xs text-gray-500">
+                      +{data.sentiments.length - 2}개 더
+                    </p>
+                  )}
+                </div>
+              )}
+              
               {data.postId && (
                 <button 
                   onClick={() => handleMarkerClick(data)}
-                  className="text-xs text-blue-600 hover:text-blue-800 mt-1 underline"
+                  className="text-xs text-blue-600 hover:text-blue-800 mt-2 underline"
                 >
                   포스트 자세히 보기 →
                 </button>
@@ -586,7 +667,7 @@ export default function StockPriceChart({
           </div>
         </div>
         
-        <div className="h-96 w-full">
+        <div className="h-96 w-full" data-testid="stock-price-chart">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
               data={priceData} 
@@ -631,6 +712,37 @@ export default function StockPriceChart({
                   const { cx, cy, payload } = props;
                   // 언급된 날짜만 파란색 빈 원으로 표시 (클릭 가능)
                   if (payload.postTitle && !payload.isCurrentPrice) {
+                    // 감정 분석에 따른 마커 색상 결정
+                    let markerColor = "#2563eb"; // 기본 파란색
+                    let strokeWidth = 2;
+                    
+                    if (payload.sentiments && payload.sentiments.length > 0) {
+                      // 여러 감정이 있는 경우 우세한 감정으로 결정
+                      const sentimentCounts = payload.sentiments.reduce((acc, s) => {
+                        acc[s.sentiment] = (acc[s.sentiment] || 0) + 1;
+                        return acc;
+                      }, {});
+                      
+                      const dominantSentiment = Object.entries(sentimentCounts)
+                        .sort(([,a], [,b]) => b - a)[0][0];
+                      
+                      switch (dominantSentiment) {
+                        case 'positive':
+                          markerColor = "#16a34a"; // 초록색
+                          strokeWidth = 3;
+                          break;
+                        case 'negative':
+                          markerColor = "#dc2626"; // 빨간색
+                          strokeWidth = 3;
+                          break;
+                        case 'neutral':
+                        default:
+                          markerColor = "#2563eb"; // 기본 파란색
+                          strokeWidth = 2;
+                          break;
+                      }
+                    }
+                    
                     return (
                       <g>
                         {/* 투명한 더 큰 영역으로 호버 영역 확대 */}
@@ -642,16 +754,27 @@ export default function StockPriceChart({
                           style={{ cursor: 'pointer' }}
                           onClick={() => handleMarkerClick(payload)}
                         />
-                        {/* 실제 보이는 마커 */}
+                        {/* 실제 보이는 마커 - 감정에 따른 색상 */}
                         <circle 
                           cx={cx} 
                           cy={cy} 
                           r={5} 
                           fill="none" 
-                          stroke="#2563eb" 
-                          strokeWidth={2}
+                          stroke={markerColor} 
+                          strokeWidth={strokeWidth}
                           style={{ cursor: 'pointer', pointerEvents: 'none' }}
                         />
+                        {/* 감정 분석이 있는 경우 작은 indicator */}
+                        {payload.sentiments && payload.sentiments.length > 0 && (
+                          <circle 
+                            cx={cx + 6} 
+                            cy={cy - 6} 
+                            r={2} 
+                            fill={markerColor}
+                            stroke="#ffffff"
+                            strokeWidth={1}
+                          />
+                        )}
                       </g>
                     );
                   }

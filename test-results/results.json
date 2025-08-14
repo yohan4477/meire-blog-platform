@@ -1,0 +1,295 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\y\\meire-blog-platform\\playwright.config.ts",
+    "rootDir": "C:/Users/y/meire-blog-platform/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": "C:\\Users\\y\\meire-blog-platform\\tests\\global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.2",
+    "workers": 6,
+    "webServer": {
+      "command": "npm run dev",
+      "port": 3004,
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "sentiment-quick-test.spec.ts",
+      "file": "sentiment-quick-test.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Sentiment Analysis Quick Test",
+          "file": "sentiment-quick-test.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should verify sentiment API works and chart displays with sentiment data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 24588,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "🧪 Quick test: Sentiment analysis integration...\n"
+                        },
+                        {
+                          "text": "✅ TSLA sentiment API working: 8 mentions\n"
+                        },
+                        {
+                          "text": "✅ Chart container loaded\n"
+                        },
+                        {
+                          "text": "📊 Total circles found: 72\n"
+                        },
+                        {
+                          "text": "🎨 Sentiment markers found:\n"
+                        },
+                        {
+                          "text": "   🟢 Positive (green): 0\n"
+                        },
+                        {
+                          "text": "   🔴 Negative (red): 0\n"
+                        },
+                        {
+                          "text": "   🔵 Neutral/default (blue): 21\n"
+                        },
+                        {
+                          "text": "📈 Total sentiment markers: 21\n"
+                        },
+                        {
+                          "text": "✅ Sentiment markers are displaying correctly\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-14T05:42:29.002Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fa46b3795a5209cd80a9-7063ed5ba7c50a4385f9",
+              "file": "sentiment-quick-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment information correctly in browser",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 30145,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-quick-test.spec.ts",
+                            "column": 16,
+                            "line": 66
+                          },
+                          "message": "Error: page.waitForTimeout: Test timeout of 30000ms exceeded.\n\n  64 |     await page.reload();\n  65 |     await page.waitForSelector('[data-testid=\"stock-price-chart\"]', { timeout: 15000 });\n> 66 |     await page.waitForTimeout(3000);\n     |                ^\n  67 |     \n  68 |     console.log('📱 Browser console logs related to sentiment:');\n  69 |     logs.forEach(log => console.log(`   ${log}`));\n    at C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-quick-test.spec.ts:66:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🧪 Testing sentiment display in browser...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-14T05:42:29.003Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-quick-test-Senti-35bd9-mation-correctly-in-browser-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-quick-test-Senti-35bd9-mation-correctly-in-browser-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-quick-test-Senti-35bd9-mation-correctly-in-browser-chromium\\error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "fa46b3795a5209cd80a9-ad969e51a30516fa030d",
+              "file": "sentiment-quick-test.spec.ts",
+              "line": 49,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-08-14T05:42:27.873Z",
+    "duration": 31730.268,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
