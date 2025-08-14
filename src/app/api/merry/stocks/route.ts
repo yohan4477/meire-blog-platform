@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-const StockDB = require('../../../../lib/stock-db-sqlite3.js');
+const { getStockDB } = require('../../../../lib/stock-db-sqlite3.js');
 
 // 캐시 저장소
 let stocksCache: {
@@ -71,12 +71,13 @@ async function loadStocksData(): Promise<any[]> {
   
   console.log('🔄 Loading fresh stocks data from SQLite DB');
   
-  // DB에서 메르's Pick 데이터 로드
-  const stockDB = new StockDB();
+  // DB에서 메르's Pick 데이터 로드 - 글로벌 인스턴스 사용
+  const stockDB = getStockDB();
   let stockData = [];
   
   try {
     // 메르가 언급한 종목들을 최근 언급일 기준으로 가져오기
+    await stockDB.connect();
     stockData = await stockDB.getMerryPickStocks(10);
     console.log(`✅ DB에서 ${stockData.length}개 종목 로드 완료`);
   } catch (error) {

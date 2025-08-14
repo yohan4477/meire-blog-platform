@@ -7,17 +7,49 @@ class StockDB {
     const dbPath = path.join(process.cwd(), 'database.db');
     this.db = null;
     this.isConnected = false;
+    this.connecting = false;
   }
 
-  // DB 연결
+  // 연결 풀링 및 재사용을 위한 개선된 DB 연결
   async connect() {
+    // 이미 연결된 경우 재사용
+    if (this.isConnected && this.db) {
+      return Promise.resolve();
+    }
+
+    // 연결 중인 경우 대기
+    if (this.connecting) {
+      return new Promise((resolve) => {
+        const checkConnection = () => {
+          if (this.isConnected) {
+            resolve();
+          } else {
+            setTimeout(checkConnection, 50);
+          }
+        };
+        checkConnection();
+      });
+    }
+
+    this.connecting = true;
+
     return new Promise((resolve, reject) => {
-      this.db = new sqlite3.Database(path.join(process.cwd(), 'database.db'), (err) => {
+      this.db = new sqlite3.Database(path.join(process.cwd(), 'database.db'), 
+        sqlite3.OPEN_READWRITE, (err) => {
         if (err) {
           console.error('SQLite3 연결 실패:', err);
+          this.connecting = false;
           reject(err);
         } else {
           this.isConnected = true;
+          this.connecting = false;
+          
+          // WAL 모드 활성화 (성능 향상)
+          this.db.run("PRAGMA journal_mode = WAL;");
+          this.db.run("PRAGMA synchronous = NORMAL;");
+          this.db.run("PRAGMA cache_size = 1000;");
+          this.db.run("PRAGMA temp_store = MEMORY;");
+          
           resolve();
         }
       });
@@ -63,20 +95,29 @@ class StockDB {
   }
 
   // 6개월치 종가 데이터 가져오기
-  async getStockPrices(ticker, period = '6m') {
+  async getStockPrices(ticker, period = '6mo') {
     if (!this.isConnected) await this.connect();
+    
+    // 한국 주식의 .KS 접미사 제거
+    const cleanTicker = ticker.replace('.KS', '');
     
     // 기간 계산
     const endDate = new Date();
     const startDate = new Date();
     
-    switch (period) {
+    // period 형식 정규화 (1mo, 3mo, 6mo -> 숫자 추출)
+    const normalizedPeriod = period.toLowerCase();
+    
+    switch (normalizedPeriod) {
+      case '6mo':
       case '6m':
         startDate.setMonth(endDate.getMonth() - 6);
         break;
+      case '3mo':
       case '3m':
         startDate.setMonth(endDate.getMonth() - 3);
         break;
+      case '1mo':
       case '1m':
         startDate.setMonth(endDate.getMonth() - 1);
         break;
@@ -90,16 +131,20 @@ class StockDB {
     const startDateStr = startDate.toISOString().split('T')[0];
     const endDateStr = endDate.toISOString().split('T')[0];
     
+    console.log(`📊 Getting stock prices for ${cleanTicker} - Period: ${period} (${normalizedPeriod})`);
+    console.log(`📅 Date range: ${startDateStr} ~ ${endDateStr}`);
+    
     return new Promise((resolve, reject) => {
       this.db.all(`
         SELECT date, close_price, volume
         FROM stock_prices 
         WHERE ticker = ? AND date >= ? AND date <= ?
         ORDER BY date ASC
-      `, [ticker, startDateStr, endDateStr], (err, rows) => {
+      `, [cleanTicker, startDateStr, endDateStr], (err, rows) => {
         if (err) {
           reject(err);
         } else {
+          console.log(`✅ Found ${rows?.length || 0} price records for ${ticker} in period ${period}`);
           resolve(rows || []);
         }
       });
@@ -318,19 +363,54 @@ class StockDB {
     });
   }
 
-  // DB 연결 종료
+  // 연결 풀링을 위한 개선된 연결 관리 (종료하지 않고 재사용)
   close() {
+    // 성능 최적화: 연결을 유지하여 재사용 가능하도록 함
+    // 프로세스 종료시에만 자동으로 연결이 종료됨
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 SQLite3 연결 유지 (성능 최적화)');
+    }
+  }
+
+  // 강제 연결 종료 (필요한 경우만 사용)
+  forceClose() {
     if (this.db && this.isConnected) {
       this.db.close((err) => {
         if (err) {
           console.error('SQLite3 연결 종료 실패:', err);
         } else {
           this.isConnected = false;
-          console.log('📪 SQLite3 연결 종료');
+          this.db = null;
+          console.log('📪 SQLite3 연결 강제 종료');
         }
       });
     }
   }
 }
 
+// 글로벌 인스턴스를 통한 연결 풀링 (성능 최적화)
+let globalStockDB = null;
+
+function getStockDB() {
+  if (!globalStockDB) {
+    globalStockDB = new StockDB();
+  }
+  return globalStockDB;
+}
+
+// 프로세스 종료 시 연결 정리
+process.on('exit', () => {
+  if (globalStockDB) {
+    globalStockDB.forceClose();
+  }
+});
+
+process.on('SIGINT', () => {
+  if (globalStockDB) {
+    globalStockDB.forceClose();
+  }
+  process.exit(0);
+});
+
 module.exports = StockDB;
+module.exports.getStockDB = getStockDB;

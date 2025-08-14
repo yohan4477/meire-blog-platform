@@ -9,10 +9,8 @@
     "globalTimeout": 0,
     "grep": {},
     "grepInvert": null,
-    "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 2
-    },
+    "maxFailures": 5,
+    "metadata": {},
     "preserveOutput": "always",
     "reporter": [
       [
@@ -40,9 +38,7 @@
         "outputDir": "C:/Users/y/meire-blog-platform/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 2
-        },
+        "metadata": {},
         "id": "chromium",
         "name": "chromium",
         "testDir": "C:/Users/y/meire-blog-platform/tests",
@@ -50,15 +46,13 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 15000
+        "timeout": 30000
       },
       {
         "outputDir": "C:/Users/y/meire-blog-platform/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 2
-        },
+        "metadata": {},
         "id": "firefox",
         "name": "firefox",
         "testDir": "C:/Users/y/meire-blog-platform/tests",
@@ -66,15 +60,13 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 15000
+        "timeout": 30000
       },
       {
         "outputDir": "C:/Users/y/meire-blog-platform/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 2
-        },
+        "metadata": {},
         "id": "webkit",
         "name": "webkit",
         "testDir": "C:/Users/y/meire-blog-platform/tests",
@@ -82,15 +74,13 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 15000
+        "timeout": 30000
       },
       {
         "outputDir": "C:/Users/y/meire-blog-platform/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 2
-        },
+        "metadata": {},
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
         "testDir": "C:/Users/y/meire-blog-platform/tests",
@@ -98,15 +88,13 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 15000
+        "timeout": 30000
       },
       {
         "outputDir": "C:/Users/y/meire-blog-platform/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 2
-        },
+        "metadata": {},
         "id": "Mobile Safari",
         "name": "Mobile Safari",
         "testDir": "C:/Users/y/meire-blog-platform/tests",
@@ -114,7 +102,7 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 15000
+        "timeout": 30000
       }
     ],
     "shard": null,
@@ -129,145 +117,17 @@
       "timeout": 120000
     }
   },
-  "suites": [
+  "suites": [],
+  "errors": [
     {
-      "title": "chart-click-test.spec.ts",
-      "file": "chart-click-test.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "📊 차트 클릭 상호작용 테스트 - 3초간 테스트",
-          "file": "chart-click-test.spec.ts",
-          "line": 3,
-          "column": 6,
-          "specs": [
-            {
-              "title": "차트 마커 클릭 및 상호작용 테스트",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 15000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 9870,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "🚀 차트 클릭 테스트 시작 - 3초간 집중 상호작용\n"
-                        },
-                        {
-                          "text": "1️⃣ TSLA 차트 페이지 방문\n"
-                        },
-                        {
-                          "text": "2️⃣ 차트 로딩 대기...\n"
-                        },
-                        {
-                          "text": "3️⃣ 차트 요소 찾기...\n"
-                        },
-                        {
-                          "text": "⚠️ 차트 없음 - 데이터 없음 메시지 확인\n"
-                        },
-                        {
-                          "text": "8️⃣ 최종 상태 확인...\n"
-                        },
-                        {
-                          "text": "9️⃣ Sheet 컴포넌트 제거 확인...\n"
-                        },
-                        {
-                          "text": "✅ Sheet 컴포넌트 없음 - 제거 성공!\n"
-                        },
-                        {
-                          "text": "\n📊 차트 클릭 테스트 결과:\n"
-                        },
-                        {
-                          "text": "  JS 에러: 0개\n"
-                        },
-                        {
-                          "text": "  콘솔 에러: 0개\n"
-                        },
-                        {
-                          "text": "  Sheet 컴포넌트: 0개 (0개가 정상)\n"
-                        },
-                        {
-                          "text": "\n🎉 차트 클릭 테스트 성공! Sheet 제거 확인됨!\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-14T11:16:49.435Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "f65a41bf10384acffa2f-adf14c184815b0311ac5",
-              "file": "chart-click-test.spec.ts",
-              "line": 4,
-              "column": 7
-            },
-            {
-              "title": "차트 상세 상호작용 - 호버 및 클릭 분리 테스트",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 15000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
-                      "status": "passed",
-                      "duration": 8874,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "🎯 차트 호버/클릭 분리 테스트 시작\n"
-                        },
-                        {
-                          "text": "📊 JS 에러 수: 0\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-14T11:16:49.457Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "f65a41bf10384acffa2f-f076f7840ed7adf925fa",
-              "file": "chart-click-test.spec.ts",
-              "line": 149,
-              "column": 7
-            }
-          ]
-        }
-      ]
+      "message": "Error: No tests found",
+      "stack": "Error: No tests found"
     }
   ],
-  "errors": [],
   "stats": {
-    "startTime": "2025-08-14T11:16:48.405Z",
-    "duration": 11542.746,
-    "expected": 2,
+    "startTime": "2025-08-14T14:55:21.527Z",
+    "duration": 324.09899999999993,
+    "expected": 0,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

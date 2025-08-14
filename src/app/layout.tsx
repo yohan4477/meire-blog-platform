@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { AutoErrorCapture } from '@/components/AutoErrorCapture';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -131,6 +132,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <QueryProvider>
+              <AutoErrorCapture />
               <div className="min-h-screen flex flex-col bg-background text-foreground">
                 <Header />
                 

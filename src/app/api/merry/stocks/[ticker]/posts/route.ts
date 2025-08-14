@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-const StockDB = require('@/lib/stock-db-sqlite3');
+const { getStockDB } = require('@/lib/stock-db-sqlite3');
 
 export async function GET(
   request: NextRequest,
@@ -49,9 +49,10 @@ export async function GET(
 
 async function findPostsByTickerFromDB(ticker: string, limit: number, offset: number) {
   try {
-    const stockDB = new StockDB();
+    const stockDB = getStockDB();
+    await stockDB.connect();
     const result = await stockDB.getRelatedPosts(ticker, limit, offset);
-    stockDB.close();
+    stockDB.close(); // 글로벌 인스턴스는 유지됨
     
     console.log(`📝 Found ${result.total} total posts for ${ticker} from database (showing ${result.posts.length})`);
     return result;

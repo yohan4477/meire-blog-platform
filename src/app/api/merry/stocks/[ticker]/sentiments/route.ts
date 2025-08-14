@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const StockDB = require('@/lib/stock-db-sqlite3');
+const { getStockDB } = require('@/lib/stock-db-sqlite3');
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +13,7 @@ export async function GET(
     
     console.log(`📊 Fetching sentiment data for ${ticker} (${period})`);
     
-    const stockDB = new StockDB();
+    const stockDB = getStockDB();
     await stockDB.connect();
     
     // Period to days mapping
@@ -53,7 +53,7 @@ export async function GET(
       });
     });
     
-    stockDB.close();
+    stockDB.close(); // 글로벌 인스턴스는 유지됨
     
     // Group sentiment data by date and sentiment type
     const sentimentByDate = {};

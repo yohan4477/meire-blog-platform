@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, BarChart3, BookOpen, User, PieChart, Brain, Bot, Home, TrendingUp, Activity, Menu, X, Bell } from 'lucide-react';
+import { Search, BarChart3, BookOpen, User, PieChart, Brain, Bot, Home, TrendingUp, Activity, Menu, X, Bell, Settings, Shield } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -14,11 +14,24 @@ import {
   SheetTitle, 
   SheetTrigger 
 } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const [isAgentActive, setIsAgentActive] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -47,11 +60,21 @@ export default function Header() {
   ]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+  const router = useRouter();
+
+  const handleAdminAccess = () => {
+    if (adminPassword === 'admin123') {
+      setIsAdminDialogOpen(false);
+      setAdminPassword('');
+      router.push('/admin/errors');
+    } else {
+      alert('비밀번호가 올바르지 않습니다.');
+    }
+  };
 
   const navigationItems = [
     { href: "/", label: "홈", icon: Home },
     { href: "/financial-curation", label: "AI 큐레이션", icon: Brain },
-    { href: "/investment", label: "국민연금 분석", icon: BarChart3 },
     { href: "/institutional-investors", label: "기관투자자", icon: TrendingUp },
     { href: "/agent-workflows", label: "에이전트", icon: Activity, badge: isAgentActive ? "Live" : null },
     { href: "/merry", label: "메르 블로그", icon: User },
@@ -89,13 +112,6 @@ export default function Header() {
               <span>AI 큐레이션</span>
             </Link>
             <Link 
-              href="/investment" 
-              className="px-3 py-2 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors flex items-center space-x-1"
-            >
-              <BarChart3 className="h-4 w-4" />
-              <span>국민연금 분석</span>
-            </Link>
-            <Link 
               href="/institutional-investors" 
               className="px-3 py-2 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors flex items-center space-x-1"
             >
@@ -121,6 +137,50 @@ export default function Header() {
               <User className="h-4 w-4" />
               <span>메르 블로그</span>
             </Link>
+            
+            {/* 관리자 버튼 */}
+            <Dialog open={isAdminDialogOpen} onOpenChange={setIsAdminDialogOpen}>
+              <DialogTrigger asChild>
+                <button
+                  className="px-3 py-2 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors flex items-center space-x-1"
+                >
+                  <Shield className="h-4 w-4" />
+                  <span>관리자</span>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>관리자 접근</DialogTitle>
+                  <DialogDescription>
+                    관리자 페이지에 접근하려면 비밀번호를 입력하세요.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="password" className="text-right">
+                      비밀번호
+                    </Label>
+                    <input
+                      id="password"
+                      type="password"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAdminAccess()}
+                      className="col-span-3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="비밀번호를 입력하세요"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button 
+                    onClick={handleAdminAccess}
+                    className="w-full"
+                  >
+                    접근
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </nav>
 
           {/* 검색 및 액션 */}
@@ -265,6 +325,50 @@ export default function Header() {
                       </Link>
                     );
                   })}
+                  
+                  {/* 모바일 관리자 버튼 */}
+                  <Dialog open={isAdminDialogOpen} onOpenChange={setIsAdminDialogOpen}>
+                    <DialogTrigger asChild>
+                      <button
+                        className="flex items-center space-x-3 px-3 py-3 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors w-full text-left"
+                      >
+                        <Shield className="h-5 w-5" />
+                        <span className="flex-1">관리자</span>
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>관리자 접근</DialogTitle>
+                        <DialogDescription>
+                          관리자 페이지에 접근하려면 비밀번호를 입력하세요.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="mobile-password" className="text-right">
+                            비밀번호
+                          </Label>
+                          <input
+                            id="mobile-password"
+                            type="password"
+                            value={adminPassword}
+                            onChange={(e) => setAdminPassword(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleAdminAccess()}
+                            className="col-span-3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="비밀번호를 입력하세요"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button 
+                          onClick={handleAdminAccess}
+                          className="w-full"
+                        >
+                          접근
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </nav>
 
                 <div className="mt-6 pt-6 border-t space-y-4">

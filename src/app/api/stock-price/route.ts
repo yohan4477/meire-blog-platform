@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-const StockDB = require('../../../lib/stock-db-sqlite3.js');
+const { getStockDB } = require('../../../lib/stock-db-sqlite3.js');
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,9 +46,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// SQLite3 DB에서 주식 가격 데이터 조회 (메르 언급 종목만)
+// SQLite3 DB에서 주식 가격 데이터 조회 (메르 언급 종목만) - 글로벌 인스턴스 사용
 async function fetchStockPriceData(ticker: string, period: string) {
-  const stockDB = new StockDB();
+  const stockDB = getStockDB();
   
   try {
     await stockDB.connect();
@@ -89,6 +89,7 @@ async function fetchStockPriceData(ticker: string, period: string) {
     // DB 실패 시 Yahoo Finance fallback
     return await fetchFromYahooFinance(ticker, period);
   } finally {
+    // 글로벌 인스턴스는 종료하지 않고 재사용
     stockDB.close();
   }
 }

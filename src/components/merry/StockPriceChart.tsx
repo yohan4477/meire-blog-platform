@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 // Sheet 관련 import 제거 - 상세 정보 패널 필요 없음
-import { TrendingUp, TrendingDown, Calendar, DollarSign, BarChart3, Zap, Target, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Calendar, DollarSign, BarChart3, Zap, Target, Activity, Info } from 'lucide-react';
 
 // 🎨 반응형 차트 테마 시스템 (다크모드/라이트모드 대응)
 const getChartTheme = (isDark: boolean = false) => ({
@@ -153,6 +153,23 @@ export default function StockPriceChart({
     touchStartX: null,
     isSwiping: false,
   });
+
+  // 필터링된 데이터 계산 - 줌 범위에 따른 데이터 필터링
+  const filteredData = useMemo(() => {
+    let data = priceData;
+    
+    // X축 줌 범위가 있으면 해당 범위의 데이터만 필터링
+    if (zoomState.left && zoomState.right) {
+      const startDate = new Date(zoomState.left).getTime();
+      const endDate = new Date(zoomState.right).getTime();
+      data = priceData.filter(d => {
+        const dataDate = new Date(d.date).getTime();
+        return dataDate >= startDate && dataDate <= endDate;
+      });
+    }
+    
+    return data;
+  }, [priceData, zoomState.left, zoomState.right]);
 
   // 다크모드 감지 - 안전한 클라이언트 전용 실행
   useEffect(() => {
@@ -481,13 +498,27 @@ export default function StockPriceChart({
   };
 
   const handleMarkerClick = (data: PricePoint) => {
-    if (data.postTitle && !data.isCurrentPrice && data.postId) {
-      // allPosts에서 해당 포스트 찾기
-      const post = allPosts.find(p => p.id === data.postId);
-      if (post) {
-        setSelectedPost(post);
-        // Sheet 열기 제거 - 툴팁만 표시
+    try {
+      if (data && data.postTitle && !data.isCurrentPrice && data.postId) {
+        // allPosts에서 해당 포스트 찾기
+        const post = allPosts.find(p => p.id === data.postId);
+        if (post) {
+          setSelectedPost(post);
+          // Sheet 열기 제거 - 툴팁만 표시
+        }
       }
+    } catch (error) {
+      console.warn('마커 클릭 에러:', error);
+    }
+  };
+
+  // 🛡️ 안전한 테마 헬퍼 함수
+  const getSafeTheme = () => {
+    try {
+      return getChartTheme(isDarkMode ?? false);
+    } catch (error) {
+      console.warn('테마 로딩 에러:', error);
+      return getChartTheme(false); // 기본값으로 라이트 테마 사용
     }
   };
 
@@ -496,7 +527,7 @@ export default function StockPriceChart({
     if (!active || !payload || !payload.length) return null;
     
     const data = payload[0].payload;
-    const theme = getChartTheme(isDarkMode);
+    const theme = getSafeTheme();
     
     // 언급된 날짜나 현재가가 아니면 툴팁을 표시하지 않음
     if (!data.postTitle && !data.isCurrentPrice) {
@@ -752,29 +783,29 @@ export default function StockPriceChart({
   };
 
   const calculateYAxisDomain = (data: PricePoint[], xDomain?: [string | number | undefined, string | number | undefined]) => {
-    let filteredData = data;
+    let dataToUse = data;
     
     // X축 줌 범위가 있으면 해당 범위의 데이터만 필터링
     if (xDomain && xDomain[0] && xDomain[1]) {
       const startDate = new Date(xDomain[0]).getTime();
       const endDate = new Date(xDomain[1]).getTime();
-      filteredData = data.filter(d => {
+      dataToUse = data.filter(d => {
         const dataDate = new Date(d.date).getTime();
         return dataDate >= startDate && dataDate <= endDate;
       });
     }
     
-    const prices = filteredData.map(d => d.price).filter(p => p > 0);
+    const prices = dataToUse.map(d => d.price).filter(p => p > 0);
     if (prices.length > 0) {
       const minPrice = Math.min(...prices);
       const maxPrice = Math.max(...prices);
-      const padding = (maxPrice - minPrice) * 0.05; // 5% 여백
+      const padding = (maxPrice - minPrice) * 0.1; // 10% 여백으로 적당하게
       
       const yAxisMin = Math.max(0, minPrice - padding);
       const yAxisMax = maxPrice + padding;
       
       setYAxisDomain([yAxisMin, yAxisMax]);
-      console.log(`📊 Y-axis range: ${yAxisMin.toFixed(0)} - ${yAxisMax.toFixed(0)} (${filteredData.length}/${data.length} points)`);
+      console.log(`📊 Y-axis range: ${yAxisMin.toFixed(0)} - ${yAxisMax.toFixed(0)} (${dataToUse.length}/${data.length} points)`);
     }
   };
 
@@ -831,23 +862,66 @@ export default function StockPriceChart({
 
   // 🤳 모바일 터치 이벤트 핸들러들
   const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
+    // 강화된 안전성 검사
+    if (!e || !e.touches || e.touches.length === 0) {
+      console.warn('터치 이벤트 또는 터치 배열이 없음');
+      return;
+    }
     
-    setTouchInteraction(prev => ({
-      ...prev,
-      isActive: true,
-      touchStartX: x,
-      isSwiping: false,
-      position: { x, y: touch.clientY - rect.top }
-    }));
+    const touch = e.touches[0];
+    if (!touch || typeof touch.clientX !== 'number' || typeof touch.clientY !== 'number') {
+      console.warn('유효하지 않은 터치 객체');
+      return;
+    }
+    
+    try {
+      const target = e.currentTarget;
+      if (!target || typeof target.getBoundingClientRect !== 'function') {
+        console.warn('유효하지 않은 터치 타겟');
+        return;
+      }
+      
+      const rect = target.getBoundingClientRect();
+      if (!rect || typeof rect.left !== 'number' || typeof rect.top !== 'number') {
+        console.warn('유효하지 않은 바운딩 렉트');
+        return;
+      }
+      
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      
+      // 차트 영역 내부인지 확인
+      if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+        console.warn('터치가 차트 영역 밖에 있음');
+        return;
+      }
+      
+      setTouchInteraction(prev => ({
+        ...prev,
+        isActive: true,
+        touchStartX: x,
+        isSwiping: false,
+        position: { x, y }
+      }));
+    } catch (error) {
+      console.error('터치 시작 처리 중 오류:', error);
+      // 오류 시 안전한 상태로 초기화
+      setTouchInteraction({
+        isActive: false,
+        activePoint: null,
+        position: null,
+        touchStartX: null,
+        isSwiping: false,
+      });
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!touchInteraction.isActive) return;
     
     const touch = e.touches[0];
+    if (!touch) return; // 터치 없음 방지
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const x = touch.clientX - rect.left;
     const y = touch.clientY - rect.top;
@@ -860,17 +934,26 @@ export default function StockPriceChart({
       setTouchInteraction(prev => ({ ...prev, isSwiping: true }));
     }
     
-    // 차트 데이터에서 현재 터치 위치에 해당하는 포인트 찾기
-    const chartWidth = rect.width - 60; // 마진 고려
-    const dataIndex = Math.round((x - 30) / chartWidth * (priceData.length - 1));
-    const clampedIndex = Math.max(0, Math.min(dataIndex, priceData.length - 1));
-    const activePoint = priceData[clampedIndex];
-    
-    setTouchInteraction(prev => ({
-      ...prev,
-      position: { x, y },
-      activePoint: activePoint || null
-    }));
+    // 차트 데이터에서 현재 터치 위치에 해당하는 포인트 찾기 (안전 장치)
+    if (priceData && priceData.length > 0) {
+      const chartWidth = rect.width - 60; // 마진 고려
+      const dataIndex = Math.round((x - 30) / chartWidth * (priceData.length - 1));
+      const clampedIndex = Math.max(0, Math.min(dataIndex, priceData.length - 1));
+      const activePoint = priceData[clampedIndex];
+      
+      setTouchInteraction(prev => ({
+        ...prev,
+        position: { x, y },
+        activePoint: activePoint || null
+      }));
+    } else {
+      // 데이터 없을 때는 위치만 업데이트
+      setTouchInteraction(prev => ({
+        ...prev,
+        position: { x, y },
+        activePoint: null
+      }));
+    }
     
     // 기본 터치 스크롤 방지 (차트 위에서만)
     if (touchInteraction.isSwiping) {
@@ -1228,6 +1311,25 @@ export default function StockPriceChart({
                 </button>
               ))}
             </div>
+            
+            {/* 📊 실제 데이터 범위 표시 */}
+            <div className="mt-2 text-xs flex items-center gap-2">
+              <Info className="w-3 h-3" style={{ color: getChartTheme(isDarkMode).text.muted }} />
+              <span style={{ color: getChartTheme(isDarkMode).text.muted }}>
+                실제 데이터: {filteredData.length > 0 ? formatDate(filteredData[0]?.date || '') : '-'} ~ {filteredData.length > 0 ? formatDate(filteredData[filteredData.length - 1]?.date || '') : '-'} ({filteredData.length}일)
+              </span>
+              {filteredData.length > 0 && filteredData.length < (timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : 180) && (
+                <span 
+                  className="px-2 py-0.5 rounded text-xs"
+                  style={{ 
+                    background: `${getChartTheme(isDarkMode).sentiment.warning.primary}20`,
+                    color: getChartTheme(isDarkMode).sentiment.warning.primary
+                  }}
+                >
+                  데이터 부족
+                </span>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center gap-3">
@@ -1290,6 +1392,7 @@ export default function StockPriceChart({
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
+              isAnimationActive={false}
             >
               {/* 🎨 프로페셔널 그리드 시스템 */}
               <CartesianGrid 
@@ -1318,7 +1421,8 @@ export default function StockPriceChart({
                   stroke: getChartTheme(isDarkMode).chart.axis, 
                   strokeWidth: 1 
                 }}
-                domain={zoomState.left && zoomState.right ? [zoomState.left, zoomState.right] : ['dataMin', 'dataMax']}
+                domain={zoomState.left && zoomState.right ? [zoomState.left, zoomState.right] : 
+                  filteredData.length > 0 ? [filteredData[0].date, filteredData[filteredData.length - 1].date] : ['dataMin', 'dataMax']}
                 type="category"
                 allowDataOverflow
                 height={40}
@@ -1327,7 +1431,7 @@ export default function StockPriceChart({
               
               {/* 💰 Y축 (가격) - 전문적인 가격 표시 */}
               <YAxis 
-                domain={yAxisDomain || ['auto', 'auto']}
+                domain={yAxisDomain || ['dataMin - 10', 'dataMax + 10']}
                 tickFormatter={(value) => formatPrice(value)}
                 tick={{ 
                   fontSize: 11, 
@@ -1372,13 +1476,14 @@ export default function StockPriceChart({
                 stroke={getChartTheme(isDarkMode).chart.line}
                 strokeWidth={2.5}
                 style={{}}
+                isAnimationActive={false}
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
                   
                   // 🎯 포스트 언급 마커 (감정 분석 기반 고급 시각화)
                   if (payload.postTitle && !payload.isCurrentPrice) {
                     // 감정 분석에 따른 마커 스타일 결정
-                    const currentTheme = getChartTheme(isDarkMode);
+                    const currentTheme = getSafeTheme();
                     let markerTheme = currentTheme.sentiment.neutral;
                     let intensity = 0.7;
                     
@@ -1477,44 +1582,19 @@ export default function StockPriceChart({
                     );
                   }
                   
-                  // 🔥 현재가 마커 (실시간 펄스 효과)
+                  // 🔥 현재가 마커 (단순한 빈 원)
                   if (payload.isCurrentPrice) {
                     return (
                       <g>
-                        {/* 펄스 애니메이션 링 */}
+                        {/* 단순한 빈 원 마커 */}
                         <circle 
                           cx={cx} 
                           cy={cy} 
-                          r={15} 
-                          fill={getChartTheme(isDarkMode).sentiment.positive.primary}
-                          opacity={0.1}
-                        />
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={10} 
-                          fill={getChartTheme(isDarkMode).sentiment.positive.primary}
-                          opacity={0.2}
-                        />
-                        
-                        {/* 메인 현재가 마커 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={7} 
-                          fill={getChartTheme(isDarkMode).sentiment.positive.primary}
-                          stroke={getChartTheme(isDarkMode).background.primary}
-                          strokeWidth={2}
-                          style={{}}
-                        />
-                        
-                        {/* 내부 하이라이트 */}
-                        <circle 
-                          cx={cx - 2} 
-                          cy={cy - 2} 
-                          r={2} 
-                          fill={getChartTheme(isDarkMode).sentiment.positive.glow}
-                          opacity={0.8}
+                          r={5} 
+                          fill="none"
+                          stroke={getSafeTheme().sentiment.positive.primary}
+                          strokeWidth={2.5}
+                          style={{ cursor: 'pointer' }}
                         />
                       </g>
                     );
@@ -1552,8 +1632,9 @@ export default function StockPriceChart({
             </LineChart>
           </ResponsiveContainer>
           
-          {/* 🤳 모바일 터치 인터랙션 오버레이 */}
-          {touchInteraction.isActive && touchInteraction.activePoint && touchInteraction.position && (
+          {/* 🤳 모바일 터치 인터랙션 오버레이 - 언급한 날짜에만 표시 */}
+          {touchInteraction.isActive && touchInteraction.activePoint && touchInteraction.position && 
+           touchInteraction.activePoint.postTitle && (
             <div 
               className="absolute pointer-events-none z-10"
               style={{
@@ -1650,13 +1731,15 @@ export default function StockPriceChart({
                   </div>
                 )}
                 
-                {/* 터치 힌트 */}
-                <div 
-                  className="text-xs text-center mt-2 opacity-75"
-                  style={{ color: getChartTheme(isDarkMode).text.muted }}
-                >
-                  👆 스와이프하여 다른 지점 보기
-                </div>
+                {/* 터치 힌트 - 언급한 날에만 표시 */}
+                {touchInteraction.activePoint.postTitle && (
+                  <div 
+                    className="text-xs text-center mt-2 opacity-75"
+                    style={{ color: getSafeTheme().text.muted }}
+                  >
+                    👆 스와이프하여 다른 지점 보기
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1708,7 +1791,7 @@ export default function StockPriceChart({
               className="text-xl font-bold tracking-tight flex items-center justify-center gap-2"
               style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
             >
-              <Activity className="w-4 h-4 animate-pulse" />
+              <Activity className="w-4 h-4" />
               {formatPrice(priceData[priceData.length - 1]?.price || 0)}
             </div>
             <div 
@@ -1809,6 +1892,44 @@ export default function StockPriceChart({
             )}
           </div>
         </div>
+
+        {/* 📝 데이터 설명 및 안내 */}
+        {filteredData.length > 0 && filteredData.length < (timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : 180) && (
+          <div 
+            className="mt-6 p-4 rounded-lg border-l-4"
+            style={{ 
+              background: `${getChartTheme(isDarkMode).sentiment.warning.primary}10`,
+              borderLeftColor: getChartTheme(isDarkMode).sentiment.warning.primary,
+              border: `1px solid ${getChartTheme(isDarkMode).sentiment.warning.primary}30`
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <Info 
+                className="w-5 h-5 mt-0.5"
+                style={{ color: getChartTheme(isDarkMode).sentiment.warning.primary }}
+              />
+              <div>
+                <h4 
+                  className="text-sm font-medium mb-2"
+                  style={{ color: getChartTheme(isDarkMode).sentiment.warning.primary }}
+                >
+                  📊 데이터 범위 안내
+                </h4>
+                <p 
+                  className="text-xs leading-relaxed"
+                  style={{ color: getChartTheme(isDarkMode).text.secondary }}
+                >
+                  현재 {timeRange} 차트와 다른 기간 차트가 동일하게 보이는 이유는 데이터베이스에 저장된 가격 데이터가 
+                  <strong className="mx-1" style={{ color: getChartTheme(isDarkMode).text.primary }}>
+                    {formatDate(filteredData[0]?.date || '')} ~ {formatDate(filteredData[filteredData.length - 1]?.date || '')}
+                  </strong>
+                  ({filteredData.length}일)로 제한되어 있기 때문입니다. 
+                  더 많은 히스토리컬 데이터가 축적되면 기간별 차이가 나타날 예정입니다.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
