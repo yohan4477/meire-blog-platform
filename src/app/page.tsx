@@ -27,6 +27,14 @@ const MerryStockPicks = dynamic(
   }
 );
 
+const MerryProfileTab = dynamic(
+  () => import('@/components/merry/MerryProfileTab'),
+  { 
+    loading: () => <Skeleton className="h-96 w-full" />,
+    ssr: false 
+  }
+);
+
 function DashboardSkeleton() {
   return (
     <div className="space-y-4">
@@ -75,27 +83,32 @@ export default function Home() {
     fetchMerryPosts();
   }, []);
 
-  // 큐레이션된 금융 콘텐츠 가져오기
+  // 큐레이션된 금융 콘텐츠 가져오기 (지연 로딩)
   useEffect(() => {
     const fetchFinancialContent = async () => {
       try {
-        const [curatedResponse, digestResponse] = await Promise.all([
-          fetch('/api/financial-curation?action=curated&limit=3'),
-          fetch('/api/financial-curation?action=digest')
-        ]);
-        
-        const [curatedData, digestData] = await Promise.all([
-          curatedResponse.json(),
-          digestResponse.json()
-        ]);
+        // 우선 큐레이션된 뉴스만 빠르게 로드
+        const curatedResponse = await fetch('/api/financial-curation?action=curated&limit=3');
+        const curatedData = await curatedResponse.json();
         
         if (curatedData.success) {
           setCuratedNews(curatedData.data.slice(0, 3));
         }
         
-        if (digestData.success) {
-          setDailyDigest(digestData.data);
-        }
+        // 다이제스트는 지연해서 로드
+        setTimeout(async () => {
+          try {
+            const digestResponse = await fetch('/api/financial-curation?action=digest');
+            const digestData = await digestResponse.json();
+            
+            if (digestData.success) {
+              setDailyDigest(digestData.data);
+            }
+          } catch (error) {
+            console.error('Daily digest 가져오기 실패:', error);
+          }
+        }, 2000); // 2초 지연
+        
       } catch (error) {
         console.error('금융 콘텐츠 가져오기 실패:', error);
         // fallback 데이터
@@ -224,7 +237,7 @@ export default function Home() {
       {/* Main Content with Tabs */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
             <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
               <span className="hidden sm:inline">📊 </span>
               <span className="truncate">대시보드</span>
@@ -240,6 +253,10 @@ export default function Home() {
             <TabsTrigger value="merry" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
               <span className="hidden sm:inline">🎭 </span>
               <span className="truncate">메르 블로그</span>
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
+              <span className="hidden sm:inline">👤 </span>
+              <span className="truncate">메르 소개</span>
             </TabsTrigger>
           </TabsList>
 
@@ -485,6 +502,10 @@ export default function Home() {
                 </div>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="profile" className="mt-6">
+            <MerryProfileTab />
           </TabsContent>
         </Tabs>
       </div>

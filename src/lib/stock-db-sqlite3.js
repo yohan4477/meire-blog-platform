@@ -246,36 +246,65 @@ class StockDB {
   }
 
   // 관련 포스트 가져오기 (페이지네이션 지원)
+  // blog_posts 테이블에서 ticker와 연관된 포스트 검색
   async getRelatedPosts(ticker, limit = 5, offset = 0) {
     if (!this.isConnected) await this.connect();
     
     return new Promise((resolve, reject) => {
+      // 주식명 매핑 (ticker -> 회사명)
+      const tickerToNameMap = {
+        '005930': '삼성전자',
+        'TSLA': '테슬라',
+        'AAPL': '애플',
+        'NVDA': '엔비디아',
+        'INTC': '인텔',
+        'TSMC': 'TSMC',
+        '042660': '한화오션',
+        '267250': 'HD현대'
+      };
+      
+      const stockName = tickerToNameMap[ticker] || ticker;
+      const searchTerms = [ticker, stockName];
+      
+      // 검색어 패턴 생성 (ticker OR 회사명)
+      const searchPattern = searchTerms.map(term => `%${term}%`).join(' OR ');
+      const whereClause = searchTerms.map(() => '(title LIKE ? OR content LIKE ? OR excerpt LIKE ?)').join(' OR ');
+      const searchParams = [];
+      searchTerms.forEach(term => {
+        const pattern = `%${term}%`;
+        searchParams.push(pattern, pattern, pattern);
+      });
+      
+      console.log(`🔍 Searching for posts with ticker: ${ticker}, name: ${stockName}`);
+      
       // 전체 포스트 수 먼저 조회
       this.db.get(`
         SELECT COUNT(*) as total
-        FROM posts p
-        JOIN post_mentions pm ON p.id = pm.post_id
-        WHERE pm.ticker = ?
-      `, [ticker], (err, countResult) => {
+        FROM blog_posts
+        WHERE ${whereClause}
+      `, searchParams, (err, countResult) => {
         if (err) {
+          console.error('Count query failed:', err);
           reject(err);
           return;
         }
         
         const total = countResult?.total || 0;
+        console.log(`📊 Found ${total} posts mentioning ${ticker}/${stockName}`);
         
         // 포스트 목록 조회
         this.db.all(`
-          SELECT p.id, p.title, p.excerpt, p.published_date
-          FROM posts p
-          JOIN post_mentions pm ON p.id = pm.post_id
-          WHERE pm.ticker = ?
-          ORDER BY p.published_date DESC
+          SELECT id, title, excerpt, created_date, views, category, blog_type
+          FROM blog_posts
+          WHERE ${whereClause}
+          ORDER BY created_date DESC
           LIMIT ? OFFSET ?
-        `, [ticker, limit, offset], (err, rows) => {
+        `, [...searchParams, limit, offset], (err, rows) => {
           if (err) {
+            console.error('Posts query failed:', err);
             reject(err);
           } else {
+            console.log(`✅ Retrieved ${rows?.length || 0} posts for ${ticker}`);
             resolve({
               posts: rows || [],
               total: total,

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { TrendingUp, TrendingDown, Calendar, DollarSign, BarChart3 } from 'lucide-react';
 
 interface PricePoint {
@@ -53,16 +54,19 @@ export default function StockPriceChart({
     percentage: number; 
     isPositive: boolean; 
   } | null>(null);
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [isPostSheetOpen, setIsPostSheetOpen] = useState(false);
 
   useEffect(() => {
     fetchAllPostsAndGenerateChart();
-  }, [ticker, currentPrice]);
+  }, [ticker, currentPrice, timeRange]);
 
   const fetchAllPostsAndGenerateChart = async () => {
     try {
-      // 6개월간의 모든 포스트 가져오기
+      // 선택된 기간에 따른 포스트 가져오기
+      const period = timeRange.toLowerCase(); // 6M -> 6m
       const cacheBuster = Date.now();
-      const response = await fetch(`/api/merry/stocks/${ticker}/posts/full?period=6mo&t=${cacheBuster}`, {
+      const response = await fetch(`/api/merry/stocks/${ticker}/posts/full?period=${period}&t=${cacheBuster}`, {
         cache: 'no-store'
       });
       
@@ -88,8 +92,8 @@ export default function StockPriceChart({
     try {
       const chartData: PricePoint[] = [];
 
-      // 실제 주식 가격 API 호출 (6개월)
-      const priceData = await fetchRealStockPrices(ticker, stockName);
+      // 실제 주식 가격 API 호출 (선택된 기간)
+      const priceData = await fetchRealStockPrices(ticker, stockName, timeRange);
       
       if (priceData && priceData.length > 0) {
         // API에서 받은 실제 가격 데이터 사용
@@ -178,18 +182,18 @@ export default function StockPriceChart({
     }
   };
 
-  // 실제 주식 가격 API 호출
-  const fetchRealStockPrices = async (ticker: string, stockName: string) => {
+  // 실제 주식 가격 API 호출 (기간별)
+  const fetchRealStockPrices = async (ticker: string, stockName: string, period: string = '6M') => {
     try {
       // 한국 주식과 미국 주식 구분
       const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
       
       if (isKoreanStock) {
         // 한국 주식: KIS API 또는 Yahoo Finance Korea 사용
-        return await fetchKoreanStockPrice(ticker);
+        return await fetchKoreanStockPrice(ticker, period);
       } else {
         // 미국 주식: Alpha Vantage 또는 Yahoo Finance 사용
-        return await fetchUSStockPrice(ticker);
+        return await fetchUSStockPrice(ticker, period);
       }
     } catch (error) {
       console.error('주식 가격 API 호출 실패:', error);
@@ -198,11 +202,12 @@ export default function StockPriceChart({
   };
 
   // 한국 주식 가격 (Yahoo Finance Korea)
-  const fetchKoreanStockPrice = async (ticker: string) => {
+  const fetchKoreanStockPrice = async (ticker: string, period: string = '6M') => {
     try {
-      // Yahoo Finance 우회 API 사용 (CORS 문제 해결) - 6개월 데이터, 캐시 무효화
+      // 기간을 API 형식으로 변환
+      const apiPeriod = period.toLowerCase().replace('m', 'mo'); // 6M -> 6mo
       const cacheBuster = Date.now();
-      const response = await fetch(`/api/stock-price?ticker=${ticker}.KS&period=6mo&t=${cacheBuster}`, {
+      const response = await fetch(`/api/stock-price?ticker=${ticker}.KS&period=${apiPeriod}&t=${cacheBuster}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache'
@@ -221,10 +226,12 @@ export default function StockPriceChart({
   };
 
   // 미국 주식 가격
-  const fetchUSStockPrice = async (ticker: string) => {
+  const fetchUSStockPrice = async (ticker: string, period: string = '6M') => {
     try {
+      // 기간을 API 형식으로 변환
+      const apiPeriod = period.toLowerCase().replace('m', 'mo'); // 6M -> 6mo
       const cacheBuster = Date.now();
-      const response = await fetch(`/api/stock-price?ticker=${ticker}&period=6mo&t=${cacheBuster}`, {
+      const response = await fetch(`/api/stock-price?ticker=${ticker}&period=${apiPeriod}&t=${cacheBuster}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache'
@@ -256,6 +263,17 @@ export default function StockPriceChart({
     });
   };
 
+  const handleMarkerClick = (data: PricePoint) => {
+    if (data.postTitle && !data.isCurrentPrice && data.postId) {
+      // allPosts에서 해당 포스트 찾기
+      const post = allPosts.find(p => p.id === data.postId);
+      if (post) {
+        setSelectedPost(post);
+        setIsPostSheetOpen(true);
+      }
+    }
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -266,7 +284,7 @@ export default function StockPriceChart({
       }
       
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md max-w-xs">
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg max-w-xs z-50">
           <p className="font-semibold text-sm">{formatDate(label)}</p>
           <p className="text-lg font-bold text-primary">
             {formatPrice(payload[0].value)}
@@ -277,6 +295,14 @@ export default function StockPriceChart({
               <p className="text-sm text-red-600 line-clamp-2">
                 {data.postTitle}
               </p>
+              {data.postId && (
+                <button 
+                  onClick={() => handleMarkerClick(data)}
+                  className="text-xs text-blue-600 hover:text-blue-800 mt-1 underline"
+                >
+                  포스트 자세히 보기 →
+                </button>
+              )}
             </div>
           )}
           {data.isCurrentPrice && (
@@ -394,31 +420,14 @@ export default function StockPriceChart({
   };
 
   const handleTimeRangeChange = (range: string) => {
+    console.log(`📅 Changing time range to: ${range}`);
     setTimeRange(range);
     setZoomState({});
     setZoomHistory([]);
+    setLoading(true);
     
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (range) {
-      case '1M':
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case '3M':
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      case '6M':
-      default:
-        startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-        break;
-    }
-    
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = now.toISOString().split('T')[0];
-    
-    setZoomState({ left: startDateStr, right: endDateStr });
-    calculateYAxisDomain(priceData, [startDateStr, endDateStr]);
+    // 새로운 기간에 대한 데이터를 다시 가져옴 (useEffect가 트리거됨)
+    // fetchAllPostsAndGenerateChart()는 useEffect를 통해 자동 호출됨
   };
 
   if (loading) {
@@ -496,7 +505,7 @@ export default function StockPriceChart({
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          최근 6개월 가격 변화 추이 및 메르의 언급 시점
+          최근 {timeRange} 가격 변화 추이 및 메르의 언급 시점
         </p>
       </CardHeader>
       <CardContent>
@@ -566,9 +575,20 @@ export default function StockPriceChart({
                 strokeWidth={2}
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
-                  // 언급된 날짜만 빨간 점으로 표시
+                  // 언급된 날짜만 빨간 점으로 표시 (클릭 가능)
                   if (payload.postTitle && !payload.isCurrentPrice) {
-                    return <circle cx={cx} cy={cy} r={6} fill="#dc2626" stroke="#ffffff" strokeWidth={2} />;
+                    return (
+                      <circle 
+                        cx={cx} 
+                        cy={cy} 
+                        r={8} 
+                        fill="#dc2626" 
+                        stroke="#ffffff" 
+                        strokeWidth={2}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleMarkerClick(payload)}
+                      />
+                    );
                   }
                   // 현재가만 초록색 점으로 표시
                   if (payload.isCurrentPrice) {
@@ -626,7 +646,7 @@ export default function StockPriceChart({
             <div className="text-lg font-bold text-primary">
               {allPosts.length > 0 ? allPosts.length : recentPosts.length}개
             </div>
-            <div className="text-sm text-muted-foreground">최근 6개월 언급</div>
+            <div className="text-sm text-muted-foreground">최근 {timeRange} 언급</div>
             <div className="text-xs text-muted-foreground mt-1">
               <Calendar className="w-3 h-3 inline mr-1" />
               {priceData.filter(p => p.postTitle && !p.isCurrentPrice).length}회 언급
@@ -638,6 +658,67 @@ export default function StockPriceChart({
             )}
           </div>
         </div>
+
+        {/* 포스트 상세 정보 팝업 */}
+        <Sheet open={isPostSheetOpen} onOpenChange={setIsPostSheetOpen}>
+          <SheetContent className="w-[400px] sm:w-[540px] max-h-[100vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="text-lg font-bold text-left">
+                📝 메르의 포스트 상세정보
+              </SheetTitle>
+            </SheetHeader>
+            {selectedPost && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold text-primary">
+                    {selectedPost.title}
+                  </h3>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {new Date(selectedPost.created_date).toLocaleDateString('ko-KR')}
+                    </span>
+                    {selectedPost.views && selectedPost.views > 0 && (
+                      <span>{selectedPost.views.toLocaleString()} 조회</span>
+                    )}
+                    {selectedPost.category && (
+                      <Badge variant="outline">{selectedPost.category}</Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-primary">
+                  <p className="text-sm leading-relaxed">
+                    {selectedPost.excerpt}
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    💡 {stockName}이(가) 언급된 포스트입니다
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsPostSheetOpen(false)}
+                    >
+                      닫기
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={() => {
+                        window.open(`/merry/${selectedPost.id}`, '_blank');
+                      }}
+                    >
+                      전체 포스트 보기 →
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
       </CardContent>
     </Card>
   );

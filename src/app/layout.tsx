@@ -9,13 +9,15 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 const inter = Inter({ 
   subsets: ['latin'],
-  variable: '--font-inter'
+  variable: '--font-inter',
+  display: 'swap'
 });
 
 const notoSansKr = Noto_Sans_KR({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-noto-sans-kr'
+  variable: '--font-noto-sans-kr',
+  display: 'swap'
 });
 
 export const metadata: Metadata = {
@@ -101,26 +103,9 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        {/* Preload critical fonts */}
-        <link
-          rel="preload"
-          href="/_next/static/media/inter-latin.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="/_next/static/media/noto-sans-kr-latin.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-        
         {/* Performance and security headers */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-        <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
         <meta name="referrer" content="strict-origin-when-cross-origin" />
         
