@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+// Sheet 관련 import 제거 - 상세 정보 패널 필요 없음
 import { TrendingUp, TrendingDown, Calendar, DollarSign, BarChart3, Zap, Target, Activity } from 'lucide-react';
 
 // 🎨 반응형 차트 테마 시스템 (다크모드/라이트모드 대응)
@@ -137,7 +137,7 @@ export default function StockPriceChart({
     isPositive: boolean; 
   } | null>(null);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
-  const [isPostSheetOpen, setIsPostSheetOpen] = useState(false);
+  // Sheet 관련 state 제거 - 상세 정보 패널 필요 없음
 
   // 다크모드 감지 - 안전한 클라이언트 전용 실행
   useEffect(() => {
@@ -471,7 +471,7 @@ export default function StockPriceChart({
       const post = allPosts.find(p => p.id === data.postId);
       if (post) {
         setSelectedPost(post);
-        setIsPostSheetOpen(true);
+        // Sheet 열기 제거 - 툴팁만 표시
       }
     }
   };
@@ -1632,66 +1632,6 @@ export default function StockPriceChart({
           </div>
         </div>
 
-        {/* 포스트 상세 정보 팝업 */}
-        <Sheet open={isPostSheetOpen} onOpenChange={setIsPostSheetOpen}>
-          <SheetContent className="w-[400px] sm:w-[540px] max-h-[100vh] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className="text-lg font-bold text-left">
-                📝 메르의 포스트 상세정보
-              </SheetTitle>
-            </SheetHeader>
-            {selectedPost && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-primary">
-                    {selectedPost.title}
-                  </h3>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(selectedPost.created_date).toLocaleDateString('ko-KR')}
-                    </span>
-                    {selectedPost.views && selectedPost.views > 0 && (
-                      <span>{selectedPost.views.toLocaleString()} 조회</span>
-                    )}
-                    {selectedPost.category && (
-                      <Badge variant="outline">{selectedPost.category}</Badge>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-primary">
-                  <p className="text-sm leading-relaxed">
-                    {selectedPost.excerpt}
-                  </p>
-                </div>
-                
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    💡 {stockName}이(가) 언급된 포스트입니다
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setIsPostSheetOpen(false)}
-                    >
-                      닫기
-                    </Button>
-                    <Button 
-                      size="sm"
-                      onClick={() => {
-                        window.open(`/merry/${selectedPost.id}`, '_blank');
-                      }}
-                    >
-                      전체 포스트 보기 →
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
       </div>
     </div>
   );

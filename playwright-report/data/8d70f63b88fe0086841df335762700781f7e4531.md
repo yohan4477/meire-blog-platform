@@ -26,5 +26,4 @@
   - paragraph: 니가 뭘 알아. 니가 뭘 아냐고.
 - link "본문으로 바로가기":
   - /url: "#main-content"
-- alert
 ```
