@@ -74,8 +74,6 @@ export default function Header() {
 
   const navigationItems = [
     { href: "/", label: "홈", icon: Home },
-    { href: "/financial-curation", label: "AI 큐레이션", icon: Brain },
-    { href: "/institutional-investors", label: "기관투자자", icon: TrendingUp },
     { href: "/agent-workflows", label: "에이전트", icon: Activity, badge: isAgentActive ? "Live" : null },
     { href: "/merry", label: "메르 블로그", icon: User },
   ];
@@ -103,20 +101,6 @@ export default function Header() {
             >
               <Home className="h-4 w-4" />
               <span>홈</span>
-            </Link>
-            <Link 
-              href="/financial-curation" 
-              className="px-3 py-2 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors flex items-center space-x-1"
-            >
-              <Brain className="h-4 w-4" />
-              <span>AI 큐레이션</span>
-            </Link>
-            <Link 
-              href="/institutional-investors" 
-              className="px-3 py-2 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors flex items-center space-x-1"
-            >
-              <TrendingUp className="h-4 w-4" />
-              <span>기관투자자</span>
             </Link>
             <Link 
               href="/agent-workflows" 
