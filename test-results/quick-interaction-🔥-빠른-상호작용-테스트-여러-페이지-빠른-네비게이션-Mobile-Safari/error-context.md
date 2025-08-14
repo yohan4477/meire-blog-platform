@@ -1,0 +1,71 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - link "M 요르의 투자 플랫폼 니가 뭘 알아. 니가 뭘 아냐고":
+    - /url: /
+  - button
+  - button "2"
+  - button "Toggle theme"
+  - button "메뉴 열기"
+- main:
+  - heading "요르의 투자 플랫폼" [level=1]
+  - paragraph: 니가 뭘 알어. 니가 뭘 아냐고. AI 에이전트가 분석하는 국민연금, 기관투자자 포트폴리오 분석 플랫폼
+  - link "🤖 AI 금융 큐레이션":
+    - /url: /financial-curation
+  - link "국민연금 분석":
+    - /url: /investment
+  - link "에이전트 관리":
+    - /url: /agent-workflows
+  - text: 메르's Pick - 주목할 종목
+  - link "전체보기":
+    - /url: /merry/stocks
+    - button "전체보기"
+  - paragraph: 메르가 블로그에서 언급한 종목들 (포스트 개수 기준 랭킹)
+  - 'link "🏆 최근 3개월 최다 언급 한화오션 042660 KRX 해양플랜트, 선박건조, 해상풍력 등 해양 에너지 솔루션 전문기업 ₩106,600 +0.28% 29개 포스트 최근: 2025. 8. 11."':
+    - /url: /merry/stocks/042660
+    - text: 🏆 최근 3개월 최다 언급
+    - heading "한화오션" [level=3]
+    - text: 042660 KRX
+    - paragraph: 해양플랜트, 선박건조, 해상풍력 등 해양 에너지 솔루션 전문기업
+    - text: "₩106,600 +0.28% 29개 포스트 최근: 2025. 8. 11."
+  - 'link "HD현대 267250 KRX HD현대의 사업 정보 ₩134,500 +0.67% 23개 포스트 최근: 2025. 8. 11."':
+    - /url: /merry/stocks/267250
+    - heading "HD현대" [level=3]
+    - text: 267250 KRX
+    - paragraph: HD현대의 사업 정보
+    - text: "₩134,500 +0.67% 23개 포스트 최근: 2025. 8. 11."
+  - 'link "삼성전자 005930 KRX 세계 최대 반도체 메모리 제조사이자 스마트폰, 디스플레이 등 다양한 IT 제품 생산 ₩71,600 -0.42% 73개 포스트 최근: 2025. 8. 9."':
+    - /url: /merry/stocks/005930
+    - heading "삼성전자" [level=3]
+    - text: 005930 KRX
+    - paragraph: 세계 최대 반도체 메모리 제조사이자 스마트폰, 디스플레이 등 다양한 IT 제품 생산
+    - text: "₩71,600 -0.42% 73개 포스트 최근: 2025. 8. 9."
+  - 'link "테슬라 TSLA NASDAQ 전기차와 자율주행 기술의 글로벌 선도기업, 에너지 저장 및 태양광 사업도 운영 $339.38 -0.43% 42개 포스트 최근: 2025. 8. 9."':
+    - /url: /merry/stocks/TSLA
+    - heading "테슬라" [level=3]
+    - text: TSLA NASDAQ
+    - paragraph: 전기차와 자율주행 기술의 글로벌 선도기업, 에너지 저장 및 태양광 사업도 운영
+    - text: "$339.38 -0.43% 42개 포스트 최근: 2025. 8. 9."
+  - 'link "인텔 INTC NASDAQ 인텔의 사업 정보 $22.22 +1.88% 7개 포스트 최근: 2025. 8. 9."':
+    - /url: /merry/stocks/INTC
+    - heading "인텔" [level=3]
+    - text: INTC NASDAQ
+    - paragraph: 인텔의 사업 정보
+    - text: "$22.22 +1.88% 7개 포스트 최근: 2025. 8. 9."
+  - tablist:
+    - tab "대시보드" [selected]
+    - tab "AI 인사이트"
+    - tab "투자 분석"
+    - tab "메르 블로그"
+    - tab "메르 소개"
+  - tabpanel "대시보드"
+- contentinfo:
+  - paragraph: © 2025 요르의 투자 블로그. All rights reserved.
+  - paragraph: 니가 뭘 알아. 니가 뭘 아냐고.
+- button "Open Tanstack query devtools":
+  - img
+- link "본문으로 바로가기":
+  - /url: "#main-content"
+- alert
+```

@@ -6,7 +6,73 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { TrendingUp, TrendingDown, Calendar, DollarSign, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Calendar, DollarSign, BarChart3, Zap, Target, Activity } from 'lucide-react';
+
+// 🎨 반응형 차트 테마 시스템 (다크모드/라이트모드 대응)
+const getChartTheme = (isDark: boolean = false) => ({
+  // 메인 배경 - 다크모드 조건부
+  background: {
+    primary: isDark ? '#0a0e1a' : '#ffffff',      // 차트 배경
+    secondary: isDark ? '#111827' : '#f8fafc',     // 카드 배경
+    tertiary: isDark ? '#1f2937' : '#f1f5f9',      // 패널 배경
+    elevated: isDark ? '#374151' : '#e2e8f0',      // 호버/활성 상태
+  },
+  
+  // 텍스트 색상 - 다크모드 조건부
+  text: {
+    primary: isDark ? '#f9fafb' : '#0f172a',       // 주요 텍스트
+    secondary: isDark ? '#d1d5db' : '#475569',     // 보조 텍스트
+    muted: isDark ? '#9ca3af' : '#64748b',         // 비활성 텍스트
+    accent: isDark ? '#60a5fa' : '#3b82f6',        // 강조 텍스트
+  },
+  
+  // 차트 색상 - 다크모드 조건부
+  chart: {
+    line: '#3b82f6',                               // 메인 라인 (공통)
+    lineGlow: isDark ? '#1d4ed8' : '#3b82f6',      // 라인 글로우
+    grid: isDark ? '#374151' : '#e2e8f0',          // 그리드 라인
+    gridMajor: isDark ? '#4b5563' : '#cbd5e1',     // 주요 그리드
+    axis: isDark ? '#6b7280' : '#64748b',          // 축 색상
+    crosshair: isDark ? '#60a5fa' : '#3b82f6',     // 크로스헤어
+  },
+  
+  // 감정 분석 마커 - 다크모드 조건부
+  sentiment: {
+    positive: {
+      primary: '#10b981',                          // 긍정 (공통)
+      secondary: '#059669',                        // 어두운 긍정
+      glow: '#6ee7b7',                            // 글로우
+      background: isDark ? '#064e3b' : '#ecfdf5', // 배경
+    },
+    negative: {
+      primary: '#ef4444',                          // 부정 (공통)
+      secondary: '#dc2626',                        // 어두운 부정
+      glow: '#fca5a5',                            // 글로우
+      background: isDark ? '#7f1d1d' : '#fef2f2', // 배경
+    },
+    neutral: {
+      primary: isDark ? '#6b7280' : '#64748b',     // 중립
+      secondary: isDark ? '#4b5563' : '#475569',   // 어두운 중립
+      glow: isDark ? '#d1d5db' : '#94a3b8',       // 글로우
+      background: isDark ? '#374151' : '#f1f5f9', // 배경
+    },
+  },
+  
+  // 인터랙션 색상 - 다크모드 조건부
+  interaction: {
+    hover: isDark ? '#1e40af' : '#2563eb',       // 호버
+    active: '#2563eb',                           // 활성 (공통)
+    focus: '#3b82f6',                            // 포커스 (공통)
+    selection: isDark ? '#1e3a8a' : '#dbeafe',   // 선택 영역
+  },
+  
+  // 그라데이션 - 다크모드 조건부
+  gradients: {
+    pricePositive: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    priceNegative: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+    chartGlow: `linear-gradient(90deg, transparent 0%, ${isDark ? '#3b82f6' : '#60a5fa'} 50%, transparent 100%)`,
+  }
+});
 
 interface PricePoint {
   date: string;
@@ -46,6 +112,7 @@ export default function StockPriceChart({
   currentPrice = 0 
 }: StockPriceChartProps) {
   const [priceData, setPriceData] = useState<PricePoint[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [allPosts, setAllPosts] = useState<any[]>([]);
   const [sentimentData, setSentimentData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -71,6 +138,47 @@ export default function StockPriceChart({
   } | null>(null);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [isPostSheetOpen, setIsPostSheetOpen] = useState(false);
+
+  // 다크모드 감지 - 안전한 클라이언트 전용 실행
+  useEffect(() => {
+    // 클라이언트 전용 실행 보장
+    if (typeof window === 'undefined') return;
+    
+    const checkDarkMode = () => {
+      try {
+        if (document?.documentElement?.classList) {
+          setIsDarkMode(document.documentElement.classList.contains('dark'));
+        }
+      } catch (error) {
+        console.warn('다크모드 감지 실패:', error);
+        setIsDarkMode(false); // 기본값
+      }
+    };
+    
+    checkDarkMode();
+    
+    // MutationObserver 안전한 생성
+    let observer: MutationObserver | null = null;
+    try {
+      if (typeof MutationObserver !== 'undefined' && document?.documentElement) {
+        observer = new MutationObserver(checkDarkMode);
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['class']
+        });
+      }
+    } catch (error) {
+      console.warn('MutationObserver 생성 실패:', error);
+    }
+    
+    return () => {
+      try {
+        observer?.disconnect();
+      } catch (error) {
+        console.warn('MutationObserver 정리 실패:', error);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     fetchAllPostsAndGenerateChart();
@@ -368,78 +476,264 @@ export default function StockPriceChart({
     }
   };
 
+  // 🚀 프로페셔널 툴팁 컴포넌트 (다크모드/라이트모드 대응)
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
+    if (!active || !payload || !payload.length) return null;
+    
+    const data = payload[0].payload;
+    const theme = getChartTheme(isDarkMode);
+    
+    // 언급된 날짜나 현재가가 아니면 툴팁을 표시하지 않음
+    if (!data.postTitle && !data.isCurrentPrice) {
+      return null;
+    }
+
+    const getSentimentInfo = (sentiments: any[]) => {
+      if (!sentiments || sentiments.length === 0) return null;
       
-      // 언급된 날짜나 현재가가 아니면 툴팁을 표시하지 않음
-      if (!data.postTitle && !data.isCurrentPrice) {
-        return null;
-      }
+      const counts = sentiments.reduce((acc, s) => {
+        acc[s.sentiment] = (acc[s.sentiment] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
       
-      return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg max-w-xs z-50">
-          <p className="font-semibold text-sm">{formatDate(label)}</p>
-          <p className="text-lg font-bold text-primary">
-            {formatPrice(payload[0].value)}
-          </p>
-          {data.postTitle && !data.isCurrentPrice && (
-            <div className="mt-2 p-2 bg-blue-50 rounded border-l-2 border-blue-400">
-              <p className="text-xs font-medium text-blue-700 mb-1">📝 메르의 언급</p>
-              <p className="text-sm text-blue-600 line-clamp-2">
-                {data.postTitle}
-              </p>
-              
-              {/* 감정 분석 정보 표시 */}
-              {data.sentiments && data.sentiments.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-blue-200">
-                  <p className="text-xs font-medium text-gray-700 mb-1">🎯 감정 분석</p>
-                  {data.sentiments.slice(0, 2).map((sentiment, index) => {
-                    const sentimentColor = sentiment.sentiment === 'positive' ? 'text-green-600' :
-                                         sentiment.sentiment === 'negative' ? 'text-red-600' : 'text-gray-600';
-                    const sentimentIcon = sentiment.sentiment === 'positive' ? '😊' :
-                                        sentiment.sentiment === 'negative' ? '😟' : '😐';
-                    
-                    return (
-                      <div key={index} className="flex items-center justify-between text-xs mb-1">
-                        <span className={`${sentimentColor} font-medium`}>
-                          {sentimentIcon} {sentiment.sentiment}
-                        </span>
-                        <span className="text-gray-500">
-                          신뢰도: {(sentiment.confidence * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {data.sentiments.length > 2 && (
-                    <p className="text-xs text-gray-500">
-                      +{data.sentiments.length - 2}개 더
-                    </p>
-                  )}
-                </div>
-              )}
-              
-              {data.postId && (
-                <button 
-                  onClick={() => handleMarkerClick(data)}
-                  className="text-xs text-blue-600 hover:text-blue-800 mt-2 underline"
-                >
-                  포스트 자세히 보기 →
-                </button>
-              )}
-            </div>
-          )}
+      const dominant = Object.entries(counts)
+        .sort(([,a], [,b]) => (b as number) - (a as number))[0];
+      
+      return {
+        type: dominant[0],
+        count: dominant[1],
+        total: sentiments.length,
+        avgConfidence: sentiments.reduce((sum, s) => sum + s.confidence, 0) / sentiments.length
+      };
+    };
+
+    const sentimentInfo = getSentimentInfo(data.sentiments || []);
+    
+    return (
+      <div 
+        className="relative"
+        style={{
+          background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
+          border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
+          borderRadius: '12px',
+          padding: '16px',
+          maxWidth: '320px',
+          boxShadow: isDarkMode ? `
+            0 20px 25px -5px rgba(0, 0, 0, 0.3),
+            0 10px 10px -5px rgba(0, 0, 0, 0.2),
+            0 0 0 1px rgba(59, 130, 246, 0.1)
+          ` : `
+            0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.05),
+            0 0 0 1px rgba(59, 130, 246, 0.1)
+          `,
+          backdropFilter: 'blur(8px)',
+          zIndex: 1000,
+        }}
+      >
+        {/* 🎯 헤더 섹션 */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div 
+              className="w-2 h-2 rounded-full animate-pulse"
+              style={{ 
+                background: data.isCurrentPrice 
+                  ? getChartTheme(isDarkMode).sentiment.positive.primary 
+                  : getChartTheme(isDarkMode).chart.line,
+                boxShadow: `0 0 8px ${data.isCurrentPrice 
+                  ? getChartTheme(isDarkMode).sentiment.positive.glow 
+                  : getChartTheme(isDarkMode).chart.crosshair}50`
+              }}
+            />
+            <span 
+              className="text-xs font-medium tracking-wide"
+              style={{ color: getChartTheme(isDarkMode).text.secondary }}
+            >
+              {formatDate(label)}
+            </span>
+          </div>
           {data.isCurrentPrice && (
-            <div className="mt-2 p-2 bg-green-50 rounded border-l-2 border-green-400">
-              <p className="text-sm text-green-600 font-medium">
-                🔥 현재가
-              </p>
+            <div className="flex items-center gap-1">
+              <Activity className="w-3 h-3" style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }} />
+              <span 
+                className="text-xs font-bold"
+                style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
+              >
+                LIVE
+              </span>
             </div>
           )}
         </div>
-      );
-    }
-    return null;
+
+        {/* 💰 가격 정보 */}
+        <div className="mb-4">
+          <div 
+            className="text-2xl font-bold tracking-tight"
+            style={{ 
+              color: getChartTheme(isDarkMode).text.primary,
+              textShadow: `0 0 10px ${getChartTheme(isDarkMode).chart.crosshair}30`
+            }}
+          >
+            {formatPrice(payload[0].value)}
+          </div>
+          {priceChange && !data.isCurrentPrice && (
+            <div className="flex items-center gap-2 mt-1">
+              <div 
+                className="text-sm font-medium"
+                style={{ 
+                  color: priceChange.isPositive 
+                    ? getChartTheme(isDarkMode).sentiment.positive.primary 
+                    : getChartTheme(isDarkMode).sentiment.negative.primary
+                }}
+              >
+                {priceChange.isPositive ? '+' : ''}{priceChange.percentage.toFixed(1)}%
+              </div>
+              <div 
+                className="text-xs px-2 py-0.5 rounded-full"
+                style={{ 
+                  background: priceChange.isPositive 
+                    ? getChartTheme(isDarkMode).sentiment.positive.background 
+                    : getChartTheme(isDarkMode).sentiment.negative.background,
+                  color: priceChange.isPositive 
+                    ? getChartTheme(isDarkMode).sentiment.positive.primary 
+                    : getChartTheme(isDarkMode).sentiment.negative.primary
+                }}
+              >
+                {formatPrice(Math.abs(priceChange.value))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 📝 포스트 정보 */}
+        {data.postTitle && !data.isCurrentPrice && (
+          <div 
+            className="rounded-lg p-3 mb-3 relative overflow-hidden"
+            style={{ 
+              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).interaction.selection}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
+              border: `1px solid ${getChartTheme(isDarkMode).chart.line}30`
+            }}
+          >
+            <div className="flex items-start gap-2 mb-2">
+              <Target className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: getChartTheme(isDarkMode).text.accent }} />
+              <div>
+                <div 
+                  className="text-xs font-medium mb-1"
+                  style={{ color: getChartTheme(isDarkMode).text.accent }}
+                >
+                  메르의 언급
+                </div>
+                <div 
+                  className="text-sm leading-relaxed line-clamp-2"
+                  style={{ color: getChartTheme(isDarkMode).text.primary }}
+                >
+                  {data.postTitle}
+                </div>
+              </div>
+            </div>
+
+            {/* 🎯 감정 분석 섹션 */}
+            {sentimentInfo && (
+              <div 
+                className="pt-3 mt-3"
+                style={{ borderTop: `1px solid ${getChartTheme(isDarkMode).chart.grid}` }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-3 h-3" style={{ color: getChartTheme(isDarkMode).text.accent }} />
+                    <span 
+                      className="text-xs font-medium"
+                      style={{ color: getChartTheme(isDarkMode).text.secondary }}
+                    >
+                      감정 분석
+                    </span>
+                  </div>
+                  <div 
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={{ 
+                      background: sentimentInfo.type === 'positive' ? '#16a34a' : sentimentInfo.type === 'negative' ? '#dc2626' : '#2563eb',
+                      color: '#ffffff'
+                    }}
+                  >
+                    {sentimentInfo.type.toUpperCase()}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <div style={{ color: getChartTheme(isDarkMode).text.muted }}>신뢰도</div>
+                    <div 
+                      className="font-medium"
+                      style={{ color: getChartTheme(isDarkMode).text.secondary }}
+                    >
+                      {(sentimentInfo.avgConfidence * 100).toFixed(0)}%
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: getChartTheme(isDarkMode).text.muted }}>분석 수</div>
+                    <div 
+                      className="font-medium"
+                      style={{ color: getChartTheme(isDarkMode).text.secondary }}
+                    >
+                      {sentimentInfo.total}개
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 클릭 유도 */}
+            {data.postId && (
+              <div className="mt-3 pt-2" style={{ borderTop: `1px dashed ${getChartTheme(isDarkMode).chart.grid}` }}>
+                <button 
+                  onClick={() => handleMarkerClick(data)}
+                  className="text-xs hover:underline transition-all duration-200"
+                  style={{ 
+                    color: getChartTheme(isDarkMode).text.accent,
+                  }}
+                >
+                  포스트 자세히 보기 →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 🔥 현재가 표시 */}
+        {data.isCurrentPrice && (
+          <div 
+            className="rounded-lg p-3"
+            style={{ 
+              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.positive.background} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
+              border: `1px solid ${getChartTheme(isDarkMode).sentiment.positive.primary}30`
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <div 
+                className="w-2 h-2 rounded-full animate-ping"
+                style={{ background: getChartTheme(isDarkMode).sentiment.positive.primary }}
+              />
+              <span 
+                className="text-sm font-medium"
+                style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
+              >
+                실시간 현재가
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* 💫 글로우 효과 */}
+        <div 
+          className="absolute inset-0 rounded-xl pointer-events-none"
+          style={{
+            background: getChartTheme(isDarkMode).gradients.chartGlow,
+            opacity: 0.1,
+            zIndex: -1
+          }}
+        />
+      </div>
+    );
   };
 
   const calculateYAxisDomain = (data: PricePoint[], xDomain?: [string | number | undefined, string | number | undefined]) => {
@@ -556,118 +850,359 @@ export default function StockPriceChart({
 
   if (loading) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            가격 차트
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
-            <p className="text-muted-foreground">차트를 불러오는 중...</p>
+      <div 
+        className="w-full rounded-xl overflow-hidden relative"
+        style={{
+          background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
+          border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
+          boxShadow: `
+            0 20px 25px -5px rgba(0, 0, 0, 0.2),
+            0 10px 10px -5px rgba(0, 0, 0, 0.1),
+            0 0 0 1px rgba(59, 130, 246, 0.05)
+          `
+        }}
+      >
+        <div 
+          className="px-6 py-4 border-b"
+          style={{ 
+            borderColor: getChartTheme(isDarkMode).chart.grid,
+            background: `linear-gradient(90deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div 
+              className="p-2 rounded-lg animate-pulse"
+              style={{ background: `${getChartTheme(isDarkMode).chart.line}20` }}
+            >
+              <BarChart3 
+                className="w-5 h-5"
+                style={{ color: getChartTheme(isDarkMode).chart.line }}
+              />
+            </div>
+            <div>
+              <h3 
+                className="text-lg font-bold tracking-tight"
+                style={{ color: getChartTheme(isDarkMode).text.primary }}
+              >
+                가격 차트
+              </h3>
+              <p 
+                className="text-sm mt-1"
+                style={{ color: getChartTheme(isDarkMode).text.muted }}
+              >
+                차트 데이터를 불러오는 중입니다...
+              </p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        
+        <div className="p-6">
+          <div 
+            className="h-80 rounded-lg flex items-center justify-center relative overflow-hidden"
+            style={{
+              background: getChartTheme(isDarkMode).background.primary,
+              border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
+            }}
+          >
+            {/* 스켈레톤 로딩 애니메이션 */}
+            <div className="absolute inset-0">
+              <div 
+                className="w-full h-full opacity-20 animate-pulse"
+                style={{
+                  background: `linear-gradient(90deg, transparent 0%, ${getChartTheme(isDarkMode).chart.line}40 50%, transparent 100%)`,
+                  backgroundSize: '200% 100%',
+                }}
+              />
+            </div>
+            
+            <div className="text-center z-10">
+              <div 
+                className="w-12 h-12 rounded-full border-2 border-transparent border-t-current animate-spin mx-auto mb-4"
+                style={{ color: getChartTheme(isDarkMode).chart.line }}
+              />
+              <p 
+                className="text-sm font-medium"
+                style={{ color: getChartTheme(isDarkMode).text.secondary }}
+              >
+                차트를 불러오는 중...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
   // CLAUDE.md 원칙: 실제 데이터 없으면 "정보 없음" 명확히 표시
   if (priceData.length === 0) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            {stockName} 가격 차트
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <div className="space-y-2">
-              <p className="text-lg font-medium">가격 정보 없음</p>
-              <p className="text-sm">
+      <div 
+        className="w-full rounded-xl overflow-hidden relative"
+        style={{
+          background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
+          border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
+          boxShadow: `
+            0 20px 25px -5px rgba(0, 0, 0, 0.2),
+            0 10px 10px -5px rgba(0, 0, 0, 0.1),
+            0 0 0 1px rgba(59, 130, 246, 0.05)
+          `
+        }}
+      >
+        <div 
+          className="px-6 py-4 border-b"
+          style={{ 
+            borderColor: getChartTheme(isDarkMode).chart.grid,
+            background: `linear-gradient(90deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div 
+              className="p-2 rounded-lg"
+              style={{ background: `${getChartTheme(isDarkMode).chart.line}20` }}
+            >
+              <BarChart3 
+                className="w-5 h-5"
+                style={{ color: getChartTheme(isDarkMode).chart.line }}
+              />
+            </div>
+            <div>
+              <h3 
+                className="text-lg font-bold tracking-tight"
+                style={{ color: getChartTheme(isDarkMode).text.primary }}
+              >
+                {stockName} 가격 차트
+              </h3>
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-6">
+          <div 
+            className="text-center py-12"
+            style={{ color: getChartTheme(isDarkMode).text.muted }}
+          >
+            <div 
+              className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center"
+              style={{ background: `${getChartTheme(isDarkMode).chart.grid}30` }}
+            >
+              <BarChart3 
+                className="w-8 h-8 opacity-50"
+                style={{ color: getChartTheme(isDarkMode).text.muted }}
+              />
+            </div>
+            <div className="space-y-3">
+              <h4 
+                className="text-xl font-semibold"
+                style={{ color: getChartTheme(isDarkMode).text.secondary }}
+              >
+                가격 정보 없음
+              </h4>
+              <p 
+                className="text-sm leading-relaxed max-w-sm mx-auto"
+                style={{ color: getChartTheme(isDarkMode).text.muted }}
+              >
                 {stockName}({ticker})의 6개월치 가격 데이터가<br/>
                 아직 준비되지 않았습니다.
               </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                메르가 언급한 종목만 차트 데이터를 제공합니다.
+              <p 
+                className="text-xs mt-4"
+                style={{ 
+                  color: getChartTheme(isDarkMode).text.muted,
+                  opacity: 0.7 
+                }}
+              >
+                💡 메르가 언급한 종목만 차트 데이터를 제공합니다.
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-4">
+    <div 
+      className="w-full rounded-xl overflow-hidden relative"
+      style={{
+        background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
+        border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
+        boxShadow: `
+          0 20px 25px -5px rgba(0, 0, 0, 0.2),
+          0 10px 10px -5px rgba(0, 0, 0, 0.1),
+          0 0 0 1px rgba(59, 130, 246, 0.05)
+        `
+      }}
+    >
+      {/* 🎨 프로페셔널 헤더 */}
+      <div 
+        className="px-6 py-4 border-b relative"
+        style={{ 
+          borderColor: getChartTheme(isDarkMode).chart.grid,
+          background: `linear-gradient(90deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`
+        }}
+      >
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            {stockName} 가격 차트
-          </CardTitle>
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-sm">
-              {ticker}
-            </Badge>
-            {priceChange && (
-              <Badge 
-                variant={priceChange.isPositive ? "default" : "destructive"}
-                className="text-sm"
+            <div 
+              className="p-2 rounded-lg"
+              style={{ background: `${getChartTheme(isDarkMode).chart.line}20` }}
+            >
+              <BarChart3 
+                className="w-5 h-5"
+                style={{ color: getChartTheme(isDarkMode).chart.line }}
+              />
+            </div>
+            <div>
+              <h3 
+                className="text-lg font-bold tracking-tight"
+                style={{ color: getChartTheme(isDarkMode).text.primary }}
               >
-                {priceChange.isPositive ? (
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                ) : (
-                  <TrendingDown className="w-3 h-3 mr-1" />
-                )}
-                {priceChange.isPositive ? '+' : ''}{priceChange.percentage.toFixed(1)}%
-              </Badge>
-            )}
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          최근 {timeRange} 가격 변화 추이 및 메르의 언급 시점
-        </p>
-      </CardHeader>
-      <CardContent>
-        {/* 줌 컨트롤 */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">기간:</span>
-            {['1M', '3M', '6M'].map((range) => (
-              <Button
-                key={range}
-                variant={timeRange === range ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleTimeRangeChange(range)}
-                className="text-xs"
+                {stockName} 가격 차트
+              </h3>
+              <p 
+                className="text-sm mt-1"
+                style={{ color: getChartTheme(isDarkMode).text.muted }}
               >
-                {range}
-              </Button>
-            ))}
+                최근 {timeRange} 가격 변화 추이 및 메르의 언급 시점
+              </p>
+            </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            {(zoomState.left && zoomState.right) && (
-              <Badge variant="secondary" className="text-xs">
-                📅 {formatDate(zoomState.left.toString())} ~ {formatDate(zoomState.right.toString())}
-              </Badge>
+          {/* 🏷️ 티커 & 성과 배지 */}
+          <div className="flex items-center gap-3">
+            <div 
+              className="px-3 py-1.5 rounded-lg text-sm font-medium"
+              style={{ 
+                background: `${getChartTheme(isDarkMode).text.accent}20`,
+                color: getChartTheme(isDarkMode).text.accent,
+                border: `1px solid ${getChartTheme(isDarkMode).text.accent}30`
+              }}
+            >
+              {ticker}
+            </div>
+            {priceChange && (
+              <div 
+                className="px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1.5"
+                style={{ 
+                  background: priceChange.isPositive 
+                    ? `${getChartTheme(isDarkMode).sentiment.positive.primary}20`
+                    : `${getChartTheme(isDarkMode).sentiment.negative.primary}20`,
+                  color: priceChange.isPositive 
+                    ? getChartTheme(isDarkMode).sentiment.positive.primary
+                    : getChartTheme(isDarkMode).sentiment.negative.primary,
+                  border: `1px solid ${priceChange.isPositive 
+                    ? getChartTheme(isDarkMode).sentiment.positive.primary
+                    : getChartTheme(isDarkMode).sentiment.negative.primary}30`
+                }}
+              >
+                {priceChange.isPositive ? (
+                  <TrendingUp className="w-3.5 h-3.5" />
+                ) : (
+                  <TrendingDown className="w-3.5 h-3.5" />
+                )}
+                {priceChange.isPositive ? '+' : ''}{priceChange.percentage.toFixed(1)}%
+              </div>
             )}
-            {zoomHistory.length > 0 && (
-              <Button variant="outline" size="sm" onClick={handleZoomOut} className="text-xs">
-                ↶ 뒤로
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={handleReset} className="text-xs">
-              🔄 초기화
-            </Button>
           </div>
         </div>
         
-        <div className="h-96 w-full" data-testid="stock-price-chart">
+        {/* 💫 헤더 글로우 효과 */}
+        <div 
+          className="absolute inset-0 pointer-events-none opacity-10"
+          style={{
+            background: getChartTheme(isDarkMode).gradients.chartGlow,
+            zIndex: -1
+          }}
+        />
+      </div>
+      
+      <div className="p-6">
+        {/* 🎛️ 프로페셔널 컨트롤 패널 */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <span 
+              className="text-sm font-medium"
+              style={{ color: getChartTheme(isDarkMode).text.secondary }}
+            >
+              기간:
+            </span>
+            <div className="flex gap-1">
+              {['1M', '3M', '6M'].map((range) => (
+                <button
+                  key={range}
+                  onClick={() => handleTimeRangeChange(range)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 hover:scale-105"
+                  style={{ 
+                    background: timeRange === range 
+                      ? getChartTheme(isDarkMode).chart.line
+                      : 'transparent',
+                    color: timeRange === range 
+                      ? getChartTheme(isDarkMode).background.primary
+                      : getChartTheme(isDarkMode).text.secondary,
+                    border: `1px solid ${timeRange === range 
+                      ? getChartTheme(isDarkMode).chart.line
+                      : getChartTheme(isDarkMode).chart.grid}`,
+                    boxShadow: timeRange === range 
+                      ? `0 0 10px ${getChartTheme(isDarkMode).chart.line}30`
+                      : 'none'
+                  }}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {(zoomState.left && zoomState.right) && (
+              <div 
+                className="px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                style={{ 
+                  background: `${getChartTheme(isDarkMode).interaction.focus}20`,
+                  color: getChartTheme(isDarkMode).interaction.focus,
+                  border: `1px solid ${getChartTheme(isDarkMode).interaction.focus}30`
+                }}
+              >
+                📅 {formatDate(zoomState.left.toString())} ~ {formatDate(zoomState.right.toString())}
+              </div>
+            )}
+            {zoomHistory.length > 0 && (
+              <button 
+                onClick={handleZoomOut}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 hover:scale-105"
+                style={{ 
+                  background: 'transparent',
+                  color: getChartTheme(isDarkMode).text.secondary,
+                  border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
+                }}
+              >
+                ↶ 뒤로
+              </button>
+            )}
+            <button 
+              onClick={handleReset}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 hover:scale-105"
+              style={{ 
+                background: 'transparent',
+                color: getChartTheme(isDarkMode).text.secondary,
+                border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
+              }}
+            >
+              🔄 초기화
+            </button>
+          </div>
+        </div>
+        
+        {/* 📊 차트 컨테이너 - 다크 배경 */}
+        <div 
+          className="h-96 w-full rounded-lg relative overflow-hidden"
+          data-testid="stock-price-chart"
+          style={{
+            background: getChartTheme(isDarkMode).background.primary,
+            border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
+            boxShadow: `inset 0 2px 4px rgba(0, 0, 0, 0.2)`
+          }}
+        >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
               data={priceData} 
@@ -676,182 +1211,421 @@ export default function StockPriceChart({
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
             >
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              {/* 🎨 프로페셔널 그리드 시스템 */}
+              <CartesianGrid 
+                strokeDasharray="1 3"
+                stroke={getChartTheme(isDarkMode).chart.grid}
+                strokeWidth={0.5}
+                opacity={0.6}
+                horizontal={true}
+                vertical={false}
+              />
+              
+              {/* 📅 X축 (시간) - TradingView 스타일 */}
               <XAxis 
                 dataKey="date" 
                 tickFormatter={formatDate}
-                className="text-xs"
+                tick={{ 
+                  fontSize: 11, 
+                  fill: getChartTheme(isDarkMode).text.muted,
+                  fontWeight: 500 
+                }}
+                axisLine={{ 
+                  stroke: getChartTheme(isDarkMode).chart.axis, 
+                  strokeWidth: 1 
+                }}
+                tickLine={{ 
+                  stroke: getChartTheme(isDarkMode).chart.axis, 
+                  strokeWidth: 1 
+                }}
                 domain={zoomState.left && zoomState.right ? [zoomState.left, zoomState.right] : ['dataMin', 'dataMax']}
                 type="category"
                 allowDataOverflow
+                height={40}
+                interval="preserveStartEnd"
               />
+              
+              {/* 💰 Y축 (가격) - 전문적인 가격 표시 */}
               <YAxis 
                 domain={yAxisDomain || ['auto', 'auto']}
                 tickFormatter={(value) => formatPrice(value)}
-                className="text-xs"
+                tick={{ 
+                  fontSize: 11, 
+                  fill: getChartTheme(isDarkMode).text.muted,
+                  fontWeight: 500 
+                }}
+                axisLine={{ 
+                  stroke: getChartTheme(isDarkMode).chart.axis, 
+                  strokeWidth: 1 
+                }}
+                tickLine={{ 
+                  stroke: getChartTheme(isDarkMode).chart.axis, 
+                  strokeWidth: 1 
+                }}
+                width={80}
+                orientation="right"
               />
+              
+              {/* 🎯 고급 툴팁 시스템 */}
               <Tooltip 
                 content={<CustomTooltip />}
-                animationDuration={150}
+                animationDuration={200}
                 animationEasing="ease-out"
                 allowEscapeViewBox={{ x: false, y: true }}
-                offset={10}
-                cursor={{ stroke: '#2563eb', strokeWidth: 1, strokeDasharray: '3 3' }}
+                offset={15}
+                cursor={{ 
+                  stroke: getChartTheme(isDarkMode).chart.crosshair, 
+                  strokeWidth: 1, 
+                  strokeDasharray: '2 2',
+                  opacity: 0.8 
+                }}
                 wrapperStyle={{ 
                   zIndex: 1000,
                   pointerEvents: 'none'
                 }}
               />
-              <Legend />
+              
+              {/* 📊 메인 가격 라인 - 글로우 효과 */}
               <Line 
                 type="monotone" 
                 dataKey="price" 
-                stroke="#2563eb" 
-                strokeWidth={2}
+                stroke={getChartTheme(isDarkMode).chart.line}
+                strokeWidth={2.5}
+                style={{
+                  filter: isDarkMode 
+                    ? `drop-shadow(0 0 3px ${getChartTheme(isDarkMode).chart.lineGlow}40)`
+                    : `drop-shadow(0 0 2px ${getChartTheme(isDarkMode).chart.lineGlow}20)`,
+                }}
                 dot={(props: any) => {
                   const { cx, cy, payload } = props;
-                  // 언급된 날짜만 파란색 빈 원으로 표시 (클릭 가능)
+                  
+                  // 🎯 포스트 언급 마커 (감정 분석 기반 고급 시각화)
                   if (payload.postTitle && !payload.isCurrentPrice) {
-                    // 감정 분석에 따른 마커 색상 결정
-                    let markerColor = "#2563eb"; // 기본 파란색
-                    let strokeWidth = 2;
+                    // 감정 분석에 따른 마커 스타일 결정
+                    const currentTheme = getChartTheme(isDarkMode);
+                    let markerTheme = currentTheme.sentiment.neutral;
+                    let intensity = 0.7;
                     
                     if (payload.sentiments && payload.sentiments.length > 0) {
-                      // 여러 감정이 있는 경우 우세한 감정으로 결정
-                      const sentimentCounts = payload.sentiments.reduce((acc, s) => {
+                      const sentimentCounts = payload.sentiments.reduce((acc: any, s: any) => {
                         acc[s.sentiment] = (acc[s.sentiment] || 0) + 1;
                         return acc;
                       }, {});
                       
                       const dominantSentiment = Object.entries(sentimentCounts)
-                        .sort(([,a], [,b]) => b - a)[0][0];
+                        .sort(([,a], [,b]) => (b as number) - (a as number))[0][0];
                       
-                      switch (dominantSentiment) {
-                        case 'positive':
-                          markerColor = "#16a34a"; // 초록색
-                          strokeWidth = 3;
-                          break;
-                        case 'negative':
-                          markerColor = "#dc2626"; // 빨간색
-                          strokeWidth = 3;
-                          break;
-                        case 'neutral':
-                        default:
-                          markerColor = "#2563eb"; // 기본 파란색
-                          strokeWidth = 2;
-                          break;
-                      }
+                      markerTheme = currentTheme.sentiment[dominantSentiment as keyof typeof currentTheme.sentiment] || currentTheme.sentiment.neutral;
+                      
+                      // 감정 강도에 따른 시각적 효과 조정
+                      const avgConfidence = payload.sentiments.reduce((sum: number, s: any) => sum + s.confidence, 0) / payload.sentiments.length;
+                      intensity = Math.max(0.5, avgConfidence);
                     }
                     
                     return (
                       <g>
-                        {/* 투명한 더 큰 영역으로 호버 영역 확대 */}
+                        {/* 외부 글로우 효과 - 다크모드 조건부 */}
                         <circle 
                           cx={cx} 
                           cy={cy} 
                           r={12} 
+                          fill={markerTheme.primary}
+                          opacity={isDarkMode ? 0.1 * intensity : 0.05 * intensity}
+                          className="animate-pulse"
+                        />
+                        
+                        {/* 중간 링 - 다크모드 조건부 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={8} 
+                          fill="none" 
+                          stroke={markerTheme.primary}
+                          strokeWidth={1}
+                          opacity={isDarkMode ? 0.3 * intensity : 0.2 * intensity}
+                        />
+                        
+                        {/* 투명한 클릭 영역 확대 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={14} 
                           fill="transparent" 
                           style={{ cursor: 'pointer' }}
                           onClick={() => handleMarkerClick(payload)}
                         />
-                        {/* 실제 보이는 마커 - 감정에 따른 색상 */}
+                        
+                        {/* 메인 마커 */}
                         <circle 
                           cx={cx} 
                           cy={cy} 
                           r={5} 
                           fill="none" 
-                          stroke={markerColor} 
-                          strokeWidth={strokeWidth}
-                          style={{ cursor: 'pointer', pointerEvents: 'none' }}
+                          stroke={markerTheme.primary} 
+                          strokeWidth={2.5}
+                          style={{ 
+                            cursor: 'pointer', 
+                            pointerEvents: 'none',
+                            filter: `drop-shadow(0 0 6px ${markerTheme.glow}60)`
+                          }}
                         />
-                        {/* 감정 분석이 있는 경우 작은 indicator */}
+                        
+                        {/* 내부 점 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={2} 
+                          fill={markerTheme.secondary}
+                          style={{ pointerEvents: 'none' }}
+                        />
+                        
+                        {/* 감정 분석 인디케이터 */}
                         {payload.sentiments && payload.sentiments.length > 0 && (
-                          <circle 
-                            cx={cx + 6} 
-                            cy={cy - 6} 
-                            r={2} 
-                            fill={markerColor}
-                            stroke="#ffffff"
-                            strokeWidth={1}
-                          />
+                          <>
+                            <circle 
+                              cx={cx + 7} 
+                              cy={cy - 7} 
+                              r={3} 
+                              fill={markerTheme.background}
+                              stroke={markerTheme.primary}
+                              strokeWidth={1.5}
+                              style={{ filter: `drop-shadow(0 1px 2px rgba(0,0,0,0.3))` }}
+                            />
+                            <circle 
+                              cx={cx + 7} 
+                              cy={cy - 7} 
+                              r={1.5} 
+                              fill={markerTheme.primary}
+                            />
+                          </>
                         )}
                       </g>
                     );
                   }
-                  // 현재가만 초록색 점으로 표시
+                  
+                  // 🔥 현재가 마커 (실시간 펄스 효과)
                   if (payload.isCurrentPrice) {
                     return (
                       <g>
-                        <circle cx={cx} cy={cy} r={10} fill="transparent" />
-                        <circle cx={cx} cy={cy} r={6} fill="#16a34a" stroke="#ffffff" strokeWidth={2} />
+                        {/* 펄스 애니메이션 링 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={15} 
+                          fill={getChartTheme(isDarkMode).sentiment.positive.primary}
+                          opacity={0.1}
+                          className="animate-ping"
+                        />
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={10} 
+                          fill={getChartTheme(isDarkMode).sentiment.positive.primary}
+                          opacity={0.2}
+                          className="animate-pulse"
+                        />
+                        
+                        {/* 메인 현재가 마커 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={7} 
+                          fill={getChartTheme(isDarkMode).sentiment.positive.primary}
+                          stroke={getChartTheme(isDarkMode).background.primary}
+                          strokeWidth={2}
+                          style={{ 
+                            filter: `drop-shadow(0 0 8px ${getChartTheme(isDarkMode).sentiment.positive.glow}80)`
+                          }}
+                        />
+                        
+                        {/* 내부 하이라이트 */}
+                        <circle 
+                          cx={cx - 2} 
+                          cy={cy - 2} 
+                          r={2} 
+                          fill={getChartTheme(isDarkMode).sentiment.positive.glow}
+                          opacity={0.8}
+                        />
                       </g>
                     );
                   }
-                  // 언급되지 않은 일반 날짜는 점 표시 안함 (곡선만)
+                  
                   return null;
                 }}
                 dotSize={0}
                 activeDot={{ 
-                  r: 12, 
-                  fill: '#1d4ed8', 
-                  stroke: '#ffffff', 
-                  strokeWidth: 2,
-                  style: { filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }
+                  r: 8, 
+                  fill: getChartTheme(isDarkMode).chart.line,
+                  stroke: getChartTheme(isDarkMode).background.primary, 
+                  strokeWidth: 3,
+                  style: { 
+                    filter: `drop-shadow(0 0 8px ${getChartTheme(isDarkMode).chart.crosshair}60)`,
+                    cursor: 'crosshair'
+                  }
                 }}
-                name="주가"
+                name=""
+                connectNulls={false}
               />
+              
+              {/* 🔍 줌 선택 영역 */}
               {zoomState.refAreaLeft && zoomState.refAreaRight && (
                 <ReferenceArea
                   x1={zoomState.refAreaLeft}
                   x2={zoomState.refAreaRight}
-                  strokeOpacity={0.3}
-                  fill="#2563eb"
-                  fillOpacity={0.1}
+                  stroke={getChartTheme(isDarkMode).interaction.selection}
+                  strokeOpacity={0.8}
+                  fill={getChartTheme(isDarkMode).interaction.selection}
+                  fillOpacity={0.15}
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
                 />
               )}
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t">
-          <div className="text-center">
-            <div className="text-lg font-bold text-primary">
+        {/* 📈 프로페셔널 통계 대시보드 */}
+        <div 
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6"
+          style={{ borderTop: `1px solid ${getChartTheme(isDarkMode).chart.grid}` }}
+        >
+          {/* 첫 언급가 */}
+          <div 
+            className="text-center p-4 rounded-lg relative overflow-hidden"
+            style={{ 
+              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.tertiary} 0%, ${getChartTheme(isDarkMode).background.secondary} 100%)`,
+              border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`
+            }}
+          >
+            <div 
+              className="text-xl font-bold tracking-tight"
+              style={{ color: getChartTheme(isDarkMode).text.primary }}
+            >
               {formatPrice(priceData[0]?.price || 0)}
             </div>
-            <div className="text-sm text-muted-foreground">첫 언급가</div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div 
+              className="text-sm font-medium mt-1"
+              style={{ color: getChartTheme(isDarkMode).text.secondary }}
+            >
+              첫 언급가
+            </div>
+            <div 
+              className="text-xs mt-2 flex items-center justify-center gap-1"
+              style={{ color: getChartTheme(isDarkMode).text.muted }}
+            >
+              <Calendar className="w-3 h-3" />
               {formatDate(priceData[0]?.date || '')}
             </div>
           </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-primary">
+
+          {/* 현재가 */}
+          <div 
+            className="text-center p-4 rounded-lg relative overflow-hidden"
+            style={{ 
+              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.positive.background}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
+              border: `1px solid ${getChartTheme(isDarkMode).sentiment.positive.primary}30`
+            }}
+          >
+            <div 
+              className="text-xl font-bold tracking-tight flex items-center justify-center gap-2"
+              style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
+            >
+              <Activity className="w-4 h-4 animate-pulse" />
               {formatPrice(priceData[priceData.length - 1]?.price || 0)}
             </div>
-            <div className="text-sm text-muted-foreground">현재가</div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div 
+              className="text-sm font-medium mt-1"
+              style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
+            >
+              현재가
+            </div>
+            <div 
+              className="text-xs mt-2 flex items-center justify-center gap-1"
+              style={{ color: getChartTheme(isDarkMode).text.muted }}
+            >
+              <Calendar className="w-3 h-3" />
               {formatDate(priceData[priceData.length - 1]?.date || '')}
             </div>
           </div>
-          <div className="text-center">
-            <div className={`text-lg font-bold ${priceChange?.isPositive ? 'text-green-500' : 'text-red-500'}`}>
+
+          {/* 가격 변동 */}
+          <div 
+            className="text-center p-4 rounded-lg relative overflow-hidden"
+            style={{ 
+              background: priceChange?.isPositive 
+                ? `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.positive.background}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`
+                : `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.negative.background}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
+              border: `1px solid ${priceChange?.isPositive 
+                ? getChartTheme(isDarkMode).sentiment.positive.primary
+                : getChartTheme(isDarkMode).sentiment.negative.primary}30`
+            }}
+          >
+            <div 
+              className="text-xl font-bold tracking-tight flex items-center justify-center gap-2"
+              style={{ 
+                color: priceChange?.isPositive 
+                  ? getChartTheme(isDarkMode).sentiment.positive.primary
+                  : getChartTheme(isDarkMode).sentiment.negative.primary
+              }}
+            >
+              {priceChange?.isPositive ? (
+                <TrendingUp className="w-4 h-4" />
+              ) : (
+                <TrendingDown className="w-4 h-4" />
+              )}
               {priceChange ? formatPrice(Math.abs(priceChange.value)) : '-'}
             </div>
-            <div className="text-sm text-muted-foreground">가격 변동</div>
-            <div className={`text-xs mt-1 ${priceChange?.isPositive ? 'text-green-500' : 'text-red-500'}`}>
+            <div 
+              className="text-sm font-medium mt-1"
+              style={{ color: getChartTheme(isDarkMode).text.secondary }}
+            >
+              가격 변동
+            </div>
+            <div 
+              className="text-xs mt-2 font-medium"
+              style={{ 
+                color: priceChange?.isPositive 
+                  ? getChartTheme(isDarkMode).sentiment.positive.primary
+                  : getChartTheme(isDarkMode).sentiment.negative.primary
+              }}
+            >
               {priceChange ? `${priceChange.isPositive ? '+' : '-'}${Math.abs(priceChange.percentage).toFixed(1)}%` : '-'}
             </div>
           </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-primary">
+
+          {/* 언급 통계 */}
+          <div 
+            className="text-center p-4 rounded-lg relative overflow-hidden"
+            style={{ 
+              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).text.accent}20 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
+              border: `1px solid ${getChartTheme(isDarkMode).text.accent}30`
+            }}
+          >
+            <div 
+              className="text-xl font-bold tracking-tight flex items-center justify-center gap-2"
+              style={{ color: getChartTheme(isDarkMode).text.accent }}
+            >
+              <Target className="w-4 h-4" />
               {allPosts.length > 0 ? allPosts.length : recentPosts.length}개
             </div>
-            <div className="text-sm text-muted-foreground">최근 {timeRange} 언급</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              <Calendar className="w-3 h-3 inline mr-1" />
+            <div 
+              className="text-sm font-medium mt-1"
+              style={{ color: getChartTheme(isDarkMode).text.secondary }}
+            >
+              최근 {timeRange} 언급
+            </div>
+            <div 
+              className="text-xs mt-2 flex items-center justify-center gap-1"
+              style={{ color: getChartTheme(isDarkMode).text.muted }}
+            >
+              <Calendar className="w-3 h-3" />
               {priceData.filter(p => p.postTitle && !p.isCurrentPrice).length}회 언급
             </div>
             {(zoomState.left && zoomState.right) && (
-              <div className="text-xs text-blue-600 mt-1">
+              <div 
+                className="text-xs mt-1 font-medium"
+                style={{ color: getChartTheme(isDarkMode).interaction.focus }}
+              >
                 🔍 줌: {formatDate(zoomState.left.toString())} ~ {formatDate(zoomState.right.toString())}
               </div>
             )}
@@ -918,7 +1692,7 @@ export default function StockPriceChart({
             )}
           </SheetContent>
         </Sheet>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

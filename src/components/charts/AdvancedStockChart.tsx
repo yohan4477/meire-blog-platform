@@ -343,8 +343,10 @@ export const AdvancedStockChart: React.FC<Props> = ({
         
         <div className="space-y-1 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-400">Price:</span>
-            <span className="text-white font-mono">
+            <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Price:</span>
+            <span className={`font-mono ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>
               ${data.price?.toFixed(2)}
             </span>
           </div>
