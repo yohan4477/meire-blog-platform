@@ -164,19 +164,11 @@ export default function StockPriceChart({
   const filteredData = useMemo(() => {
     let data = priceData;
     
-    // 1. 시간 범위 기반 필터링 (timeRange: 1M, 3M, 6M, 1Y)
-    if (timeRange && data.length > 0) {
-      const now = new Date();
-      const daysToShow = timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : timeRange === '6M' ? 180 : 365;
-      const cutoffDate = new Date(now.getTime() - (daysToShow * 24 * 60 * 60 * 1000));
-      
-      data = data.filter(d => {
-        const dataDate = new Date(d.date);
-        return dataDate >= cutoffDate;
-      });
-      
-      console.log(`📅 [${timeRange}] Filtered data: ${data.length} days (from ${cutoffDate.toISOString().split('T')[0]} to ${now.toISOString().split('T')[0]})`);
-      console.log(`📊 [${timeRange}] Date range: ${data.length > 0 ? data[0].date : 'none'} ~ ${data.length > 0 ? data[data.length - 1].date : 'none'}`);
+    // API가 이미 기간별 데이터를 제공하므로 프론트엔드에서 추가 시간 필터링 불필요
+    // 1. 시간 범위 기반 필터링 건너뛰기 (API에서 이미 처리됨)
+    console.log(`📊 [${timeRange}] Using API-filtered data: ${data.length} records`);
+    if (data.length > 0) {
+      console.log(`📅 [${timeRange}] Date range: ${data[0].date} ~ ${data[data.length - 1].date}`);
     }
     
     // 2. X축 줌 범위가 있으면 추가 필터링
