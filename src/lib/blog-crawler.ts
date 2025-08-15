@@ -53,12 +53,15 @@ export class BlogCrawler {
       skippedOld: 0
     };
 
-    // 해당 연도의 기존 포스트 로그 번호들 가져오기
+    // 해당 연도의 기존 포스트 로그 번호들 가져오기 (타임스탬프와 ISO 날짜 모두 고려)
     const existingPosts = await query<{ log_no: string }>(`
       SELECT log_no FROM blog_posts 
       WHERE blog_type = 'merry' 
-        AND strftime('%Y', created_date) = ?
-    `, [year.toString()]);
+        AND (
+          (LENGTH(created_date) = 13 AND strftime('%Y', datetime(created_date/1000, 'unixepoch')) = ?)
+          OR (LENGTH(created_date) < 13 AND strftime('%Y', created_date) = ?)
+        )
+    `, [year.toString(), year.toString()]);
     
     const existingLogNos = new Set(existingPosts.map(p => p.log_no));
     console.log(`📊 ${year}년도 기존 포스트: ${existingLogNos.size}개`);
@@ -549,12 +552,15 @@ export class BlogCrawler {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
         `;
         
+        // 날짜를 밀리초 타임스탬프로 변환
+        const timestampDate = new Date(postData.created_date).getTime();
+        
         await query(insertSql, [
           postData.logNo,
           postData.title,
           postData.content,
           postData.category,
-          postData.created_date,
+          timestampDate,  // 밀리초 타임스탬프로 저장
           '메르',
           Math.floor(Math.random() * 300) + 50, // 임시 조회수
           Math.floor(Math.random() * 20) + 1,   // 임시 좋아요
