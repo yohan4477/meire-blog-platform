@@ -56,6 +56,12 @@ const getChartTheme = (isDark: boolean = false) => ({
       glow: isDark ? '#d1d5db' : '#94a3b8',       // 글로우
       background: isDark ? '#374151' : '#f1f5f9', // 배경
     },
+    warning: {
+      primary: '#f59e0b',                          // 경고 (데이터 부족)
+      secondary: '#d97706',                        // 어두운 경고
+      glow: '#fbbf24',                            // 글로우
+      background: isDark ? '#451a03' : '#fef3c7', // 배경
+    },
   },
   
   // 인터랙션 색상 - 다크모드 조건부
@@ -158,18 +164,34 @@ export default function StockPriceChart({
   const filteredData = useMemo(() => {
     let data = priceData;
     
-    // X축 줌 범위가 있으면 해당 범위의 데이터만 필터링
+    // 1. 시간 범위 기반 필터링 (timeRange: 1M, 3M, 6M)
+    if (timeRange && data.length > 0) {
+      const now = new Date();
+      const daysToShow = timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : 180;
+      const cutoffDate = new Date(now.getTime() - (daysToShow * 24 * 60 * 60 * 1000));
+      
+      data = data.filter(d => {
+        const dataDate = new Date(d.date);
+        return dataDate >= cutoffDate;
+      });
+      
+      console.log(`📅 Filtered data for ${timeRange}: ${data.length} days (from ${cutoffDate.toLocaleDateString()})`);
+    }
+    
+    // 2. X축 줌 범위가 있으면 추가 필터링
     if (zoomState.left && zoomState.right) {
       const startDate = new Date(zoomState.left).getTime();
       const endDate = new Date(zoomState.right).getTime();
-      data = priceData.filter(d => {
+      data = data.filter(d => {
         const dataDate = new Date(d.date).getTime();
         return dataDate >= startDate && dataDate <= endDate;
       });
+      
+      console.log(`🔍 Zoom filtered data: ${data.length} days`);
     }
     
     return data;
-  }, [priceData, zoomState.left, zoomState.right]);
+  }, [priceData, timeRange, zoomState.left, zoomState.right]);
 
   // 다크모드 감지 - 안전한 클라이언트 전용 실행
   useEffect(() => {

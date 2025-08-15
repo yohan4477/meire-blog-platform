@@ -47,8 +47,12 @@ class StockDB {
           // WAL 모드 활성화 (성능 향상)
           this.db.run("PRAGMA journal_mode = WAL;");
           this.db.run("PRAGMA synchronous = NORMAL;");
-          this.db.run("PRAGMA cache_size = 1000;");
+          this.db.run("PRAGMA cache_size = 5000;"); // 캐시 크기 증가
           this.db.run("PRAGMA temp_store = MEMORY;");
+          this.db.run("PRAGMA wal_autocheckpoint = 1000;"); // 체크포인트 최적화
+          this.db.run("PRAGMA busy_timeout = 30000;"); // 30초 대기
+          
+          console.log('🚀 SQLite3 고성능 모드 활성화 완료');
           
           resolve();
         }
@@ -305,7 +309,15 @@ class StockDB {
         'INTC': '인텔',
         'TSMC': 'TSMC',
         '042660': '한화오션',
-        '267250': 'HD현대'
+        '267250': 'HD현대',
+        '010620': '현대미포조선',
+        'LLY': '일라이릴리',
+        'UNH': '유나이티드헬스케어',
+        'BRK': '버크셔헤서웨이',
+        'GOOGL': '구글',
+        'MSFT': '마이크로소프트',
+        'META': '메타',
+        'AMD': 'AMD'
       };
       
       const stockName = tickerToNameMap[ticker] || ticker;

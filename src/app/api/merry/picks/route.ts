@@ -123,7 +123,7 @@ const STOCK_INFO_MAP: Record<string, any> = {
     name: '인텔',
     market: 'NASDAQ',
     currency: 'USD',
-    description: 'PC와 서버용 프로세서 시장을 오랫동안 주도해온 미국 반도체 기업'
+    description: '트럼프 행정부의 반도체 국산화 정책 핵심기업, 정부 지분투자로 사실상 국영기업화 추진 중'
   },
   'AMD': {
     name: 'AMD',
@@ -135,13 +135,19 @@ const STOCK_INFO_MAP: Record<string, any> = {
     name: '일라이릴리',
     market: 'NYSE',
     currency: 'USD',
-    description: '당뇨병과 비만 치료제 분야를 선도하는 미국 제약회사'
+    description: '트럼프의 약값 최혜국대우 정책에 맞서 영국 비만치료제 마운자로 가격 170% 인상한 글로벌 제약사'
   },
   'UNH': {
     name: '유나이티드헬스그룹',
     market: 'NYSE',
     currency: 'USD',
-    description: '미국 최대 규모의 의료보험 및 헬스케어 서비스 기업'
+    description: '트럼프 공격에도 불구하고 워런 버핏이 16억달러 매수한 미국 의료카르텔 핵심기업'
+  },
+  '010620': {
+    name: '현대미포조선',
+    market: 'KOSPI',
+    currency: 'KRW',
+    description: '북극항로 개통으로 중형선박 수요 증가 예상, 한국 조선3사 중 중형선박 전문 조선소'
   }
 };
 
@@ -235,8 +241,19 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
         const picks = Object.values(stockMentions)
           .filter((stock: any) => stock.count > 0) // 언급된 종목만
           .map((stock: any) => {
-            // 가장 최근 언급일 계산
-            const latestMention = Math.max(...stock.mentions.map((m: any) => m.created_date));
+            // 가장 최근 언급일 계산 - 날짜 형식 혼재 문제 해결
+            const latestMentionTimestamp = Math.max(...stock.mentions.map((m: any) => {
+              const date = m.created_date;
+              // 숫자형 timestamp인지 문자열 날짜인지 확인
+              if (typeof date === 'number') {
+                return date;
+              } else if (typeof date === 'string') {
+                // ISO 문자열이면 timestamp로 변환
+                return new Date(date).getTime();
+              }
+              return 0; // 유효하지 않은 날짜는 0으로 처리
+            }));
+            
             const stockInfo = STOCK_INFO_MAP[stock.ticker] || {
               name: stock.ticker,
               market: 'UNKNOWN',
@@ -245,7 +262,7 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
             };
 
             // 유효한 날짜인지 확인
-            const lastMentionDate = new Date(latestMention);
+            const lastMentionDate = new Date(latestMentionTimestamp);
             const lastMentionISO = isNaN(lastMentionDate.getTime()) 
               ? new Date().toISOString() 
               : lastMentionDate.toISOString();

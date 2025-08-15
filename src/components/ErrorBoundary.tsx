@@ -91,88 +91,23 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     this.reportSectionError(error, errorInfo);
   }
 
-  // 📤 섹션 오류 자동 리포팅
+  // 📤 섹션 오류 자동 리포팅 (비활성화 - 무한 루프 방지)
   private async reportSectionError(error: Error, errorInfo: React.ErrorInfo) {
-    const { level = 'component', componentName, sectionName } = this.props;
+    // 🚨 긴급 비활성화: 무한 루프 방지를 위해 자동 리포팅 중단
+    // AutoCapture + ErrorBoundary 조합이 무한 에러 ID 생성 및 API 호출을 유발
     
-    // 중복 리포팅 방지
-    if (this.state.isReporting || this.state.reportSent) return;
-    
-    this.setState({ isReporting: true });
-    
-    try {
-      // 현재 페이지 경로
-      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '';
-      
-      // 오류 카테고리 자동 분류
-      const errorCategory = this.categorizeError(error);
-      
-      // 컴포넌트 props 스냅샷 (민감한 데이터 제외)
-      const propsSnapshot = this.sanitizeProps(this.props);
-      
-      // 오류 데이터 구성
-      const errorData = {
-        componentName: componentName || 'Unknown',
-        sectionName: sectionName || level,
-        pagePath,
-        errorMessage: error.message,
-        errorStack: error.stack,
-        errorType: error.constructor.name,
-        errorCategory,
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-        userAction: this.lastUserAction,
-        apiCalls: this.apiCallHistory,
-        componentProps: propsSnapshot,
-        stateSnapshot: {
-          level,
-          hasError: true,
-          errorId: this.state.errorId,
-          timestamp: Date.now()
-        }
-      };
-      
-      console.group(`🚨 [SECTION ERROR] ${componentName || 'Unknown'}/${sectionName || level}`);
-      console.error('Error:', error);
-      console.error('Error Info:', errorInfo);
-      console.error('Context:', errorData);
-      console.groupEnd();
-      
-      // 섹션 오류 API로 전송
-      const response = await fetch('/api/section-errors', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(errorData)
+    // 개발 환경에서만 콘솔 로그 출력 (프로덕션에서는 로그도 제거)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('🛑 ErrorBoundary caught error (reporting disabled):', {
+        error: error.message,
+        component: this.props.componentName || 'Unknown',
+        section: this.props.sectionName || this.props.level
       });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        console.log(`✅ [SECTION ERROR] Reported: ${result.errorHash}`);
-        
-        // 해결 방법이 있으면 콘솔에 출력
-        if (result.solutions && result.solutions.length > 0) {
-          console.group('💡 추천 해결 방법:');
-          result.solutions.forEach((sol: any, index: number) => {
-            console.log(`${index + 1}. ${sol.title}`);
-            if (sol.codeTemplate) {
-              console.log('코드 템플릿:', sol.codeTemplate);
-            }
-          });
-          console.groupEnd();
-        }
-        
-        this.setState({ reportSent: true });
-      } else {
-        console.error('섹션 오류 리포팅 실패:', result.error);
-      }
-      
-    } catch (reportError) {
-      console.error('섹션 오류 리포팅 중 오류 발생:', reportError);
-    } finally {
-      this.setState({ isReporting: false });
     }
+    
+    // 자동 리포팅은 완전히 비활성화
+    // 필요시 수동으로만 에러 보고하도록 변경
+    return;
   }
 
   // 🏷️ 오류 카테고리 자동 분류

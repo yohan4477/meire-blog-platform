@@ -65,7 +65,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   generateErrorId(): string {
-    return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // 🚨 긴급 비활성화: 무한 루프 방지를 위해 에러 ID 생성 중단
+    // return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `ui_error_${Date.now()}`; // 안전한 형태로 변경
   }
 
   handleRetry = () => {

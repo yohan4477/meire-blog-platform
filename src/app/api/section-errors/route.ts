@@ -104,7 +104,40 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || '';
     const { browserName, deviceType } = parseBrowserInfo(userAgent);
     
-    console.log(`🚨 [SECTION ERROR] ${errorData.componentName}/${errorData.sectionName}: ${errorData.errorMessage}`);
+    // F12 콘솔 에러 로깅 개선
+    if (errorData.userAction === 'F12_CONSOLE_ERROR_DETECTED') {
+      console.log(`🔍 [F12 CONSOLE ERROR] ${errorData.componentName}/${errorData.sectionName}: ${errorData.errorMessage.substring(0, 200)}${errorData.errorMessage.length > 200 ? '...' : ''}`);
+      console.log(`📍 [F12 CONTEXT] Page: ${errorData.pagePath}, Severity: ${errorData.errorType}`);
+    } else {
+      console.log(`🚨 [SECTION ERROR] ${errorData.componentName}/${errorData.sectionName}: ${errorData.errorMessage}`);
+    }
+    
+    // F12 콘솔 에러 중복 방지 (1분 내 동일 에러 무시)
+    if (errorData.userAction === 'F12_CONSOLE_ERROR_DETECTED') {
+      const existingConsoleError = await new Promise<any[]>((resolve, reject) => {
+        db.all(`
+          SELECT * FROM section_errors 
+          WHERE component_name = ? 
+          AND section_name = ?
+          AND error_message = ?
+          AND user_action = 'F12_CONSOLE_ERROR_DETECTED'
+          AND created_at > datetime('now', '-1 minutes')
+        `, [errorData.componentName, errorData.sectionName, errorData.errorMessage], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        });
+      });
+
+      if (existingConsoleError.length > 0) {
+        console.log(`⚠️  F12 콘솔 에러 중복 무시: ${errorData.errorMessage.substring(0, 100)} (1분 내 이미 존재)`);
+        db.close();
+        return NextResponse.json({
+          success: true,
+          message: 'F12 콘솔 에러 중복 무시됨',
+          errorHash: existingConsoleError[0].error_hash
+        });
+      }
+    }
     
     // AutoCapture 오류에 대한 특별한 처리 (빈번한 중복 방지)
     if (errorData.componentName === 'AutoCapture' && errorData.sectionName === 'pattern-detected') {

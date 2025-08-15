@@ -16,7 +16,7 @@ const MerryStockPicks = dynamic(
   () => import('@/components/merry/MerryStockPicks'),
   { 
     loading: () => <Skeleton className="h-96 w-full" />,
-    ssr: false 
+    ssr: true // SSR 활성화로 첫 로딩 성능 향상
   }
 );
 
@@ -36,17 +36,62 @@ export default function Home() {
   const [dailyDigest, setDailyDigest] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('insights');
 
-  // 메르 블로그 최신 포스트 가져오기
+  // 🚀 병렬 API 호출로 성능 최적화
   useEffect(() => {
-    const fetchMerryPosts = async () => {
+    const fetchAllData = async () => {
+      setLoading(true);
+      
       try {
-        const response = await fetch('/api/merry?limit=2');
-        const result = await response.json();
-        if (result.success && result.data) {
-          setMerryPosts(result.data.slice(0, 2));
+        // 핵심 데이터 병렬 로딩 (가장 중요한 API들)
+        const [merryResponse, curatedResponse] = await Promise.all([
+          fetch('/api/merry?limit=2').catch(err => ({ error: err })),
+          fetch('/api/financial-curation?action=curated&limit=3').catch(err => ({ error: err }))
+        ]);
+
+        // 메르 블로그 포스트 처리 (안전한 JSON 파싱)
+        if (!merryResponse.error) {
+          try {
+            const merryResult = await merryResponse.json();
+            if (merryResult.success && merryResult.data) {
+              setMerryPosts(merryResult.data.slice(0, 2));
+            }
+          } catch (jsonError) {
+            console.warn('메르 블로그 JSON 파싱 실패:', jsonError);
+            // Fallback 데이터 사용
+          }
         }
+
+        // 큐레이션 뉴스 처리 (안전한 JSON 파싱)
+        if (!curatedResponse.error) {
+          try {
+            const curatedData = await curatedResponse.json();
+            if (curatedData.success) {
+              setCuratedNews(curatedData.data.slice(0, 3));
+            }
+          } catch (jsonError) {
+            console.warn('큐레이션 뉴스 JSON 파싱 실패:', jsonError);
+            // Fallback 데이터 사용
+          }
+        }
+
+        // 다이제스트는 비동기로 나중에 로드 (성능 최적화)
+        setTimeout(async () => {
+          try {
+            const digestResponse = await fetch('/api/financial-curation?action=digest');
+            const digestData = await digestResponse.json();
+            
+            if (digestData.success) {
+              setDailyDigest(digestData.data);
+            }
+          } catch (error) {
+            console.error('Daily digest 로딩 실패:', error);
+            // JSON 파싱 에러도 여기서 안전하게 처리됨
+          }
+        }, 1000); // 1초로 단축
+
       } catch (error) {
-        console.error('메르 블로그 포스트 가져오기 실패:', error);
+        console.error('데이터 로딩 실패:', error);
+        
         // fallback 데이터
         setMerryPosts([
           {
@@ -59,40 +104,7 @@ export default function Home() {
             featured: true
           }
         ]);
-      }
-    };
-    fetchMerryPosts();
-  }, []);
-
-  // 큐레이션된 금융 콘텐츠 가져오기 (지연 로딩)
-  useEffect(() => {
-    const fetchFinancialContent = async () => {
-      try {
-        // 우선 큐레이션된 뉴스만 빠르게 로드
-        const curatedResponse = await fetch('/api/financial-curation?action=curated&limit=3');
-        const curatedData = await curatedResponse.json();
         
-        if (curatedData.success) {
-          setCuratedNews(curatedData.data.slice(0, 3));
-        }
-        
-        // 다이제스트는 지연해서 로드
-        setTimeout(async () => {
-          try {
-            const digestResponse = await fetch('/api/financial-curation?action=digest');
-            const digestData = await digestResponse.json();
-            
-            if (digestData.success) {
-              setDailyDigest(digestData.data);
-            }
-          } catch (error) {
-            console.error('Daily digest 가져오기 실패:', error);
-          }
-        }, 2000); // 2초 지연
-        
-      } catch (error) {
-        console.error('금융 콘텐츠 가져오기 실패:', error);
-        // fallback 데이터
         setCuratedNews([
           {
             id: 'demo_1',
@@ -128,10 +140,12 @@ export default function Home() {
           top_stories: [],
           sectors_in_focus: ['Technology', 'Finance', 'Healthcare']
         });
+      } finally {
+        setLoading(false);
       }
     };
     
-    fetchFinancialContent();
+    fetchAllData();
   }, []);
 
   // 요르의 개인 투자 분석 포스트들 (실제 클릭 가능)

@@ -34,16 +34,36 @@ export default function MerryStockPicks() {
   }, []);
 
   const fetchStocks = async () => {
+    setLoading(true);
     try {
       console.log('📊 메르스 픽 종목 데이터 로딩 시작...');
-      const response = await fetch('/api/merry/stocks?limit=5');
-      const data = await response.json();
       
-      console.log('📊 API 응답:', data);
+      // 🚀 캐시 무효화 파라미터 추가로 실시간 데이터 보장
+      const timestamp = Date.now();
+      const response = await fetch(`/api/merry/stocks?limit=5&t=${timestamp}`, {
+        cache: 'no-store', // 브라우저 캐시 무효화
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      let data;
+      try {
+        data = await response.json();
+        console.log('📊 API 응답:', data);
+      } catch (jsonError) {
+        console.error('📊 JSON 파싱 실패:', jsonError);
+        throw new Error('서버 응답 파싱 실패');
+      }
       
       if (data.success && data.data && data.data.stocks) {
         console.log(`📊 ${data.data.stocks.length}개 종목 로드 완료`);
         setStocks(data.data.stocks);
+        setError(null);
       } else {
         console.error('📊 종목 데이터 구조 오류:', data);
         setError('종목 데이터를 불러올 수 없습니다.');

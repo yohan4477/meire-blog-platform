@@ -552,15 +552,15 @@ export class BlogCrawler {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
         `;
         
-        // 날짜를 밀리초 타임스탬프로 변환
-        const timestampDate = new Date(postData.created_date).getTime();
+        // 8월 12일 이전 방식: 날짜를 문자열 형식으로 저장 (YYYY-MM-DD HH:MM:SS)
+        const dateString = postData.created_date; // 이미 문자열 형식
         
-        await query(insertSql, [
+        const result = await query(insertSql, [
           postData.logNo,
           postData.title,
           postData.content,
           postData.category,
-          timestampDate,  // 밀리초 타임스탬프로 저장
+          dateString,  // 문자열 형식으로 저장 (8월 12일 이전 방식)
           '메르',
           Math.floor(Math.random() * 300) + 50, // 임시 조회수
           Math.floor(Math.random() * 20) + 1,   // 임시 좋아요
@@ -571,6 +571,9 @@ export class BlogCrawler {
         
         this.stats.newPosts++;
         console.log(`새 포스트 저장 - logNo: ${postData.logNo}${postData.category ? ` | 카테고리: ${postData.category}` : ''}`);
+        
+        // 🚀 자동화: 새 포스트의 종목 언급 자동 추출
+        await this.processStockMentions(result.lastInsertRowid || postData.logNo, postData.title, postData.content, dateString);
       }
       
       console.log(`  제목: ${postData.title.substring(0, 50)}...`);

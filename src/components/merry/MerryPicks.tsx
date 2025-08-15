@@ -62,6 +62,9 @@ export default function MerryPicks({
         const data = await response.json();
         if (data.success) {
           console.log(`⭐ Loaded ${data.data.picks.length} Merry's picks`);
+          console.log('📊 Merry\'s Pick 순서:', data.data.picks.map((p: any, i: number) => 
+            `${i+1}. ${p.name}(${p.ticker}) - ${new Date(p.last_mentioned_at).toLocaleDateString('ko-KR')} - ${p.mention_count}번`
+          ));
           setPicks(data.data.picks);
         } else {
           setError('메르의 Pick 데이터를 불러올 수 없습니다.');
@@ -265,10 +268,14 @@ export default function MerryPicks({
                     <div className="pt-2 border-t space-y-1">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
-                        {formatDate(stock.last_mentioned_at)}
+                        최근: {new Date(stock.last_mentioned_at).toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: 'numeric', 
+                          day: 'numeric'
+                        })}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        총 {stock.mention_count}번 언급
+                        # {stock.mention_count}개 포스트
                       </div>
                     </div>
                   </div>

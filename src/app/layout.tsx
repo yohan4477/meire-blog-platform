@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { AutoErrorCapture } from '@/components/AutoErrorCapture';
+import { ConsoleErrorLogger } from '@/components/ConsoleErrorLogger';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -132,7 +133,12 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <QueryProvider>
-              <AutoErrorCapture />
+              {/* AutoErrorCapture 비활성화 - 사이트 로딩 차단 문제 해결 */}
+              {/* <AutoErrorCapture /> */}
+              
+              {/* F12 콘솔 에러 자동 감지 및 로깅 시스템 */}
+              <ConsoleErrorLogger />
+              
               <div className="min-h-screen flex flex-col bg-background text-foreground">
                 <Header />
                 
