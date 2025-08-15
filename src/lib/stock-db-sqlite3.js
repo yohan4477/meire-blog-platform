@@ -66,14 +66,14 @@ class StockDB {
     
     return new Promise((resolve, reject) => {
       this.db.get(`
-        SELECT is_merry_mentioned 
-        FROM stocks 
-        WHERE ticker = ?
+        SELECT COUNT(*) as mention_count
+        FROM stock_mentions_unified 
+        WHERE ticker = ? AND mentioned_date IS NOT NULL
       `, [ticker], (err, row) => {
         if (err) {
           reject(err);
         } else {
-          resolve(row?.is_merry_mentioned === 1);
+          resolve(row?.mention_count > 0);
         }
       });
     });
@@ -85,9 +85,15 @@ class StockDB {
     
     return new Promise((resolve, reject) => {
       this.db.get(`
-        SELECT ticker, company_name_kr, market, currency, is_merry_mentioned
-        FROM stocks 
+        SELECT 
+          ticker, 
+          company_name_kr, 
+          market, 
+          currency,
+          CASE WHEN COUNT(CASE WHEN mentioned_date IS NOT NULL THEN 1 END) > 0 THEN 1 ELSE 0 END as is_merry_mentioned
+        FROM stock_mentions_unified 
         WHERE ticker = ?
+        GROUP BY ticker, company_name_kr, market, currency
       `, [ticker], (err, row) => {
         if (err) {
           reject(err);
@@ -161,9 +167,9 @@ class StockDB {
     
     return new Promise((resolve, reject) => {
       this.db.all(`
-        SELECT mentioned_date, mention_type, sentiment_score
-        FROM merry_mentioned_stocks
-        WHERE ticker = ?
+        SELECT mentioned_date, mention_type, sentiment_score, post_id, context
+        FROM stock_mentions_unified
+        WHERE ticker = ? AND mentioned_date IS NOT NULL
         ORDER BY mentioned_date DESC
       `, [ticker], (err, rows) => {
         if (err) {
@@ -175,7 +181,7 @@ class StockDB {
     });
   }
 
-  // 메르's Pick 종목 가져오기 (최근 언급 순)
+  // 메르's Pick 종목 가져오기 (최근 언급 순) - VIEW 사용
   async getMerryPickStocks(limit = 10) {
     if (!this.isConnected) await this.connect();
     
@@ -187,14 +193,16 @@ class StockDB {
           s.company_name_kr as nameKr,
           s.market,
           s.currency,
-          s.mention_count as postCount,
-          s.last_mentioned_date as lastMention,
-          s.first_mentioned_date as firstMention,
+          COALESCE(s.real_mention_count, old.mention_count, 0) as postCount,
+          s.last_mention_date as lastMention,
+          s.first_mention_date as firstMention,
           'positive' as sentiment,
-          s.sector
-        FROM stocks s
+          s.sector,
+          old.mention_count as legacy_mention_count
+        FROM stock_stats_view s
+        LEFT JOIN stocks old ON s.ticker = old.ticker
         WHERE s.is_merry_mentioned = 1
-        ORDER BY s.last_mentioned_date DESC
+        ORDER BY s.last_mention_date DESC
         LIMIT ?
       `, [limit], (err, rows) => {
         if (err) {
@@ -218,6 +226,8 @@ class StockDB {
           const formatted = (rows || []).map(row => {
             const ticker = row.ticker;
             const name = row.nameKr || row.name;
+            // legacy_mention_count가 있으면 사용, 없으면 real_mention_count 사용
+            const actualMentionCount = row.legacy_mention_count || row.postCount;
             let description = companyDescriptions[ticker] || companyDescriptions[name];
             
             // 회사 설명이 없으면 기본 설명 생성
@@ -234,14 +244,14 @@ class StockDB {
               name: name,
               market: row.market || 'NASDAQ',
               currency: row.currency || 'USD',
-              postCount: row.postCount || 0,
+              postCount: actualMentionCount || 0,
               firstMention: row.firstMention,
               lastMention: row.lastMention,
               sentiment: row.sentiment || 'neutral',
               tags: [],
               description: description,
               recentPosts: [],
-              mentions: row.postCount || 0
+              mentions: actualMentionCount || 0
             };
           });
           resolve(formatted);
@@ -256,14 +266,20 @@ class StockDB {
     
     return new Promise((resolve, reject) => {
       this.db.all(`
-        SELECT s.ticker, s.company_name, s.company_name_kr, s.market, 
-               s.currency, s.mention_count, s.last_mentioned_date,
-               COUNT(sp.id) as price_data_count
-        FROM stocks s
+        SELECT 
+          s.ticker, 
+          s.company_name, 
+          s.company_name_kr, 
+          s.market, 
+          s.currency, 
+          COUNT(CASE WHEN s.mentioned_date IS NOT NULL THEN 1 END) as mention_count, 
+          MAX(s.mentioned_date) as last_mentioned_date,
+          COUNT(sp.id) as price_data_count
+        FROM stock_mentions_unified s
         LEFT JOIN stock_prices sp ON s.ticker = sp.ticker
-        WHERE s.is_merry_mentioned = 1
-        GROUP BY s.ticker
-        ORDER BY s.last_mentioned_date DESC
+        WHERE s.mentioned_date IS NOT NULL
+        GROUP BY s.ticker, s.company_name, s.company_name_kr, s.market, s.currency
+        ORDER BY MAX(s.mentioned_date) DESC
         LIMIT ?
       `, [limit], (err, rows) => {
         if (err) {
@@ -281,9 +297,21 @@ class StockDB {
     
     return new Promise((resolve, reject) => {
       this.db.get(`
-        SELECT *
-        FROM stocks
+        SELECT 
+          ticker,
+          company_name,
+          company_name_kr,
+          market,
+          currency,
+          sector,
+          industry,
+          COUNT(CASE WHEN mentioned_date IS NOT NULL THEN 1 END) as mention_count,
+          MIN(mentioned_date) as first_mentioned_date,
+          MAX(mentioned_date) as last_mentioned_date,
+          CASE WHEN COUNT(CASE WHEN mentioned_date IS NOT NULL THEN 1 END) > 0 THEN 1 ELSE 0 END as is_merry_mentioned
+        FROM stock_mentions_unified
         WHERE ticker = ?
+        GROUP BY ticker, company_name, company_name_kr, market, currency, sector, industry
       `, [ticker], (err, row) => {
         if (err) {
           reject(err);

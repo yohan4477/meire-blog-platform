@@ -17,12 +17,19 @@
       "Bash(node:*)",
       "Bash(start http://localhost:3006/merry/stocks/LLY)",
       "Bash(timeout 60 npx playwright test:*)",
-      "Bash(timeout 30 npx playwright test:*)"
+      "Bash(timeout 30 npx playwright test:*)",
+      "Bash(echo $PWD)",
+      "Bash(mkdir:*)",
+      "Bash(start http://localhost:3006/merry/stocks/TSLA)",
+      "Bash(cp:*)",
+      "Bash(start http://localhost:3006/merry/stocks/INTC)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
-      "C:\\"
+      "C:\\",
+      "C:\\c\\Users\\y"
     ]
   }
 }

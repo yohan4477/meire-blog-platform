@@ -235,10 +235,12 @@ export default function StockPriceChart({
   }, []);
 
   useEffect(() => {
+    console.log(`🔄 [DEBUG] StockPriceChart useEffect triggered - ticker: ${ticker}, timeRange: ${timeRange}`);
     fetchAllPostsAndGenerateChart();
   }, [ticker, currentPrice, timeRange]);
 
   const fetchAllPostsAndGenerateChart = async () => {
+    console.log(`🚀 [DEBUG] fetchAllPostsAndGenerateChart called for ${ticker}, timeRange: ${timeRange}`);
     try {
       // 선택된 기간에 따른 포스트 가져오기
       const period = timeRange.toLowerCase().replace('m', 'mo'); // 6M -> 6mo
@@ -265,9 +267,10 @@ export default function StockPriceChart({
           if (sentimentResponse.ok) {
             const sentimentDataResponse = await sentimentResponse.json();
             console.log(`🎯 Loaded sentiment data for ${ticker}:`, sentimentDataResponse);
+            console.log(`📅 Available sentiment dates:`, Object.keys(sentimentDataResponse?.sentimentByDate || {}));
             setSentimentData(sentimentDataResponse);
           } else {
-            console.warn('감정 분석 데이터 로딩 실패');
+            console.warn('🚨 감정 분석 데이터 로딩 실패:', sentimentResponse.status);
             setSentimentData(null);
           }
           
@@ -358,7 +361,15 @@ export default function StockPriceChart({
                 matchingPoint.postId = post.id;
                 
                 // 감정 분석 데이터 추가
-                const postDateStr = matchingPoint.date;
+                const postDateStr = typeof matchingPoint.date === 'string' && matchingPoint.date.match(/^\d{4}-\d{2}-\d{2}$/)
+                  ? matchingPoint.date
+                  : new Date(matchingPoint.date).toISOString().split('T')[0];
+                console.log(`🔍 Looking for sentiment data on date: ${postDateStr}`, { 
+                  rawDate: matchingPoint.date,
+                  availableDates: Object.keys(sentimentData?.sentimentByDate || {}),
+                  sentimentDataExists: !!sentimentData,
+                  hasMatchingDate: !!(sentimentData?.sentimentByDate && sentimentData.sentimentByDate[postDateStr])
+                });
                 if (sentimentData && sentimentData.sentimentByDate && sentimentData.sentimentByDate[postDateStr]) {
                   matchingPoint.sentiments = sentimentData.sentimentByDate[postDateStr].sentiments;
                   matchingPoint.posts = sentimentData.sentimentByDate[postDateStr].posts;
@@ -369,13 +380,16 @@ export default function StockPriceChart({
                 matchingPoint.postTitle = `${matchingPoint.postTitle} | ${post.title}`;
                 
                 // 감정 분석 데이터도 합치기
-                const postDateStr = matchingPoint.date;
+                const postDateStr = typeof matchingPoint.date === 'string' && matchingPoint.date.match(/^\d{4}-\d{2}-\d{2}$/)
+                  ? matchingPoint.date
+                  : new Date(matchingPoint.date).toISOString().split('T')[0];
                 if (sentimentData && sentimentData.sentimentByDate && sentimentData.sentimentByDate[postDateStr]) {
                   if (!matchingPoint.sentiments) matchingPoint.sentiments = [];
                   if (!matchingPoint.posts) matchingPoint.posts = [];
                   
                   matchingPoint.sentiments = [...matchingPoint.sentiments, ...sentimentData.sentimentByDate[postDateStr].sentiments];
                   matchingPoint.posts = [...matchingPoint.posts, ...sentimentData.sentimentByDate[postDateStr].posts];
+                  console.log(`🎯 Merged sentiment data to existing marker on ${postDateStr}:`, matchingPoint.sentiments);
                 }
               }
             } else {
@@ -384,7 +398,9 @@ export default function StockPriceChart({
           });
           
           const markersCount = chartData.filter(p => p.postTitle && !p.isCurrentPrice).length;
+          const sentimentMarkers = chartData.filter(p => p.sentiments && p.sentiments.length > 0).length;
           console.log(`📊 Total markers created: ${markersCount} out of ${postsToUse.length} posts`);
+          console.log(`🎭 Sentiment markers: ${sentimentMarkers} out of ${markersCount} total markers`);
         }
 
         // 현재가 추가/업데이트
@@ -1298,9 +1314,9 @@ export default function StockPriceChart({
         />
       </div>
       
-      <div className="p-6">
+      <div className="p-4">
         {/* 🎛️ 프로페셔널 컨트롤 패널 */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <span 
               className="text-sm font-medium"
@@ -1396,7 +1412,7 @@ export default function StockPriceChart({
         
         {/* 📊 차트 컨테이너 - 다크 배경 + 터치 이벤트 */}
         <div 
-          className="h-96 w-full rounded-lg relative overflow-hidden"
+          className="h-72 w-full rounded-lg relative overflow-hidden"
           data-testid="stock-price-chart"
           style={{
             background: getChartTheme(isDarkMode).background.primary,
@@ -1410,7 +1426,7 @@ export default function StockPriceChart({
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
               data={priceData} 
-              margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
+              margin={{ top: 15, right: 15, left: 15, bottom: 25 }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -1472,13 +1488,14 @@ export default function StockPriceChart({
                 orientation="right"
               />
               
-              {/* 🎯 고급 툴팁 시스템 */}
+              {/* 🎯 고급 툴팁 시스템 - 고정 위치 */}
               <Tooltip 
                 content={<CustomTooltip />}
                 animationDuration={200}
                 animationEasing="ease-out"
-                allowEscapeViewBox={{ x: false, y: true }}
-                offset={15}
+                allowEscapeViewBox={{ x: false, y: false }}
+                position={{ x: 20, y: 20 }}
+                offset={0}
                 cursor={{ 
                   stroke: getChartTheme(isDarkMode).chart.crosshair, 
                   strokeWidth: 1, 
@@ -1487,7 +1504,10 @@ export default function StockPriceChart({
                 }}
                 wrapperStyle={{ 
                   zIndex: 1000,
-                  pointerEvents: 'none'
+                  pointerEvents: 'none',
+                  position: 'fixed',
+                  top: '20px',
+                  left: '20px'
                 }}
               />
               
@@ -1504,6 +1524,7 @@ export default function StockPriceChart({
                   
                   // 🎯 포스트 언급 마커 (감정 분석 기반 고급 시각화)
                   if (payload.postTitle && !payload.isCurrentPrice) {
+                    console.log(`🎨 Rendering marker for: ${payload.postTitle}`, { sentiments: payload.sentiments });
                     // 감정 분석에 따른 마커 스타일 결정
                     const currentTheme = getSafeTheme();
                     let markerTheme = currentTheme.sentiment.neutral;
@@ -1769,12 +1790,12 @@ export default function StockPriceChart({
 
         {/* 📈 프로페셔널 통계 대시보드 */}
         <div 
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6"
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2 pt-2"
           style={{ borderTop: `1px solid ${getChartTheme(isDarkMode).chart.grid}` }}
         >
           {/* 첫 언급가 */}
           <div 
-            className="text-center p-4 rounded-lg relative overflow-hidden"
+            className="text-center p-3 rounded-lg relative overflow-hidden"
             style={{ 
               background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.tertiary} 0%, ${getChartTheme(isDarkMode).background.secondary} 100%)`,
               border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`
@@ -1803,7 +1824,7 @@ export default function StockPriceChart({
 
           {/* 현재가 */}
           <div 
-            className="text-center p-4 rounded-lg relative overflow-hidden"
+            className="text-center p-3 rounded-lg relative overflow-hidden"
             style={{ 
               background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.positive.background}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
               border: `1px solid ${getChartTheme(isDarkMode).sentiment.positive.primary}30`
@@ -1833,7 +1854,7 @@ export default function StockPriceChart({
 
           {/* 가격 변동 */}
           <div 
-            className="text-center p-4 rounded-lg relative overflow-hidden"
+            className="text-center p-3 rounded-lg relative overflow-hidden"
             style={{ 
               background: priceChange?.isPositive 
                 ? `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.positive.background}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`
@@ -1878,7 +1899,7 @@ export default function StockPriceChart({
 
           {/* 언급 통계 */}
           <div 
-            className="text-center p-4 rounded-lg relative overflow-hidden"
+            className="text-center p-3 rounded-lg relative overflow-hidden"
             style={{ 
               background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).text.accent}20 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
               border: `1px solid ${getChartTheme(isDarkMode).text.accent}30`
@@ -1918,7 +1939,7 @@ export default function StockPriceChart({
         {/* 📝 데이터 설명 및 안내 */}
         {filteredData.length > 0 && filteredData.length < (timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : 180) && (
           <div 
-            className="mt-6 p-4 rounded-lg border-l-4"
+            className="mt-2 p-2 rounded-lg border-l-4"
             style={{ 
               background: `${getChartTheme(isDarkMode).sentiment.warning.primary}10`,
               borderLeftColor: getChartTheme(isDarkMode).sentiment.warning.primary,
@@ -1932,7 +1953,7 @@ export default function StockPriceChart({
               />
               <div>
                 <h4 
-                  className="text-sm font-medium mb-2"
+                  className="text-sm font-medium mb-1"
                   style={{ color: getChartTheme(isDarkMode).sentiment.warning.primary }}
                 >
                   📊 데이터 범위 안내

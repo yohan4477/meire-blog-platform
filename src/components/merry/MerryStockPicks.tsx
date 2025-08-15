@@ -87,6 +87,75 @@ export default function MerryStockPicks() {
     }
   };
 
+  // 종목별 특성 뱃지 (Individual Stock Badges)
+  const getStockCharacteristicBadges = (stock: any) => {
+    const badges = [];
+    
+    // 오늘 언급 뱃지
+    const today = new Date().toISOString().split('T')[0];
+    const lastMentionDate = stock.lastMention?.split(' ')[0];
+    if (lastMentionDate === today) {
+      badges.push({
+        icon: '🆕',
+        text: '오늘 언급',
+        className: 'bg-gradient-to-r from-red-500 to-pink-500 text-white animate-pulse'
+      });
+    }
+    
+    // 트럼프 관련 뱃지 (실제 데이터 기반)
+    const trumpRelatedStocks = {
+      'INTC': { mentions: 3, relevance: 'high' },
+      'LLY': { mentions: 6, relevance: 'high' },
+      'UNH': { mentions: 4, relevance: 'medium' },
+      '005930': { mentions: 24, relevance: 'high' },
+      'TSLA': { mentions: 15, relevance: 'high' }
+    };
+    
+    if (trumpRelatedStocks[stock.ticker]) {
+      const trumpData = trumpRelatedStocks[stock.ticker];
+      if (trumpData.relevance === 'high') {
+        badges.push({
+          icon: '🇺🇸',
+          text: '트럼프 관련',
+          className: 'bg-gradient-to-r from-blue-600 to-red-600 text-white'
+        });
+      }
+    }
+    
+    return badges;
+  };
+
+  // 상대적 순위 뱃지 (Comparative Ranking Badges)
+  const getRankingBadge = (stock: any, index: number, allStocks: any[]) => {
+    // 3개월 최다 언급 (1위만)
+    if (index === 0) {
+      return {
+        icon: '🏆',
+        text: '3개월 최다 언급',
+        className: 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
+      };
+    }
+    
+    // 2위, 3위 순위 뱃지
+    if (index === 1) {
+      return {
+        icon: '🥈',
+        text: '2위',
+        className: 'bg-gradient-to-r from-gray-400 to-gray-600 text-white'
+      };
+    }
+    
+    if (index === 2) {
+      return {
+        icon: '🥉',
+        text: '3위',
+        className: 'bg-gradient-to-r from-orange-400 to-orange-600 text-white'
+      };
+    }
+    
+    return null;
+  };
+
   const getMarketColor = (market: string) => {
     switch (market) {
       case 'KOSPI':
@@ -157,17 +226,29 @@ export default function MerryStockPicks() {
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
-        {stocks.map((stock, index) => (
+        {stocks.map((stock, index) => {
+          const characteristicBadges = getStockCharacteristicBadges(stock);
+          const rankingBadge = getRankingBadge(stock, index, stocks);
+          
+          return (
           <Link key={stock.ticker} href={`/merry/stocks/${stock.ticker}`}>
             <div className="group p-4 rounded-lg border bg-card hover:bg-accent/50 transition-all cursor-pointer">
-              {/* 최다 언급 배지를 종목 위에 배치 */}
-              {index === 0 && (
-                <div className="mb-2">
-                  <Badge variant="default" className="text-xs bg-gradient-to-r from-yellow-500 to-orange-500">
-                    🏆 최근 3개월 최다 언급
+              {/* 뱃지 시스템 - 2단계 분리 */}
+              <div className="mb-2 flex flex-wrap gap-1">
+                {/* 1. 종목별 특성 뱃지 (개별 종목) */}
+                {characteristicBadges.map((badge, badgeIndex) => (
+                  <Badge key={badgeIndex} className={`text-xs ${badge.className}`}>
+                    {badge.icon} {badge.text}
                   </Badge>
-                </div>
-              )}
+                ))}
+                
+                {/* 2. 상대적 순위 뱃지 (전체 비교) */}
+                {rankingBadge && (
+                  <Badge className={`text-xs ${rankingBadge.className}`}>
+                    {rankingBadge.icon} {rankingBadge.text}
+                  </Badge>
+                )}
+              </div>
               
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -230,7 +311,7 @@ export default function MerryStockPicks() {
               </div>
             </div>
           </Link>
-        ))}
+        )})}
       </CardContent>
     </Card>
   );

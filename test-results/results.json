@@ -1,0 +1,475 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\y\\meire-blog-platform\\playwright.config.ts",
+    "rootDir": "C:/Users/y/meire-blog-platform/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": "C:\\Users\\y\\meire-blog-platform\\tests\\global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 5
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 5
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.2",
+    "workers": 6,
+    "webServer": {
+      "command": "npm run dev",
+      "port": 3004,
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "sentiment-analysis.spec.ts",
+      "file": "sentiment-analysis.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Sentiment Analysis Integration",
+          "file": "sentiment-analysis.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 42668,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts",
+                            "column": 16,
+                            "line": 13
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  11 |     \n  12 |     // Navigate to TSLA stock page\n> 13 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  14 |     \n  15 |     // Wait for page to load and chart to render\n  16 |     await page.waitForSelector('[data-testid=\"stock-price-chart\"]', { timeout: 10000 });\n    at C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts:13:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🧪 Testing sentiment analysis integration on TSLA chart...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-15T12:22:49.253Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-da445-lored-markers-on-TSLA-chart-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-406a215d7767d2e73279",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 35166,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts",
+                            "column": 16,
+                            "line": 13
+                          },
+                          "message": "Error: page.goto: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  11 |     \n  12 |     // Navigate to TSLA stock page\n> 13 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  14 |     \n  15 |     // Wait for page to load and chart to render\n  16 |     await page.waitForSelector('[data-testid=\"stock-price-chart\"]', { timeout: 10000 });\n    at C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts:13:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🧪 Testing sentiment analysis integration on TSLA chart...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-15T12:22:49.231Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-da445-lored-markers-on-TSLA-chart-firefox\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-da445-lored-markers-on-TSLA-chart-firefox\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-4e572d0fad016938aa69",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 37048,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts",
+                            "column": 16,
+                            "line": 13
+                          },
+                          "message": "Error: page.goto: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  11 |     \n  12 |     // Navigate to TSLA stock page\n> 13 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  14 |     \n  15 |     // Wait for page to load and chart to render\n  16 |     await page.waitForSelector('[data-testid=\"stock-price-chart\"]', { timeout: 10000 });\n    at C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts:13:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🧪 Testing sentiment analysis integration on TSLA chart...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-15T12:22:49.430Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-da445-lored-markers-on-TSLA-chart-webkit\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-da445-lored-markers-on-TSLA-chart-webkit\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-d466f41376b3d0797f1e",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 42119,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts",
+                            "column": 16,
+                            "line": 13
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  11 |     \n  12 |     // Navigate to TSLA stock page\n> 13 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  14 |     \n  15 |     // Wait for page to load and chart to render\n  16 |     await page.waitForSelector('[data-testid=\"stock-price-chart\"]', { timeout: 10000 });\n    at C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts:13:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🧪 Testing sentiment analysis integration on TSLA chart...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-15T12:22:49.380Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-da445-lored-markers-on-TSLA-chart-Mobile-Chrome\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-082b2204bd10a6077bd3",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "timedOut",
+                      "duration": 36444,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts",
+                            "column": 16,
+                            "line": 13
+                          },
+                          "message": "Error: page.goto: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  11 |     \n  12 |     // Navigate to TSLA stock page\n> 13 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  14 |     \n  15 |     // Wait for page to load and chart to render\n  16 |     await page.waitForSelector('[data-testid=\"stock-price-chart\"]', { timeout: 10000 });\n    at C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts:13:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🧪 Testing sentiment analysis integration on TSLA chart...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-15T12:22:49.322Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-da445-lored-markers-on-TSLA-chart-Mobile-Safari\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-da445-lored-markers-on-TSLA-chart-Mobile-Safari\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-8a09aa0b02fb78301f4f",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-08-15T12:22:47.402Z",
+    "duration": 45926.556,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 5,
+    "flaky": 0
+  }
+}
