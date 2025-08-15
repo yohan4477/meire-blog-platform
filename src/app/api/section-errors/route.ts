@@ -74,7 +74,27 @@ function parseBrowserInfo(userAgent?: string) {
 // POST: 섹션 오류 기록
 export async function POST(request: NextRequest) {
   try {
-    const errorData: SectionError = await request.json();
+    // JSON 파싱 전에 요청 본문 확인
+    const requestText = await request.text();
+    
+    if (!requestText || requestText.trim() === '') {
+      return NextResponse.json({
+        success: false,
+        error: '요청 본문이 비어있습니다'
+      }, { status: 400 });
+    }
+    
+    let errorData: SectionError;
+    try {
+      errorData = JSON.parse(requestText);
+    } catch (parseError) {
+      console.error('JSON 파싱 실패:', parseError);
+      console.error('요청 본문:', requestText);
+      return NextResponse.json({
+        success: false,
+        error: 'JSON 형식이 올바르지 않습니다'
+      }, { status: 400 });
+    }
     const db = await getDbConnection();
     
     // 오류 해시 생성 (중복 방지)
@@ -86,6 +106,32 @@ export async function POST(request: NextRequest) {
     
     console.log(`🚨 [SECTION ERROR] ${errorData.componentName}/${errorData.sectionName}: ${errorData.errorMessage}`);
     
+    // AutoCapture 오류에 대한 특별한 처리 (빈번한 중복 방지)
+    if (errorData.componentName === 'AutoCapture' && errorData.sectionName === 'pattern-detected') {
+      // 최근 5분 내에 동일한 에러 ID가 있는지 확인
+      const existingAutoCapture = await new Promise<any[]>((resolve, reject) => {
+        db.all(`
+          SELECT * FROM section_errors 
+          WHERE component_name = 'AutoCapture' 
+          AND section_name = 'pattern-detected'
+          AND error_message = ?
+          AND created_at > datetime('now', '-5 minutes')
+        `, [errorData.errorMessage], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        });
+      });
+
+      if (existingAutoCapture.length > 0) {
+        console.log(`⚠️  AutoCapture 중복 무시: ${errorData.errorMessage} (5분 내 이미 존재)`);
+        return NextResponse.json({
+          success: true,
+          message: 'AutoCapture 중복 오류 무시됨',
+          errorHash: existingAutoCapture[0].error_hash
+        });
+      }
+    }
+
     // 오류 기록 (중복 시 카운트 업데이트)
     await new Promise<void>((resolve, reject) => {
       db.run(`
@@ -176,11 +222,11 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type') || 'stats';
+    const type = searchParams.get('type') || 'list'; // 기본값을 list로 변경
     const component = searchParams.get('component');
     const status = searchParams.get('status');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const timeRange = searchParams.get('timeRange') || '7d';
+    const limit = parseInt(searchParams.get('limit') || '100'); // 기본 제한을 100으로 증가
+    const timeRange = searchParams.get('timeRange') || '30d'; // 기본 시간 범위를 30일로 확장
     
     // TimeRange를 SQL WHERE 조건으로 변환
     const getTimeRangeCondition = (range: string) => {
@@ -248,8 +294,16 @@ export async function GET(request: NextRequest) {
       let query = `
         SELECT id, error_hash, component_name, section_name, page_path,
                error_message, error_type, error_category, browser_name, device_type,
-               occurrence_count, status, created_at, first_occurred_at, last_occurred_at,
-               resolved_at, resolution_notes
+               occurrence_count, status, 
+               created_at as timestamp, first_occurred_at, last_occurred_at,
+               resolved_at, resolution_notes,
+               CASE 
+                 WHEN occurrence_count > 10 OR error_category = 'critical' THEN 'critical'
+                 WHEN occurrence_count > 5 THEN 'high'
+                 WHEN occurrence_count > 2 THEN 'medium'
+                 ELSE 'low'
+               END as severity,
+               '' as user_agent, '' as stack_trace, '' as ip_address, '' as session_id, '' as user_id
         FROM section_errors
         WHERE 1=1 ${timeRangeCondition}
       `;
@@ -275,20 +329,20 @@ export async function GET(request: NextRequest) {
             else resolve(rows || []);
           });
         }),
-        // 통계 정보 조회
+        // 통계 정보 조회 (대시보드 형식에 맞춤)
         new Promise<any>((resolve, reject) => {
           db.get(`
             SELECT 
               COUNT(*) as total,
-              SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new,
-              SUM(CASE WHEN status = 'investigating' THEN 1 ELSE 0 END) as investigating,
-              SUM(CASE WHEN status = 'fixed' THEN 1 ELSE 0 END) as fixed,
-              SUM(CASE WHEN status = 'ignored' THEN 1 ELSE 0 END) as ignored
+              SUM(CASE WHEN DATE(created_at) = DATE('now') THEN 1 ELSE 0 END) as today,
+              SUM(CASE WHEN created_at >= datetime('now', '-7 days') THEN 1 ELSE 0 END) as last_week,
+              SUM(CASE WHEN status = 'fixed' THEN 1 ELSE 0 END) as resolved,
+              SUM(CASE WHEN error_category = 'critical' OR occurrence_count > 10 THEN 1 ELSE 0 END) as critical
             FROM section_errors 
             WHERE 1=1 ${timeRangeCondition}
           `, (err, row) => {
             if (err) reject(err);
-            else resolve(row || { total: 0, new: 0, investigating: 0, fixed: 0, ignored: 0 });
+            else resolve(row || { total: 0, today: 0, last_week: 0, resolved: 0, critical: 0 });
           });
         })
       ]);

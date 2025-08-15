@@ -1,5 +1,4 @@
 import { Stock, StockPrice, StockQuote } from '@/types';
-import { updateStockPrice, getStockPrices } from './portfolio-db';
 import { query } from './database';
 
 // 주가 데이터 제공자 인터페이스
@@ -409,14 +408,7 @@ export class StockPriceService {
       }
 
       const stockId = stocks[0].id;
-      await updateStockPrice(stockId, {
-        price: quote.price,
-        change_amount: quote.change,
-        change_percent: quote.changePercent,
-        volume: quote.volume,
-        market_cap: quote.marketCap,
-        price_date: new Date().toISOString().split('T')[0]
-      });
+      await this.updateStockPriceInDatabase(stockId, quote);
 
     } catch (error) {
       console.error(`Failed to save quote to database for ${symbol}:`, error);
@@ -424,14 +416,27 @@ export class StockPriceService {
   }
 
   private async updateStockPriceInDatabase(stockId: number, quote: StockQuote): Promise<void> {
-    await updateStockPrice(stockId, {
-      price: quote.price,
-      change_amount: quote.change,
-      change_percent: quote.changePercent,
-      volume: quote.volume,
-      market_cap: quote.marketCap,
-      price_date: new Date().toISOString().split('T')[0]
-    });
+    try {
+      const sql = `
+        INSERT OR REPLACE INTO stock_prices (
+          stock_id, price, change_amount, change_percent, 
+          volume, market_cap, price_date, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `;
+      
+      await query(sql, [
+        stockId,
+        quote.price,
+        quote.change,
+        quote.changePercent,
+        quote.volume || null,
+        quote.marketCap || null,
+        new Date().toISOString().split('T')[0]
+      ]);
+    } catch (error) {
+      console.error(`Failed to update stock price in database for stock ID ${stockId}:`, error);
+      throw error;
+    }
   }
 
   // 캐시 관리

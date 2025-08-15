@@ -278,7 +278,16 @@ export class BlogCrawler {
         }
       });
       
-      const content = contentLines.join('\n');
+      let content = contentLines.join('\n');
+      
+      // CoolPubilcDomains 관련 출처 표기 제거
+      content = content.replace(/© CoolPubilcDomains,?\s*출처\s*OGQ/g, '');
+      content = content.replace(/© CoolPubilcDomains/g, '');
+      content = content.replace(/© CoolPublicDomains,?\s*출처\s*OGQ/g, '');
+      content = content.replace(/© CoolPublicDomains/g, '');
+      
+      // 연속된 빈 줄 정리
+      content = content.replace(/\n\s*\n/g, '\n').trim();
       
       // 작성 날짜 추출
       const createdDate = await this.extractPostDateFromSoup($, response.data, logNo);
@@ -662,6 +671,111 @@ export class BlogCrawler {
    */
   getStats(): CrawlerStats {
     return { ...this.stats };
+  }
+
+  /**
+   * DB에 없는 새로운 포스트만 크롤링
+   */
+  async crawlNewPostsOnly(delayRange: [number, number] = [0.5, 1.0]): Promise<CrawlerStats> {
+    console.log(`=== ${this.config.blogId} 신규 포스트 크롤링 시작 ===`);
+    console.log(`DB에 없는 새로운 포스트만 크롤링합니다.`);
+    console.log('');
+    
+    let page = 1;
+    let foundNewPosts = true;
+    const allNewPosts: Array<{log_no: string, url: string, title_preview: string}> = [];
+    
+    // DB에서 기존 포스트 목록 가져오기
+    const existingPosts = await query<{ log_no: string }>(`
+      SELECT log_no FROM blog_posts WHERE blog_type = 'merry'
+    `);
+    const existingLogNos = new Set(existingPosts.map(p => p.log_no));
+    console.log(`📋 기존 DB 포스트: ${existingLogNos.size}개`);
+    
+    // 새로운 포스트를 찾을 때까지 페이지별로 탐색
+    while (foundNewPosts && page <= 50) {
+      console.log(`[PAGE ${page}] 새로운 포스트 검색 중...`);
+      
+      const pagePosts = await this.getPostListFromPage(page);
+      
+      if (pagePosts.length === 0) {
+        console.log(`페이지 ${page}에서 포스트를 찾을 수 없음. 크롤링 종료.`);
+        break;
+      }
+      
+      // 이 페이지에서 새로운 포스트 찾기
+      const newPostsInPage = pagePosts.filter(post => !existingLogNos.has(post.log_no));
+      
+      if (newPostsInPage.length === 0) {
+        console.log(`✅ 페이지 ${page}: 모든 포스트가 이미 DB에 존재함. 크롤링 완료.`);
+        foundNewPosts = false;
+        break;
+      }
+      
+      console.log(`🆕 페이지 ${page}: 새로운 포스트 ${newPostsInPage.length}개 발견`);
+      allNewPosts.push(...newPostsInPage);
+      
+      // 발견된 새로운 포스트를 기존 목록에 추가 (중복 방지)
+      newPostsInPage.forEach(post => existingLogNos.add(post.log_no));
+      
+      page++;
+      
+      // 페이지 간 대기
+      const waitTime = Math.random() * (delayRange[1] - delayRange[0]) + delayRange[0];
+      await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+    }
+    
+    this.stats.totalFound = allNewPosts.length;
+    console.log(`\\n📝 새로운 포스트 ${allNewPosts.length}개 발견`);
+    
+    if (allNewPosts.length === 0) {
+      console.log('새로운 포스트가 없습니다.');
+      return this.stats;
+    }
+    
+    // 새로운 포스트들을 역순으로 정렬 (오래된 것부터 처리)
+    allNewPosts.reverse();
+    
+    // 각 새로운 포스트 내용 추출 및 저장
+    console.log('\\n[EXTRACT] 새로운 포스트 내용 추출 및 저장 시작...');
+    
+    for (let i = 0; i < allNewPosts.length; i++) {
+      const postInfo = allNewPosts[i];
+      
+      // 프로그레스 바 계산
+      const progress = Math.floor(((i + 1) / allNewPosts.length) * 100);
+      const barLength = 30;
+      const filledLength = Math.floor(barLength * (i + 1) / allNewPosts.length);
+      const bar = '#'.repeat(filledLength) + '-'.repeat(barLength - filledLength);
+      
+      console.log(`\\n[${i + 1}/${allNewPosts.length}] [${bar}] ${progress}%`);
+      console.log(`🆕 새 포스트 처리 중: ${postInfo.title_preview}`);
+      
+      // 포스트 내용 추출
+      const postData = await this.extractPostContent(postInfo.url);
+      
+      if (postData) {
+        // DB에 저장
+        const success = await this.savePostToDb(postData);
+        
+        if (success) {
+          console.log(`✅ SUCCESS: 새 포스트 저장 완료`);
+        } else {
+          console.log(`❌ ERROR: 저장 실패`);
+        }
+      } else {
+        console.log(`❌ ERROR: 추출 실패`);
+      }
+      
+      // 요청 간 대기 (서버 부하 방지)
+      if (i < allNewPosts.length - 1) {
+        const waitTime = Math.random() * (delayRange[1] - delayRange[0]) + delayRange[0];
+        await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+      }
+    }
+    
+    this.printStats();
+    return this.stats;
   }
 }
 

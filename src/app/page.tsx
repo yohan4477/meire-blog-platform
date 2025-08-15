@@ -11,13 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // 동적 import로 성능 최적화
-const UnifiedDashboard = dynamic(
-  () => import('@/components/dashboard/UnifiedDashboard'),
-  { 
-    loading: () => <DashboardSkeleton />,
-    ssr: false 
-  }
-);
 
 const MerryStockPicks = dynamic(
   () => import('@/components/merry/MerryStockPicks'),
@@ -35,25 +28,13 @@ const MerryProfileTab = dynamic(
   }
 );
 
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-8 w-64" />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-32" />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [merryPosts, setMerryPosts] = useState<any[]>([]);
   const [curatedNews, setCuratedNews] = useState<any[]>([]);
   const [dailyDigest, setDailyDigest] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('insights');
 
   // 메르 블로그 최신 포스트 가져오기
   useEffect(() => {
@@ -205,21 +186,15 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center max-w-4xl mx-auto px-2">
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base">
-                <Link href="/financial-curation" className="flex items-center justify-center">
-                  <span className="truncate">🤖 AI 금융 큐레이션</span>
-                  <Brain className="ml-2 h-4 w-4 flex-shrink-0" />
+                <Link href="/merry" className="flex items-center justify-center">
+                  <span className="truncate">📝 메르 블로그</span>
+                  <User className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base">
-                <Link href="/investment" className="flex items-center justify-center">
-                  <span className="truncate">국민연금 분석</span>
-                  <BarChart3 className="ml-2 h-4 w-4 flex-shrink-0" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base">
-                <Link href="/agent-workflows" className="flex items-center justify-center">
-                  <span className="truncate">에이전트 관리</span>
-                  <Brain className="ml-2 h-4 w-4 flex-shrink-0" />
+                <Link href="/merry/stocks/TSLA" className="flex items-center justify-center">
+                  <span className="truncate">📊 종목 분석</span>
+                  <TrendingUp className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>
             </div>
@@ -227,21 +202,126 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 메르's Pick - 주목할 종목 (상단 배치) */}
+      {/* 메르 AI 분석 시스템 - 매크로 트렌드 논리체인 */}
+      <section className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border-b">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">🧠 메르 AI 분석 시스템</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              메르의 독특한 시각과 논리 전개를 AI가 학습하여 분석합니다<br/>
+              복잡한 사건들 사이의 숨은 연결고리와 투자 기회를 자동으로 발견합니다
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href='/api/merry/analysis'}>
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                  <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">다차원 논리 분석</h3>
+                  <p className="text-sm text-muted-foreground">
+                    지정학, 기술, 문화, 경제를 아우르는 통찰
+                  </p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">메르식 사고 학습</h3>
+                  <p className="text-sm text-muted-foreground">
+                    독특한 관점과 예측 패턴을 AI가 학습
+                  </p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
+                  <Bell className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">감정 & 트렌드 분석</h3>
+                  <p className="text-sm text-muted-foreground">
+                    종목별 감정과 시장 트렌드 실시간 추적
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
+          
+          <div className="text-center">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/merry/analysis">
+                AI 분석 대시보드 보기
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* 메르's Pick - 주목할 종목 */}
       <section className="bg-muted/50 border-b">
         <div className="container mx-auto px-4 py-6">
           <MerryStockPicks />
+        </div>
+      </section>
+      
+      {/* 국민연금 분석 & 에이전트 관리 (하단 배치) */}
+      <section className="bg-card border-b">
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center">
+                  <BarChart3 className="mr-2 h-5 w-5" />
+                  국민연금 분석
+                </h3>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/investment">
+                    자세히 보기
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                국민연금공단의 최신 포트폴리오 변화와 투자 전략을 분석합니다
+              </p>
+            </Card>
+            
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center">
+                  <Brain className="mr-2 h-5 w-5" />
+                  에이전트 관리
+                </h3>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/agent-workflows">
+                    자세히 보기
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                AI 에이전트들의 분석 워크플로우를 관리하고 모니터링합니다
+              </p>
+            </Card>
+          </div>
         </div>
       </section>
 
       {/* Main Content with Tabs */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
-            <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
-              <span className="hidden sm:inline">📊 </span>
-              <span className="truncate">대시보드</span>
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 h-auto">
             <TabsTrigger value="insights" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
               <span className="hidden sm:inline">🤖 </span>
               <span className="truncate">AI 인사이트</span>
@@ -260,9 +340,6 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="mt-6">
-            <UnifiedDashboard />
-          </TabsContent>
 
           <TabsContent value="insights" className="mt-6 space-y-6">
             {/* AI 금융 큐레이션 섹션 */}

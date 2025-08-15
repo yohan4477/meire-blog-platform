@@ -22,16 +22,12 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       }, { status: 400 });
     }
 
-    // 포스트와 태그 정보 조회
+    // 포스트 정보 조회 (blog_posts 테이블 사용)
     const postQuery = `
       SELECT 
-        p.*,
-        GROUP_CONCAT(t.name) as tags
-      FROM posts p
-      LEFT JOIN merry_post_tags pt ON p.id = pt.post_id
-      LEFT JOIN merry_tags t ON pt.tag_id = t.id
-      WHERE p.id = ? AND p.blog_type = 'merry'
-      GROUP BY p.id
+        id, title, content, excerpt, category, created_date, views, featured
+      FROM blog_posts
+      WHERE id = ?
     `;
 
     const posts = await query<BlogPost & { tags?: string }>(postQuery, [postId]);
@@ -49,11 +45,15 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 
     const post = {
       ...posts[0],
-      tags: posts[0].tags ? posts[0].tags.split(',') : []
+      author: '메르', // 기본 작성자
+      createdAt: posts[0].created_date,
+      likes: 0, // 기본값
+      comments: 0, // 기본값  
+      tags: [] // 태그는 추후 구현
     };
 
     // 조회수 증가
-    await query('UPDATE posts SET views = views + 1 WHERE id = ?', [postId]);
+    await query('UPDATE blog_posts SET views = views + 1 WHERE id = ?', [postId]);
     post.views = (post.views || 0) + 1;
 
     return NextResponse.json({

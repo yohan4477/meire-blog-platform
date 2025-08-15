@@ -35,15 +35,21 @@ export default function MerryStockPicks() {
 
   const fetchStocks = async () => {
     try {
+      console.log('📊 메르스 픽 종목 데이터 로딩 시작...');
       const response = await fetch('/api/merry/stocks?limit=5');
       const data = await response.json();
       
-      if (data.success) {
+      console.log('📊 API 응답:', data);
+      
+      if (data.success && data.data && data.data.stocks) {
+        console.log(`📊 ${data.data.stocks.length}개 종목 로드 완료`);
         setStocks(data.data.stocks);
       } else {
+        console.error('📊 종목 데이터 구조 오류:', data);
         setError('종목 데이터를 불러올 수 없습니다.');
       }
     } catch (err) {
+      console.error('📊 종목 데이터 로딩 에러:', err);
       setError('종목 데이터 로딩 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
