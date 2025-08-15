@@ -23,7 +23,17 @@
       "Bash(start http://localhost:3006/merry/stocks/TSLA)",
       "Bash(cp:*)",
       "Bash(start http://localhost:3006/merry/stocks/INTC)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm install:*)",
+      "Bash(echo:*)",
+      "Bash(/dev/null)",
+      "Bash(npx playwright:*)",
+      "Bash(npm run build:*)",
+      "Bash(start http://localhost:3007/merry/stocks/TSLA)",
+      "Bash(cmd /c start:*)",
+      "Bash(start http://localhost:3005/merry/stocks/TSLA)",
+      "Bash(del test-circle-fix.js)",
+      "Bash(start http://localhost:3005/merry/stocks/INTC)"
     ],
     "deny": [],
     "ask": [],
