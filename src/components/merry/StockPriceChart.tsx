@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts';
 // Sheet 관련 import 제거 - 상세 정보 패널 필요 없음
 import { TrendingUp, TrendingDown, Calendar, DollarSign, BarChart3, Zap, Target, Activity, Info } from 'lucide-react';
 
@@ -250,6 +250,9 @@ export default function StockPriceChart({
         })
       ]);
       
+      // 🔧 Fix scope issue: declare sentimentDataResponse outside if blocks
+      let sentimentDataResponse = null;
+      
       if (postsResponse.ok) {
         const postsData = await postsResponse.json();
         if (postsData.success) {
@@ -258,17 +261,29 @@ export default function StockPriceChart({
           
           // 감정 분석 데이터 처리
           if (sentimentResponse.ok) {
-            const sentimentDataResponse = await sentimentResponse.json();
+            sentimentDataResponse = await sentimentResponse.json();
             console.log(`🎯 Loaded sentiment data for ${ticker}:`, sentimentDataResponse);
             console.log(`📅 Available sentiment dates:`, Object.keys(sentimentDataResponse?.sentimentByDate || {}));
+            console.log(`📊 Sentiment data structure:`, {
+              hasSentimentByDate: !!(sentimentDataResponse?.sentimentByDate),
+              dateCount: Object.keys(sentimentDataResponse?.sentimentByDate || {}).length,
+              firstDateExample: Object.keys(sentimentDataResponse?.sentimentByDate || {})[0],
+              firstDateData: sentimentDataResponse?.sentimentByDate?.[Object.keys(sentimentDataResponse?.sentimentByDate || {})[0]]
+            });
             setSentimentData(sentimentDataResponse);
           } else {
             console.warn('🚨 감정 분석 데이터 로딩 실패:', sentimentResponse.status);
             setSentimentData(null);
+            sentimentDataResponse = null;
           }
           
-          // 포스트 로드 후 차트 생성
-          await generatePriceHistory(postsData.data.posts);
+          // 포스트 로드 후 차트 생성 (감정 데이터와 함께)
+          console.log(`🔗 Passing sentiment data to chart generation:`, {
+            hasSentimentData: !!sentimentDataResponse,
+            sentimentDates: Object.keys(sentimentDataResponse?.sentimentByDate || {}),
+            postsCount: postsData.data.posts.length
+          });
+          await generatePriceHistory(postsData.data.posts, sentimentDataResponse);
           return;
         }
       }
@@ -280,7 +295,7 @@ export default function StockPriceChart({
     await generatePriceHistory([]);
   };
 
-  const generatePriceHistory = async (postsData?: any[]) => {
+  const generatePriceHistory = async (postsData?: any[], sentimentDataParam?: any) => {
     try {
       const chartData: PricePoint[] = [];
 
@@ -307,6 +322,17 @@ export default function StockPriceChart({
         
         if (postsToUse && postsToUse.length > 0) {
           console.log(`🎯 Processing ${postsToUse.length} posts for chart markers`);
+          console.log(`📈 Chart data range:`, {
+            totalPoints: chartData.length,
+            firstDate: chartData[0]?.date,
+            lastDate: chartData[chartData.length - 1]?.date,
+            sampleDates: chartData.slice(0, 5).map(p => p.date)
+          });
+          
+          let successfulMatches = 0;
+          let exactMatches = 0;
+          let approximateMatches = 0;
+          let failedMatches = 0;
           
           postsToUse.forEach((post, index) => {
             let mentionDate: Date;
@@ -317,7 +343,10 @@ export default function StockPriceChart({
             }
             
             const postDateStr = mentionDate.toISOString().split('T')[0];
-            console.log(`📅 Post ${index + 1}: "${post.title.substring(0, 30)}..." on ${postDateStr}`);
+            console.log(`📅 Post ${index + 1}/${postsToUse.length}: "${post.title.substring(0, 30)}..." on ${postDateStr}`, {
+              rawTimestamp: post.created_date,
+              postId: post.id
+            });
             
             // 정확한 날짜 매칭을 먼저 시도
             let matchingPoint = chartData.find(p => p.date === postDateStr);
@@ -343,10 +372,17 @@ export default function StockPriceChart({
               
               matchingPoint = closestPoint;
               if (matchingPoint) {
-                console.log(`🔗 Matched post "${post.title.substring(0, 30)}..." (${postDateStr}) to chart point (${matchingPoint.date})`);
+                console.log(`🔗 Approximate match: "${post.title.substring(0, 30)}..." (${postDateStr}) → (${matchingPoint.date}) Distance: ${Math.round(closestDistance / dayMs * 10) / 10}d`);
+                approximateMatches++;
+                successfulMatches++;
+              } else {
+                console.log(`❌ No match within 7 days for "${post.title.substring(0, 30)}..." (${postDateStr})`);
+                failedMatches++;
               }
             } else {
-              console.log(`✅ Exact match for post "${post.title.substring(0, 30)}..." on ${postDateStr}`);
+              console.log(`✅ Exact match: "${post.title.substring(0, 30)}..." on ${postDateStr}`);
+              exactMatches++;
+              successfulMatches++;
             }
             
             if (matchingPoint) {
@@ -355,35 +391,50 @@ export default function StockPriceChart({
                 matchingPoint.postTitle = post.title;
                 matchingPoint.postId = post.id;
                 
-                // 감정 분석 데이터 추가
+                // 감정 분석 데이터 추가 (파라미터로 받은 데이터 사용)
+                const useSentimentData = sentimentDataParam || sentimentData;
                 const postDateStr = typeof matchingPoint.date === 'string' && matchingPoint.date.match(/^\d{4}-\d{2}-\d{2}$/)
                   ? matchingPoint.date
                   : new Date(matchingPoint.date).toISOString().split('T')[0];
                 console.log(`🔍 Looking for sentiment data on date: ${postDateStr}`, { 
                   rawDate: matchingPoint.date,
-                  availableDates: Object.keys(sentimentData?.sentimentByDate || {}),
-                  sentimentDataExists: !!sentimentData,
-                  hasMatchingDate: !!(sentimentData?.sentimentByDate && sentimentData.sentimentByDate[postDateStr])
+                  availableDates: Object.keys(useSentimentData?.sentimentByDate || {}),
+                  sentimentDataExists: !!useSentimentData,
+                  hasMatchingDate: !!(useSentimentData?.sentimentByDate && useSentimentData.sentimentByDate[postDateStr]),
+                  usingParameterData: !!sentimentDataParam
                 });
-                if (sentimentData && sentimentData.sentimentByDate && sentimentData.sentimentByDate[postDateStr]) {
-                  matchingPoint.sentiments = sentimentData.sentimentByDate[postDateStr].sentiments;
-                  matchingPoint.posts = sentimentData.sentimentByDate[postDateStr].posts;
+                if (useSentimentData && useSentimentData.sentimentByDate && useSentimentData.sentimentByDate[postDateStr]) {
+                  matchingPoint.sentiments = useSentimentData.sentimentByDate[postDateStr].sentiments;
+                  matchingPoint.posts = useSentimentData.sentimentByDate[postDateStr].posts;
                   console.log(`🎯 Added sentiment data to marker on ${postDateStr}:`, matchingPoint.sentiments);
+                  console.log(`✅ SUCCESS: Sentiment data added to chart point:`, {
+                    date: postDateStr,
+                    sentimentCount: matchingPoint.sentiments?.length || 0,
+                    firstSentiment: matchingPoint.sentiments?.[0]?.sentiment,
+                    postTitle: matchingPoint.postTitle?.substring(0, 30)
+                  });
+                } else {
+                  console.log(`❌ FAILED: No sentiment data found for date ${postDateStr}`, {
+                    sentimentDataExists: !!useSentimentData,
+                    availableDates: Object.keys(useSentimentData?.sentimentByDate || {}),
+                    hasPostDateInSentiment: !!(useSentimentData?.sentimentByDate && useSentimentData.sentimentByDate[postDateStr])
+                  });
                 }
               } else {
                 // 여러 포스트가 같은 날짜에 있으면 제목 합치기
                 matchingPoint.postTitle = `${matchingPoint.postTitle} | ${post.title}`;
                 
-                // 감정 분석 데이터도 합치기
+                // 감정 분석 데이터도 합치기 (파라미터로 받은 데이터 사용)
+                const useSentimentData = sentimentDataParam || sentimentData;
                 const postDateStr = typeof matchingPoint.date === 'string' && matchingPoint.date.match(/^\d{4}-\d{2}-\d{2}$/)
                   ? matchingPoint.date
                   : new Date(matchingPoint.date).toISOString().split('T')[0];
-                if (sentimentData && sentimentData.sentimentByDate && sentimentData.sentimentByDate[postDateStr]) {
+                if (useSentimentData && useSentimentData.sentimentByDate && useSentimentData.sentimentByDate[postDateStr]) {
                   if (!matchingPoint.sentiments) matchingPoint.sentiments = [];
                   if (!matchingPoint.posts) matchingPoint.posts = [];
                   
-                  matchingPoint.sentiments = [...matchingPoint.sentiments, ...sentimentData.sentimentByDate[postDateStr].sentiments];
-                  matchingPoint.posts = [...matchingPoint.posts, ...sentimentData.sentimentByDate[postDateStr].posts];
+                  matchingPoint.sentiments = [...matchingPoint.sentiments, ...useSentimentData.sentimentByDate[postDateStr].sentiments];
+                  matchingPoint.posts = [...matchingPoint.posts, ...useSentimentData.sentimentByDate[postDateStr].posts];
                   console.log(`🎯 Merged sentiment data to existing marker on ${postDateStr}:`, matchingPoint.sentiments);
                 }
               }
@@ -392,31 +443,27 @@ export default function StockPriceChart({
             }
           });
           
-          const markersCount = chartData.filter(p => p.postTitle && !p.isCurrentPrice).length;
+          const markersCount = chartData.filter(p => p.postTitle).length;
           const sentimentMarkers = chartData.filter(p => p.sentiments && p.sentiments.length > 0).length;
-          console.log(`📊 Total markers created: ${markersCount} out of ${postsToUse.length} posts`);
-          console.log(`🎭 Sentiment markers: ${sentimentMarkers} out of ${markersCount} total markers`);
+          
+          console.log(`📊 Chart Marker Statistics:`, {
+            postsProcessed: postsToUse.length,
+            exactMatches: exactMatches,
+            approximateMatches: approximateMatches,
+            failedMatches: failedMatches,
+            successfulMatches: successfulMatches,
+            markersCreated: markersCount,
+            sentimentMarkersCreated: sentimentMarkers,
+            successRate: `${Math.round((successfulMatches / postsToUse.length) * 100)}%`
+          });
+          
+          if (failedMatches > 0) {
+            console.warn(`⚠️ ${failedMatches} posts could not be matched to chart points (outside 7-day range)`);
+          }
         }
 
-        // 현재가 추가/업데이트
-        const today = new Date().toISOString().split('T')[0];
-        const todayPoint = chartData.find(p => p.date === today);
-        const todayPrice = currentPrice || (chartData.length > 0 ? chartData[chartData.length - 1].price : 0);
-        
-        if (todayPoint) {
-          todayPoint.price = todayPrice;
-          todayPoint.isCurrentPrice = true;
-          if (!todayPoint.postTitle) {
-            todayPoint.postTitle = '현재가';
-          }
-        } else {
-          chartData.push({
-            date: today,
-            price: todayPrice,
-            postTitle: '현재가',
-            isCurrentPrice: true
-          });
-        }
+        // 현재가 추가/업데이트 - 제거됨 (불필요한 마커 생성 방지)
+        // 차트에는 실제 데이터만 표시하고, 현재가 마커는 별도 UI로 처리
 
         // 날짜순으로 정렬
         chartData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -643,7 +690,7 @@ export default function StockPriceChart({
 
   const handleMarkerClick = (data: PricePoint) => {
     try {
-      if (data && data.postTitle && !data.isCurrentPrice && data.postId) {
+      if (data && data.postTitle && data.postId) {
         // allPosts에서 해당 포스트 찾기
         const post = allPosts.find(p => p.id === data.postId);
         if (post) {
@@ -673,8 +720,8 @@ export default function StockPriceChart({
     const data = payload[0].payload;
     const theme = getSafeTheme();
     
-    // 언급된 날짜나 현재가가 아니면 툴팁을 표시하지 않음
-    if (!data.postTitle && !data.isCurrentPrice) {
+    // 언급된 날짜가 아니면 툴팁을 표시하지 않음
+    if (!data.postTitle) {
       return null;
     }
 
@@ -727,12 +774,8 @@ export default function StockPriceChart({
             <div 
               className="w-2 h-2 rounded-full animate-pulse"
               style={{ 
-                background: data.isCurrentPrice 
-                  ? getChartTheme(isDarkMode).sentiment.positive.primary 
-                  : getChartTheme(isDarkMode).chart.line,
-                boxShadow: `0 0 8px ${data.isCurrentPrice 
-                  ? getChartTheme(isDarkMode).sentiment.positive.glow 
-                  : getChartTheme(isDarkMode).chart.crosshair}50`
+                background: getChartTheme(isDarkMode).chart.line,
+                boxShadow: `0 0 8px ${getChartTheme(isDarkMode).chart.crosshair}50`
               }}
             />
             <span 
@@ -742,17 +785,6 @@ export default function StockPriceChart({
               {formatDate(label)}
             </span>
           </div>
-          {data.isCurrentPrice && (
-            <div className="flex items-center gap-1">
-              <Activity className="w-3 h-3" style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }} />
-              <span 
-                className="text-xs font-bold"
-                style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
-              >
-                LIVE
-              </span>
-            </div>
-          )}
         </div>
 
         {/* 💰 가격 정보 */}
@@ -766,7 +798,7 @@ export default function StockPriceChart({
           >
             {formatPrice(payload[0].value)}
           </div>
-          {priceChange && !data.isCurrentPrice && (
+          {priceChange && (
             <div className="flex items-center gap-2 mt-1">
               <div 
                 className="text-sm font-medium"
@@ -796,7 +828,7 @@ export default function StockPriceChart({
         </div>
 
         {/* 📝 포스트 정보 */}
-        {data.postTitle && !data.isCurrentPrice && (
+        {data.postTitle && (
           <div 
             className="rounded-lg p-3 mb-3 relative overflow-hidden"
             style={{ 
@@ -869,6 +901,107 @@ export default function StockPriceChart({
                     </div>
                   </div>
                 </div>
+                
+                {/* 🔍 감정 판단 근거 표시 */}
+                {data.sentiments && data.sentiments[0] && (
+                  <div className="mt-3 space-y-2">
+                    {/* 핵심 판단 논리 */}
+                    {data.sentiments[0].key_reasoning && (
+                      <div 
+                        className="p-2 rounded-lg"
+                        style={{ 
+                          background: `${getChartTheme(isDarkMode).background.tertiary}80`,
+                          border: `1px solid ${getChartTheme(isDarkMode).chart.grid}50`
+                        }}
+                      >
+                        <div 
+                          className="text-xs font-medium mb-1 flex items-center gap-1"
+                          style={{ color: getChartTheme(isDarkMode).text.accent }}
+                        >
+                          <span>💡</span> 핵심 논리
+                        </div>
+                        <div 
+                          className="text-xs leading-relaxed"
+                          style={{ color: getChartTheme(isDarkMode).text.primary }}
+                        >
+                          {data.sentiments[0].key_reasoning}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* 지원 증거 */}
+                    {data.sentiments[0].supporting_evidence && (
+                      <div className="space-y-1">
+                        {data.sentiments[0].supporting_evidence.positive_factors?.length > 0 && (
+                          <div className="flex items-start gap-1">
+                            <span className="text-xs mt-0.5">✅</span>
+                            <div 
+                              className="text-xs"
+                              style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
+                            >
+                              {data.sentiments[0].supporting_evidence.positive_factors[0]}
+                            </div>
+                          </div>
+                        )}
+                        {data.sentiments[0].supporting_evidence.negative_factors?.length > 0 && (
+                          <div className="flex items-start gap-1">
+                            <span className="text-xs mt-0.5">❌</span>
+                            <div 
+                              className="text-xs"
+                              style={{ color: getChartTheme(isDarkMode).sentiment.negative.primary }}
+                            >
+                              {data.sentiments[0].supporting_evidence.negative_factors[0]}
+                            </div>
+                          </div>
+                        )}
+                        {data.sentiments[0].supporting_evidence.neutral_factors?.length > 0 && (
+                          <div className="flex items-start gap-1">
+                            <span className="text-xs mt-0.5">➖</span>
+                            <div 
+                              className="text-xs"
+                              style={{ color: getChartTheme(isDarkMode).text.secondary }}
+                            >
+                              {data.sentiments[0].supporting_evidence.neutral_factors[0]}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* 투자 관점 */}
+                    {data.sentiments[0].investment_perspective?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {data.sentiments[0].investment_perspective.slice(0, 3).map((perspective: string, idx: number) => (
+                          <span 
+                            key={idx}
+                            className="text-xs px-2 py-0.5 rounded-full"
+                            style={{ 
+                              background: `${getChartTheme(isDarkMode).chart.line}20`,
+                              color: getChartTheme(isDarkMode).text.secondary,
+                              border: `1px solid ${getChartTheme(isDarkMode).chart.line}30`
+                            }}
+                          >
+                            {perspective}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* 컨텍스트 인용구 */}
+                    {data.sentiments[0].context_quotes?.length > 0 && (
+                      <div 
+                        className="mt-2 p-2 rounded italic text-xs"
+                        style={{ 
+                          background: `${getChartTheme(isDarkMode).background.tertiary}50`,
+                          color: getChartTheme(isDarkMode).text.muted,
+                          borderLeft: `3px solid ${getChartTheme(isDarkMode).chart.line}50`
+                        }}
+                      >
+                        "{data.sentiments[0].context_quotes[0]}"
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -889,29 +1022,6 @@ export default function StockPriceChart({
           </div>
         )}
 
-        {/* 🔥 현재가 표시 */}
-        {data.isCurrentPrice && (
-          <div 
-            className="rounded-lg p-3"
-            style={{ 
-              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.positive.background} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
-              border: `1px solid ${getChartTheme(isDarkMode).sentiment.positive.primary}30`
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <div 
-                className="w-2 h-2 rounded-full animate-ping"
-                style={{ background: getChartTheme(isDarkMode).sentiment.positive.primary }}
-              />
-              <span 
-                className="text-sm font-medium"
-                style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
-              >
-                실시간 현재가
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* 💫 글로우 효과 */}
         <div 
@@ -988,7 +1098,7 @@ export default function StockPriceChart({
         ...prev,
         {
           xDomain: [zoomState.left, zoomState.right],
-          yDomain
+          yDomain: yAxisDomain
         }
       ]);
       
@@ -1607,14 +1717,9 @@ export default function StockPriceChart({
                 animationDuration={200}
                 animationEasing="ease-out"
                 allowEscapeViewBox={{ x: false, y: false }}
-                position={{ x: 20, y: 20 }}
                 offset={0}
-                cursor={{ 
-                  stroke: getChartTheme(isDarkMode).chart.crosshair, 
-                  strokeWidth: 1, 
-                  strokeDasharray: '2 2',
-                  opacity: 0.8 
-                }}
+                isAnimationActive={false}
+                cursor={false}
                 wrapperStyle={{ 
                   zIndex: 1000,
                   pointerEvents: 'none',
@@ -1637,10 +1742,14 @@ export default function StockPriceChart({
                   
                   // 🎯 포스트 언급 마커 (감정 분석 기반 고급 시각화)
                   if (payload.postTitle && !payload.isCurrentPrice) {
-                    console.log(`🎨 Rendering marker for: ${payload.postTitle}`, { sentiments: payload.sentiments });
+                    console.log(`🎨 Rendering marker for: ${payload.postTitle}`, { 
+                      sentiments: payload.sentiments,
+                      hasSentiments: !!(payload.sentiments && payload.sentiments.length > 0),
+                      sentimentCount: payload.sentiments?.length || 0
+                    });
                     // 감정 분석에 따른 마커 스타일 결정
                     const currentTheme = getChartTheme(isDarkMode);
-                    let markerTheme = currentTheme.sentiment.neutral;
+                    let markerTheme = currentTheme.sentiment.neutral; // 기본값은 중립
                     let intensity = 0.7;
                     
                     if (payload.sentiments && payload.sentiments.length > 0) {
@@ -1652,12 +1761,50 @@ export default function StockPriceChart({
                       const dominantSentiment = Object.entries(sentimentCounts)
                         .sort(([,a], [,b]) => (b as number) - (a as number))[0][0];
                       
-                      markerTheme = currentTheme.sentiment[dominantSentiment as keyof typeof currentTheme.sentiment] || currentTheme.sentiment.neutral;
+                      console.log(`🎯 Sentiment analysis for marker:`, { 
+                        sentimentCounts, 
+                        dominantSentiment,
+                        markerThemeBefore: markerTheme.primary,
+                        willUseSentiment: currentTheme.sentiment[dominantSentiment as keyof typeof currentTheme.sentiment]?.primary
+                      });
+                      
+                      // 🎨 명시적인 감정별 색상 매핑
+                      if (dominantSentiment === 'positive') {
+                        markerTheme = currentTheme.sentiment.positive;
+                      } else if (dominantSentiment === 'negative') {
+                        markerTheme = currentTheme.sentiment.negative;
+                      } else if (dominantSentiment === 'neutral') {
+                        markerTheme = currentTheme.sentiment.neutral;
+                      } else {
+                        // 알 수 없는 감정의 경우 기본값
+                        console.warn(`⚠️ Unknown sentiment: ${dominantSentiment}`);
+                        markerTheme = currentTheme.sentiment.neutral;
+                      }
                       
                       // 감정 강도에 따른 시각적 효과 조정
                       const avgConfidence = payload.sentiments.reduce((sum: number, s: any) => sum + s.confidence, 0) / payload.sentiments.length;
                       intensity = Math.max(0.5, avgConfidence);
+                      
+                      console.log(`🎨 Final marker style:`, { 
+                        markerThemeAfter: markerTheme.primary, 
+                        intensity,
+                        avgConfidence 
+                      });
+                    } else {
+                      console.log(`⚪ No sentiment data, using neutral marker:`, { 
+                        neutralColor: markerTheme.primary,
+                        currentTheme: currentTheme,
+                        isDarkMode: isDarkMode
+                      });
                     }
+                    
+                    // 🔧 색상이 제대로 적용되는지 강제 확인
+                    console.log(`🔧 Final marker theme check:`, {
+                      markerThemePrimary: markerTheme.primary,
+                      shouldBeGreen: currentTheme.sentiment.positive.primary,
+                      shouldBeRed: currentTheme.sentiment.negative.primary,
+                      shouldBeNeutral: currentTheme.sentiment.neutral.primary
+                    });
                     
                     return (
                       <g>
@@ -1738,23 +1885,161 @@ export default function StockPriceChart({
                     );
                   }
                   
-                  // 🔥 현재가 마커 (단순한 빈 원)
-                  if (payload.isCurrentPrice) {
+                  // 현재가 마커 제거됨 - 불필요한 원형 마커 방지
+                  
+                  return null;
+                }}
+                dot={(props: any) => {
+                  const { cx, cy, payload } = props;
+                  
+                  // 🎯 포스트 언급 마커 (감정 분석 기반 고급 시각화)
+                  if (payload.postTitle) {
+                    console.log(`🎨 Rendering marker for: ${payload.postTitle}`, { 
+                      sentiments: payload.sentiments,
+                      hasSentiments: !!(payload.sentiments && payload.sentiments.length > 0),
+                      sentimentCount: payload.sentiments?.length || 0
+                    });
+                    // 감정 분석에 따른 마커 스타일 결정
+                    const currentTheme = getChartTheme(isDarkMode);
+                    let markerTheme = currentTheme.sentiment.neutral; // 기본값은 중립
+                    let intensity = 0.7;
+                    
+                    if (payload.sentiments && payload.sentiments.length > 0) {
+                      const sentimentCounts = { positive: 0, negative: 0, neutral: 0 };
+                      payload.sentiments.forEach((s: any) => {
+                        if (sentimentCounts[s.sentiment as keyof typeof sentimentCounts] !== undefined) {
+                          sentimentCounts[s.sentiment as keyof typeof sentimentCounts]++;
+                        }
+                      });
+                      
+                      const dominantSentiment = Object.entries(sentimentCounts)
+                        .sort(([,a], [,b]) => (b as number) - (a as number))[0][0];
+                      
+                      console.log(`🎯 Sentiment analysis for marker:`, { 
+                        sentimentCounts, 
+                        dominantSentiment,
+                        markerThemeBefore: markerTheme.primary,
+                        willUseSentiment: currentTheme.sentiment[dominantSentiment as keyof typeof currentTheme.sentiment]?.primary
+                      });
+                      
+                      // 🎨 명시적인 감정별 색상 매핑
+                      if (dominantSentiment === 'positive') {
+                        markerTheme = currentTheme.sentiment.positive;
+                      } else if (dominantSentiment === 'negative') {
+                        markerTheme = currentTheme.sentiment.negative;
+                      } else if (dominantSentiment === 'neutral') {
+                        markerTheme = currentTheme.sentiment.neutral;
+                      } else {
+                        // 알 수 없는 감정의 경우 기본값
+                        console.warn(`⚠️ Unknown sentiment: ${dominantSentiment}`);
+                        markerTheme = currentTheme.sentiment.neutral;
+                      }
+                      
+                      // 감정 강도에 따른 시각적 효과 조정
+                      const avgConfidence = payload.sentiments.reduce((sum: number, s: any) => sum + s.confidence, 0) / payload.sentiments.length;
+                      intensity = Math.max(0.5, avgConfidence);
+                      
+                      console.log(`🎨 Final marker style:`, { 
+                        markerThemeAfter: markerTheme.primary, 
+                        intensity,
+                        avgConfidence 
+                      });
+                    } else {
+                      console.log(`⚪ No sentiment data, using neutral marker:`, { 
+                        neutralColor: markerTheme.primary,
+                        currentTheme: currentTheme,
+                        isDarkMode: isDarkMode
+                      });
+                    }
+                    
+                    // 🔧 색상이 제대로 적용되는지 강제 확인
+                    console.log(`🔧 Final marker theme check:`, {
+                      markerThemePrimary: markerTheme.primary,
+                      shouldBeGreen: currentTheme.sentiment.positive.primary,
+                      shouldBeRed: currentTheme.sentiment.negative.primary,
+                      shouldBeNeutral: currentTheme.sentiment.neutral.primary
+                    });
+                    
                     return (
                       <g>
-                        {/* 단순한 빈 원 마커 */}
+                        {/* 외부 글로우 효과 - 다크모드 조건부 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={12} 
+                          fill={markerTheme.primary}
+                          opacity={isDarkMode ? 0.1 * intensity : 0.05 * intensity}
+                        />
+                        
+                        {/* 중간 링 - 다크모드 조건부 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={8} 
+                          fill="none" 
+                          stroke={markerTheme.primary}
+                          strokeWidth={1}
+                          opacity={isDarkMode ? 0.3 * intensity : 0.2 * intensity}
+                        />
+                        
+                        {/* 투명한 클릭 영역 확대 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={14} 
+                          fill="transparent" 
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => handleMarkerClick(payload)}
+                        />
+                        
+                        {/* 메인 마커 */}
                         <circle 
                           cx={cx} 
                           cy={cy} 
                           r={5} 
-                          fill="none"
-                          stroke={getChartTheme(isDarkMode).sentiment.positive.primary}
+                          fill="none" 
+                          stroke={markerTheme.primary} 
                           strokeWidth={2.5}
-                          style={{ cursor: 'pointer' }}
+                          style={{ 
+                            cursor: 'pointer', 
+                            filter: `drop-shadow(0 0 6px ${markerTheme.glow}80)`
+                          }}
                         />
+                        
+                        {/* 내부 점 */}
+                        <circle 
+                          cx={cx} 
+                          cy={cy} 
+                          r={2} 
+                          fill={markerTheme.secondary}
+                          style={{ pointerEvents: 'none' }}
+                        />
+                        
+                        {/* 감정 분석 인디케이터 */}
+                        {payload.sentiments && payload.sentiments.length > 0 && (
+                          <>
+                            <circle 
+                              cx={cx + 7} 
+                              cy={cy - 7} 
+                              r={3} 
+                              fill={markerTheme.background}
+                              stroke={markerTheme.primary}
+                              strokeWidth={1.5}
+                              style={{}}
+                            />
+                            <circle 
+                              cx={cx + 7} 
+                              cy={cy - 7} 
+                              r={1.5} 
+                              fill={markerTheme.primary}
+                            />
+                          </>
+                        )}
                       </g>
                     );
                   }
+                  
+                  // 현재가 마커 제거됨 - 불필요한 원형 마커 방지
                   
                   return null;
                 }}
@@ -1866,18 +2151,6 @@ export default function StockPriceChart({
                   </div>
                 )}
                 
-                {/* 현재가 표시 */}
-                {touchInteraction.activePoint.isCurrentPrice && (
-                  <div 
-                    className="text-xs text-center mt-2 px-2 py-1 rounded-full"
-                    style={{ 
-                      background: getChartTheme(isDarkMode).sentiment.positive.primary,
-                      color: '#ffffff'
-                    }}
-                  >
-                    🔥 실시간 현재가
-                  </div>
-                )}
                 
                 {/* 터치 힌트 - 언급한 날에만 표시 */}
                 {touchInteraction.activePoint.postTitle && (
@@ -2028,7 +2301,7 @@ export default function StockPriceChart({
               style={{ color: getChartTheme(isDarkMode).text.muted }}
             >
               <Calendar className="w-3 h-3" />
-              {priceData.filter(p => p.postTitle && !p.isCurrentPrice).length}회 언급
+              {priceData.filter(p => p.postTitle).length}회 언급
             </div>
             {(zoomState.left && zoomState.right) && (
               <div 
