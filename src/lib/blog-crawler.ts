@@ -39,6 +39,145 @@ export class BlogCrawler {
   }
 
   /**
+   * 특정 연도의 블로그 글 크롤링 (백그라운드 크롤링용)
+   */
+  async crawlByYear(year: number, delayRange: [number, number] = [0.5, 1.0]): Promise<CrawlerStats> {
+    console.log(`🚀 ${year}년도 블로그 크롤링 시작...`);
+    
+    // 기존 통계 초기화
+    this.stats = {
+      totalFound: 0,
+      newPosts: 0,
+      updatedPosts: 0,
+      errors: 0,
+      skippedOld: 0
+    };
+
+    // 해당 연도의 기존 포스트 로그 번호들 가져오기
+    const existingPosts = await query<{ log_no: string }>(`
+      SELECT log_no FROM blog_posts 
+      WHERE blog_type = 'merry' 
+        AND strftime('%Y', created_date) = ?
+    `, [year.toString()]);
+    
+    const existingLogNos = new Set(existingPosts.map(p => p.log_no));
+    console.log(`📊 ${year}년도 기존 포스트: ${existingLogNos.size}개`);
+
+    let page = 1;
+    let foundNewPosts = true;
+    let consecutiveEmptyPages = 0;
+    const maxEmptyPages = 10; // 연속 빈 페이지 허용 개수
+
+    while (foundNewPosts && page <= this.config.maxPages && consecutiveEmptyPages < maxEmptyPages) {
+      try {
+        console.log(`📄 페이지 ${page} 크롤링 중... (${year}년도)`);
+        
+        const pagePosts = await this.getPostListFromPage(page);
+        
+        if (pagePosts.length === 0) {
+          consecutiveEmptyPages++;
+          console.log(`⚠️ 빈 페이지 발견 (${consecutiveEmptyPages}/${maxEmptyPages})`);
+          page++;
+          continue;
+        }
+
+        consecutiveEmptyPages = 0; // 포스트가 있으면 카운터 리셋
+        this.stats.totalFound += pagePosts.length;
+
+        // 해당 연도의 새로운 포스트 필터링 (중복 방지)
+        const targetYearPosts = [];
+
+        for (const post of pagePosts) {
+          // 1차 중복 체크: 기존 로그 번호와 비교
+          if (existingLogNos.has(post.log_no)) {
+            console.log(`⏭️ 중복 포스트 스킵: ${post.log_no}`);
+            this.stats.skippedOld++;
+            continue;
+          }
+
+          // 2차 중복 체크: DB에서 실시간 확인
+          const duplicateCheck = await query<{ count: number }>(`
+            SELECT COUNT(*) as count FROM blog_posts 
+            WHERE log_no = ? AND blog_type = 'merry'
+          `, [post.log_no]);
+
+          if (duplicateCheck[0].count > 0) {
+            console.log(`⏭️ DB 중복 확인으로 스킵: ${post.log_no}`);
+            this.stats.skippedOld++;
+            existingLogNos.add(post.log_no); // 메모리 캐시에도 추가
+            continue;
+          }
+
+          // 포스트 상세 정보 가져와서 날짜 확인
+          try {
+            const postUrl = `https://m.blog.naver.com/${this.config.blogId}/${post.log_no}`;
+            const postDetails = await this.extractPostContent(postUrl);
+            
+            if (!postDetails) {
+              console.log(`⚠️ 포스트 ${post.log_no} 상세 정보 없음`);
+              continue;
+            }
+            
+            const postYear = new Date(postDetails.created_date).getFullYear();
+            
+            if (postYear === year) {
+              targetYearPosts.push({ ...post, ...postDetails });
+              console.log(`✅ ${year}년도 포스트 발견: ${post.title_preview} (${post.log_no})`);
+            } else if (postYear < year) {
+              // 더 이전 연도에 도달하면 크롤링 종료
+              console.log(`📅 ${year}년도 이전 포스트 발견 (${postYear}년), 크롤링 종료`);
+              foundNewPosts = false;
+              break;
+            } else {
+              console.log(`📅 더 최신 포스트 스킵: ${postYear}년 (목표: ${year}년)`);
+            }
+          } catch (error) {
+            console.error(`❌ 포스트 ${post.log_no} 상세 정보 가져오기 실패:`, error);
+            this.stats.errors++;
+          }
+        }
+
+        if (targetYearPosts.length === 0 && page > 5) {
+          // 5페이지 이후에도 해당 연도 포스트가 없으면 중단
+          console.log(`📅 ${year}년도 포스트를 찾을 수 없습니다. 크롤링 중단.`);
+          foundNewPosts = false;
+          break;
+        }
+
+        // 새로운 포스트들 저장
+        for (const post of targetYearPosts) {
+          try {
+            const success = await this.savePostToDb(post);
+            if (success) {
+              this.stats.newPosts++;
+              console.log(`✅ ${year}년도 포스트 저장: ${post.title}`);
+            } else {
+              console.log(`⚠️ 포스트 저장 스킵: ${post.title}`);
+            }
+          } catch (error) {
+            console.error(`❌ 포스트 저장 실패:`, error);
+            this.stats.errors++;
+          }
+        }
+
+        // 지연
+        const delay = Math.random() * (delayRange[1] - delayRange[0]) + delayRange[0];
+        await new Promise(resolve => setTimeout(resolve, delay * 1000));
+        
+        page++;
+
+      } catch (error) {
+        console.error(`❌ 페이지 ${page} 크롤링 실패:`, error);
+        this.stats.errors++;
+        page++;
+      }
+    }
+
+    console.log(`🎉 ${year}년도 크롤링 완료:`, this.stats);
+    return this.stats;
+  }
+
+  /**
    * 포스트 목록 페이지에서 포스트 URL들 추출
    */
   async getPostListFromPage(page: number = 1): Promise<Array<{log_no: string, url: string, title_preview: string}>> {
