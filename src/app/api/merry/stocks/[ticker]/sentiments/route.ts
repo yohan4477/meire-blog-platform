@@ -17,7 +17,7 @@ export async function GET(
     await stockDB.connect();
     
     // Period to days mapping
-    const periodDays = period === '1mo' ? 30 : period === '3mo' ? 90 : 180;
+    const periodDays = period === '1mo' ? 30 : period === '3mo' ? 90 : period === '6mo' ? 180 : 365;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - periodDays);
     const startTimestamp = Math.floor(startDate.getTime() / 1000);
@@ -80,7 +80,14 @@ export async function GET(
         sentiment: record.sentiment,
         score: record.sentiment_score,
         confidence: record.confidence,
-        keywords: JSON.parse(record.keywords || '{}'),
+        keywords: (() => {
+          try {
+            return JSON.parse(record.keywords || '{}');
+          } catch (e) {
+            console.warn('Failed to parse keywords:', record.keywords);
+            return {};
+          }
+        })(),
         context: record.context_snippet
       });
       

@@ -25,7 +25,6 @@ interface MerryPost {
 export default function MerryPage() {
   const [posts, setPosts] = useState<MerryPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // API에서 메르 블로그 데이터 가져오기
   useEffect(() => {
@@ -84,11 +83,7 @@ export default function MerryPage() {
     fetchPosts();
   }, []);
 
-  const categories = ['all', '일상', '투자', '독서', '라이프스타일'];
-  
-  const filteredPosts = selectedCategory === 'all' 
-    ? posts 
-    : posts.filter(post => post.category === selectedCategory);
+  // 모든 포스트 표시 (카테고리 필터링 제거)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -126,90 +121,73 @@ export default function MerryPage() {
         </p>
       </div>
 
-      {/* Category Filter */}
-      <div className="flex flex-wrap justify-center gap-2 mb-8">
-        {categories.map((category) => (
-          <Button
-            key={category}
-            variant={selectedCategory === category ? "default" : "outline"}
-            onClick={() => setSelectedCategory(category)}
-            className="capitalize"
-          >
-            {category === 'all' ? '전체' : category}
-          </Button>
-        ))}
-      </div>
 
       {/* Featured Posts */}
-      {selectedCategory === 'all' && (
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">✨ 추천 포스트</h2>
-          <div className="grid gap-6 md:grid-cols-2">
-            {posts.filter(post => post.featured).map((post) => (
-              <Card key={post.id} className="group hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary">{post.category}</Badge>
-                    <Badge variant="outline" className="text-amber-600">추천</Badge>
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">✨ 추천 포스트</h2>
+        <div className="grid gap-6 md:grid-cols-2">
+          {posts.filter(post => post.featured).map((post) => (
+            <Card key={post.id} className="group hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Badge variant="outline" className="text-amber-600">추천</Badge>
+                </div>
+                <CardTitle className="group-hover:text-blue-600 transition-colors">
+                  <Link href={`/merry/${post.id}`}>
+                    {post.title}
+                  </Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
+                
+                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                  <div className="flex items-center gap-1">
+                    <User size={14} />
+                    {post.author}
                   </div>
-                  <CardTitle className="group-hover:text-blue-600 transition-colors">
-                    <Link href={`/merry/${post.id}`}>
-                      {post.title}
-                    </Link>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
-                  
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                    <div className="flex items-center gap-1">
-                      <User size={14} />
-                      {post.author}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar size={14} />
-                      {formatDate(post.createdAt)}
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar size={14} />
+                    {formatDate(post.createdAt)}
                   </div>
+                </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Eye size={14} />
-                        {post.views}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Heart size={14} />
-                        {post.likes}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MessageSquare size={14} />
-                        {post.comments}
-                      </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Eye size={14} />
+                      {post.views}
                     </div>
-                    <Button variant="ghost" size="sm">
-                      <Share2 size={14} />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Heart size={14} />
+                      {post.likes}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageSquare size={14} />
+                      {post.comments}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <Button variant="ghost" size="sm">
+                    <Share2 size={14} />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* All Posts */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          📝 {selectedCategory === 'all' ? '모든 포스트' : `${selectedCategory} 포스트`}
+          📝 모든 포스트
         </h2>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPosts.map((post) => (
+          {posts.map((post) => (
             <Card key={post.id} className="group hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
-                  <Badge variant="secondary">{post.category}</Badge>
                   {post.featured && (
                     <Badge variant="outline" className="text-amber-600">추천</Badge>
                   )}
@@ -272,13 +250,11 @@ export default function MerryPage() {
           ))}
         </div>
 
-        {filteredPosts.length === 0 && (
+        {posts.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-lg mb-4">📝</div>
             <p className="text-gray-600">
-              {selectedCategory === 'all' 
-                ? '아직 포스트가 없습니다.' 
-                : `${selectedCategory} 카테고리에 포스트가 없습니다.`}
+              아직 포스트가 없습니다.
             </p>
           </div>
         )}

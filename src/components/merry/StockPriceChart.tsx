@@ -136,7 +136,7 @@ export default function StockPriceChart({
     xDomain: [string | number | undefined, string | number | undefined];
     yDomain: [number, number] | null;
   }>>([]);
-  const [timeRange, setTimeRange] = useState<string>('6M');
+  const [timeRange, setTimeRange] = useState<string>('1Y');
   const [priceChange, setPriceChange] = useState<{ 
     value: number; 
     percentage: number; 
@@ -164,10 +164,10 @@ export default function StockPriceChart({
   const filteredData = useMemo(() => {
     let data = priceData;
     
-    // 1. 시간 범위 기반 필터링 (timeRange: 1M, 3M, 6M)
+    // 1. 시간 범위 기반 필터링 (timeRange: 1M, 3M, 6M, 1Y)
     if (timeRange && data.length > 0) {
       const now = new Date();
-      const daysToShow = timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : 180;
+      const daysToShow = timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : timeRange === '6M' ? 180 : 365;
       const cutoffDate = new Date(now.getTime() - (daysToShow * 24 * 60 * 60 * 1000));
       
       data = data.filter(d => {
@@ -175,7 +175,8 @@ export default function StockPriceChart({
         return dataDate >= cutoffDate;
       });
       
-      console.log(`📅 Filtered data for ${timeRange}: ${data.length} days (from ${cutoffDate.toLocaleDateString()})`);
+      console.log(`📅 [${timeRange}] Filtered data: ${data.length} days (from ${cutoffDate.toISOString().split('T')[0]} to ${now.toISOString().split('T')[0]})`);
+      console.log(`📊 [${timeRange}] Date range: ${data.length > 0 ? data[0].date : 'none'} ~ ${data.length > 0 ? data[data.length - 1].date : 'none'}`);
     }
     
     // 2. X축 줌 범위가 있으면 추가 필터링
@@ -243,9 +244,9 @@ export default function StockPriceChart({
     console.log(`🚀 [DEBUG] fetchAllPostsAndGenerateChart called for ${ticker}, timeRange: ${timeRange}`);
     try {
       // 선택된 기간에 따른 포스트 가져오기
-      const period = timeRange.toLowerCase().replace('m', 'mo'); // 6M -> 6mo
+      const period = timeRange.toLowerCase().replace(/(\d+)m$/, '$1mo').replace(/(\d+)y$/, '$1y'); // 6M -> 6mo, 1Y -> 1y
       const cacheBuster = Date.now();
-      console.log(`📅 Fetching posts for period: ${timeRange} (API: ${period})`);
+      console.log(`📅 [${timeRange}] Fetching posts for period: ${timeRange} (API: ${period}) - Cache buster: ${cacheBuster}`);
       
       // 포스트와 감정 분석 데이터를 병렬로 가져오기
       const [postsResponse, sentimentResponse] = await Promise.all([
@@ -292,9 +293,11 @@ export default function StockPriceChart({
       const chartData: PricePoint[] = [];
 
       // 실제 주식 가격 API 호출 (선택된 기간)
+      console.log(`📊 [${timeRange}] Fetching stock price data for ${ticker} - Period: ${timeRange}`);
       const priceData = await fetchRealStockPrices(ticker, stockName, timeRange);
       
       if (priceData && priceData.length > 0) {
+        console.log(`📈 [${timeRange}] Received ${priceData.length} price data points for ${ticker}`);
         // API에서 받은 실제 가격 데이터 사용
         priceData.forEach((dataPoint) => {
           chartData.push({
@@ -477,8 +480,9 @@ export default function StockPriceChart({
   const fetchKoreanStockPrice = async (ticker: string, period: string = '6M') => {
     try {
       // 기간을 API 형식으로 변환
-      const apiPeriod = period.toLowerCase().replace('m', 'mo'); // 6M -> 6mo
+      const apiPeriod = period.toLowerCase().replace(/(\d+)m$/, '$1mo').replace(/(\d+)y$/, '$1y'); // 6M -> 6mo, 1Y -> 1y
       const cacheBuster = Date.now();
+      console.log(`🇰🇷 [${period}] Fetching Korean stock price for ${ticker} - API period: ${apiPeriod}`);
       const response = await fetch(`/api/stock-price?ticker=${ticker}.KS&period=${apiPeriod}&t=${cacheBuster}`, {
         cache: 'no-store',
         headers: {
@@ -488,11 +492,13 @@ export default function StockPriceChart({
       const data = await response.json();
       
       if (data.success && data.prices) {
+        console.log(`✅ [${period}] Received ${data.prices.length} Korean stock prices for ${ticker}`);
         return data.prices;
       }
+      console.warn(`⚠️ [${period}] No price data for ${ticker}`);
       return null;
     } catch (error) {
-      console.error('한국 주식 가격 조회 실패:', error);
+      console.error(`❌ [${period}] 한국 주식 가격 조회 실패:`, error);
       return null;
     }
   };
@@ -501,8 +507,9 @@ export default function StockPriceChart({
   const fetchUSStockPrice = async (ticker: string, period: string = '6M') => {
     try {
       // 기간을 API 형식으로 변환
-      const apiPeriod = period.toLowerCase().replace('m', 'mo'); // 6M -> 6mo
+      const apiPeriod = period.toLowerCase().replace(/(\d+)m$/, '$1mo').replace(/(\d+)y$/, '$1y'); // 6M -> 6mo, 1Y -> 1y
       const cacheBuster = Date.now();
+      console.log(`🇺🇸 [${period}] Fetching US stock price for ${ticker} - API period: ${apiPeriod}`);
       const response = await fetch(`/api/stock-price?ticker=${ticker}&period=${apiPeriod}&t=${cacheBuster}`, {
         cache: 'no-store',
         headers: {
@@ -512,11 +519,13 @@ export default function StockPriceChart({
       const data = await response.json();
       
       if (data.success && data.prices) {
+        console.log(`✅ [${period}] Received ${data.prices.length} US stock prices for ${ticker}`);
         return data.prices;
       }
+      console.warn(`⚠️ [${period}] No price data for ${ticker}`);
       return null;
     } catch (error) {
-      console.error('미국 주식 가격 조회 실패:', error);
+      console.error(`❌ [${period}] 미국 주식 가격 조회 실패:`, error);
       return null;
     }
   };
@@ -533,6 +542,111 @@ export default function StockPriceChart({
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  // X축 전용 날짜 포맷터 - timeRange에 따라 다른 형식 적용
+  const formatXAxisDate = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    
+    // 1Y는 년도 변경시 년도 표시, 일반 월은 월만 표시
+    if (timeRange === '1Y') {
+      // 1월이면서 년도가 현재 데이터 시작년도와 다르면 년도 표시
+      const month = date.getMonth();
+      const year = date.getFullYear();
+      const isYearTransition = month === 0; // 1월인 경우
+      
+      if (isYearTransition) {
+        // 년도를 축약해서 표시 (2025 -> 25년)
+        return `${year.toString().slice(2)}년`;
+      } else {
+        // 일반 월은 월만 표시
+        return date.toLocaleDateString('ko-KR', {
+          month: 'short'
+        });
+      }
+    }
+    
+    // 6M는 월 기준으로만 표시 (년도 제외)
+    if (timeRange === '6M') {
+      return date.toLocaleDateString('ko-KR', {
+        month: 'short'
+      });
+    }
+    
+    // 1M, 3M은 기존처럼 월/일 표시
+    return date.toLocaleDateString('ko-KR', {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // X축 틱 필터링 - 월이 시작하는 곳에서만 표시 (1Y에서는 년도 변경도 표시)
+  const getCustomTicks = (data: PricePoint[]) => {
+    if (timeRange !== '6M' && timeRange !== '1Y') {
+      return undefined; // 1M, 3M은 기본 틱 사용
+    }
+
+    const ticks: string[] = [];
+    let lastMonth = -1;
+    let lastYear = -1;
+    
+    data.forEach(point => {
+      const date = new Date(point.date);
+      const currentMonth = date.getMonth();
+      const currentYear = date.getFullYear();
+      
+      // 월이 바뀌었거나 (6M, 1Y 공통) 년도가 바뀌었을 때 (1Y만)
+      const shouldAddTick = currentMonth !== lastMonth || 
+        (timeRange === '1Y' && currentYear !== lastYear);
+      
+      if (shouldAddTick) {
+        ticks.push(point.date);
+        lastMonth = currentMonth;
+        lastYear = currentYear;
+      }
+    });
+    
+    return ticks;
+  };
+
+  // Y축 틱 필터링 - 정수 값만 표시하고 중복 제거
+  const getCustomYTicks = (data: PricePoint[]) => {
+    if (!data.length) return undefined;
+    
+    const prices = data.map(d => d.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceRange = maxPrice - minPrice;
+    
+    // 적절한 간격 계산 (약 6-8개 틱 표시)
+    const targetTickCount = 8;
+    const rawInterval = priceRange / (targetTickCount - 1);
+    
+    // 간격을 깔끔한 정수로 반올림 (1, 5, 10, 50, 100, 500, 1000 등)
+    let interval = 1;
+    if (rawInterval >= 1000) interval = Math.ceil(rawInterval / 1000) * 1000;
+    else if (rawInterval >= 500) interval = Math.ceil(rawInterval / 500) * 500;
+    else if (rawInterval >= 100) interval = Math.ceil(rawInterval / 100) * 100;
+    else if (rawInterval >= 50) interval = Math.ceil(rawInterval / 50) * 50;
+    else if (rawInterval >= 10) interval = Math.ceil(rawInterval / 10) * 10;
+    else if (rawInterval >= 5) interval = Math.ceil(rawInterval / 5) * 5;
+    else interval = Math.max(1, Math.ceil(rawInterval));
+    
+    // 시작점을 간격에 맞춰 조정
+    const startTick = Math.floor(minPrice / interval) * interval;
+    const endTick = Math.ceil(maxPrice / interval) * interval;
+    
+    const ticks: number[] = [];
+    for (let tick = startTick; tick <= endTick; tick += interval) {
+      ticks.push(tick);
+    }
+    
+    // 중복 제거 및 정수로 변환
+    const uniqueTicks = Array.from(new Set(ticks.map(t => Math.round(t))));
+    
+    console.log(`📊 Y-axis ticks: interval=${interval}, range=${minPrice.toFixed(0)}-${maxPrice.toFixed(0)}, ticks=${uniqueTicks.length}`);
+    
+    return uniqueTicks;
   };
 
   const handleMarkerClick = (data: PricePoint) => {
@@ -837,7 +951,10 @@ export default function StockPriceChart({
     if (prices.length > 0) {
       const minPrice = Math.min(...prices);
       const maxPrice = Math.max(...prices);
-      const padding = (maxPrice - minPrice) * 0.1; // 10% 여백으로 적당하게
+      const priceRange = maxPrice - minPrice;
+      
+      // 시계열 변화를 더 잘 보이도록 padding 줄임
+      const padding = priceRange * 0.05; // 10% → 5%로 줄임
       
       const yAxisMin = Math.max(0, minPrice - padding);
       const yAxisMax = maxPrice + padding;
@@ -1032,7 +1149,7 @@ export default function StockPriceChart({
     setZoomState({});
     setZoomHistory([]);
     calculateYAxisDomain(priceData);
-    setTimeRange('6M');
+    setTimeRange('1Y');
   };
 
   const handleTimeRangeChange = (range: string) => {
@@ -1325,7 +1442,7 @@ export default function StockPriceChart({
               기간:
             </span>
             <div className="flex gap-1">
-              {['1M', '3M', '6M'].map((range) => (
+              {['1M', '3M', '6M', '1Y'].map((range) => (
                 <button
                   key={range}
                   onClick={() => handleTimeRangeChange(range)}
@@ -1356,7 +1473,7 @@ export default function StockPriceChart({
               <span style={{ color: getChartTheme(isDarkMode).text.muted }}>
                 실제 데이터: {filteredData.length > 0 ? formatDate(filteredData[0]?.date || '') : '-'} ~ {filteredData.length > 0 ? formatDate(filteredData[filteredData.length - 1]?.date || '') : '-'} ({filteredData.length}일)
               </span>
-              {filteredData.length > 0 && filteredData.length < (timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : 180) && (
+              {filteredData.length > 0 && filteredData.length < (timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : timeRange === '6M' ? 180 : 365) && (
                 <span 
                   className="px-2 py-0.5 rounded text-xs"
                   style={{ 
@@ -1445,7 +1562,9 @@ export default function StockPriceChart({
               {/* 📅 X축 (시간) - TradingView 스타일 */}
               <XAxis 
                 dataKey="date" 
-                tickFormatter={formatDate}
+                tickFormatter={formatXAxisDate}
+                ticks={getCustomTicks(filteredData)}
+                tickCount={timeRange === '6M' || timeRange === '1Y' ? undefined : 8}
                 tick={{ 
                   fontSize: 11, 
                   fill: getChartTheme(isDarkMode).text.muted,
@@ -1469,8 +1588,9 @@ export default function StockPriceChart({
               
               {/* 💰 Y축 (가격) - 전문적인 가격 표시 */}
               <YAxis 
-                domain={yAxisDomain || ['dataMin - 10', 'dataMax + 10']}
-                tickFormatter={(value) => formatPrice(value)}
+                domain={yAxisDomain || ['dataMin - 2', 'dataMax + 2']}
+                tickFormatter={(value) => formatPrice(Math.round(value))}
+                ticks={getCustomYTicks(filteredData)}
                 tick={{ 
                   fontSize: 11, 
                   fill: getChartTheme(isDarkMode).text.muted,
@@ -1484,8 +1604,9 @@ export default function StockPriceChart({
                   stroke: getChartTheme(isDarkMode).chart.axis, 
                   strokeWidth: 1 
                 }}
-                width={80}
+                width={100}
                 orientation="right"
+                allowDecimals={false}
               />
               
               {/* 🎯 고급 툴팁 시스템 - 고정 위치 */}
@@ -1526,7 +1647,7 @@ export default function StockPriceChart({
                   if (payload.postTitle && !payload.isCurrentPrice) {
                     console.log(`🎨 Rendering marker for: ${payload.postTitle}`, { sentiments: payload.sentiments });
                     // 감정 분석에 따른 마커 스타일 결정
-                    const currentTheme = getSafeTheme();
+                    const currentTheme = getChartTheme(isDarkMode);
                     let markerTheme = currentTheme.sentiment.neutral;
                     let intensity = 0.7;
                     
@@ -1635,7 +1756,7 @@ export default function StockPriceChart({
                           cy={cy} 
                           r={5} 
                           fill="none"
-                          stroke={getSafeTheme().sentiment.positive.primary}
+                          stroke={getChartTheme(isDarkMode).sentiment.positive.primary}
                           strokeWidth={2.5}
                           style={{ cursor: 'pointer' }}
                         />
@@ -1646,15 +1767,7 @@ export default function StockPriceChart({
                   return null;
                 }}
                 dotSize={0}
-                activeDot={{ 
-                  r: 8, 
-                  fill: getChartTheme(isDarkMode).chart.line,
-                  stroke: getChartTheme(isDarkMode).background.primary, 
-                  strokeWidth: 3,
-                  style: { 
-                    cursor: 'crosshair'
-                  }
-                }}
+                activeDot={false}
                 name=""
                 connectNulls={false}
               />

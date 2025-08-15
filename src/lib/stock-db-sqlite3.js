@@ -119,6 +119,10 @@ class StockDB {
     const normalizedPeriod = period.toLowerCase();
     
     switch (normalizedPeriod) {
+      case '1y':
+      case '1year':
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
       case '6mo':
       case '6m':
         startDate.setMonth(endDate.getMonth() - 6);
@@ -239,14 +243,21 @@ class StockDB {
               }
             }
             
+            // 날짜 정규화 (혼재된 형식 통일)
+            const normalizeDate = (dateStr) => {
+              if (!dateStr) return dateStr;
+              // 타임스탬프가 포함된 경우 날짜 부분만 추출
+              return dateStr.split(' ')[0];
+            };
+
             return {
               ticker: row.ticker,
               name: name,
               market: row.market || 'NASDAQ',
               currency: row.currency || 'USD',
               postCount: actualMentionCount || 0,
-              firstMention: row.firstMention,
-              lastMention: row.lastMention,
+              firstMention: normalizeDate(row.firstMention),
+              lastMention: normalizeDate(row.lastMention),
               sentiment: row.sentiment || 'neutral',
               tags: [],
               description: description,
@@ -316,6 +327,17 @@ class StockDB {
         if (err) {
           reject(err);
         } else {
+          // 날짜 정규화 적용
+          if (row) {
+            const normalizeDate = (dateStr) => {
+              if (!dateStr) return dateStr;
+              // 타임스탬프가 포함된 경우 날짜 부분만 추출
+              return dateStr.split(' ')[0];
+            };
+            
+            row.first_mentioned_date = normalizeDate(row.first_mentioned_date);
+            row.last_mentioned_date = normalizeDate(row.last_mentioned_date);
+          }
           resolve(row);
         }
       });

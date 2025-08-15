@@ -61,7 +61,7 @@ async function findAllPostsByTicker(ticker: string, period: string): Promise<any
       const stockDB = new StockDB();
       
       // 시간 범위 계산
-      const periodDays = period === '1mo' ? 30 : period === '3mo' ? 90 : 180; // 1M=30일, 3M=90일, 6M=180일
+      const periodDays = period === '1mo' ? 30 : period === '3mo' ? 90 : period === '6mo' ? 180 : 365; // 1M=30일, 3M=90일, 6M=180일, 1Y=365일
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - periodDays);
       const startTimestamp = Math.floor(startDate.getTime() / 1000); // Unix timestamp
