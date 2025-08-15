@@ -7,9 +7,17 @@
       "Bash(start http://localhost:3004)",
       "Bash(curl:*)",
       "Bash(powershell:*)",
-      "Bash(npx playwright test:*)"
+      "Bash(npx playwright test:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx next dev:*)",
+      "Bash(timeout:*)",
+      "Bash(start http://localhost:3006)",
+      "Bash(rm:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "C:\\"
+    ]
   }
 }
