@@ -48,10 +48,14 @@ export default function MerryPicks({
     try {
       setLoading(true);
       
-      // CLAUDE.md 요구사항: 최근 언급 순서, 성능 <500ms
+      // CLAUDE.md 캐시 무효화 요구사항: 실시간 업데이트 지원
       const cacheBuster = Date.now();
       const response = await fetch(`/api/merry/picks?limit=${limit}&t=${cacheBuster}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
       });
 
       if (response.ok) {

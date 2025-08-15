@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-const { getStockDB } = require('../../../../lib/stock-db-sqlite3.js');
 
 // CLAUDE.md 요구사항: 메르's Pick - 최신 언급일 기준 랭킹 (절대 준수)
 export async function GET(request: NextRequest) {
@@ -22,13 +21,17 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // CLAUDE.md 성능 요구사항: 캐싱을 통한 빠른 로딩 (<500ms)
+    // CLAUDE.md 캐시 무효화 요구사항: 실시간 업데이트 지원
     if (cacheBuster) {
-      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      // 캐시 버스터 파라미터 있을 때: 완전 캐시 무효화
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       response.headers.set('Pragma', 'no-cache');
+      response.headers.set('Expires', '0');
+      console.log('🔄 Cache invalidated due to cache buster parameter');
     } else {
-      // 5분 캐시 (메인 페이지 로딩 성능을 위해)
-      response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300');
+      // 기본: 짧은 캐시 (30초) - 실시간성과 성능의 균형
+      response.headers.set('Cache-Control', 'public, max-age=30, s-maxage=30, must-revalidate');
+      console.log('⚡ Short cache applied (30s)');
     }
 
     return response;
@@ -163,26 +166,35 @@ const TICKER_NAME_MAP: Record<string, string[]> = {
 };
 
 async function getMerryPicksFromDB(limit: number): Promise<any[]> {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     try {
-      const stockDB = getStockDB();
-      await stockDB.connect(); // 연결 보장
+      const sqlite3 = require('sqlite3').verbose();
+      const path = require('path');
+      const dbPath = path.join(process.cwd(), 'database.db');
       
-      // 최근 90일 내 포스트에서 종목 언급 검색
-      const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
-      const query = `
-        SELECT id, title, content, excerpt, created_date 
-        FROM blog_posts 
-        WHERE created_date >= ? 
-        ORDER BY created_date DESC
-      `;
-      
-      stockDB.db.all(query, [ninetyDaysAgo], (err: any, recentPosts: any[]) => {
+      const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err: any) => {
         if (err) {
-          console.error('DB 쿼리 오류:', err);
+          console.error('DB 연결 실패:', err);
           resolve([]);
           return;
         }
+        
+        // 최근 90일 내 포스트에서 종목 언급 검색
+        const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
+        const query = `
+          SELECT id, title, content, excerpt, created_date 
+          FROM blog_posts 
+          WHERE created_date >= ? 
+          ORDER BY created_date DESC
+        `;
+        
+        db.all(query, [ninetyDaysAgo], (err: any, recentPosts: any[]) => {
+          if (err) {
+            console.error('DB 쿼리 오류:', err);
+            db.close();
+            resolve([]);
+            return;
+          }
 
         console.log(`📊 Found ${recentPosts.length} recent posts to analyze for stock mentions`);
 
@@ -273,7 +285,9 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
           console.log(`  ${index + 1}. ${pick.name} (${pick.ticker}) - ${date}, ${pick.mention_count}번 언급`);
         });
 
-        resolve(picks);
+          db.close();
+          resolve(picks);
+        });
       });
 
     } catch (error) {

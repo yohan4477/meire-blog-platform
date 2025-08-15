@@ -130,24 +130,29 @@
 - **종가 데이터**: 한 번 저장된 종가는 절대 변경 불가
 - **메르 포스트**: 작성된 포스트 내용은 불변
 
-**캐시 가능 데이터 (갱신 가능)**:
+**실시간 업데이트 데이터 (캐시 무효화 지원)**:
+- **메르's Pick**: 실시간 DB 연동으로 즉시 반영
 - **주식 실시간 정보**: 현재가, 등락률 등
 - **통계 데이터**: 집계 정보, 순위 등
 - **UI 관련 데이터**: 레이아웃, 표시 설정 등
-- **임시 계산 결과**: 성과 계산, 분석 결과 등
 
-**캐시 관리 원칙**:
+**캐시 무효화 전략 (2단계)**:
 ```javascript
-// 캐시 비우기 가능한 항목
-- API 응답 캐시
-- 계산된 통계
-- UI 상태
-- 세션 데이터
+// 1단계: 짧은 캐시 (30초) - 일반 사용
+'Cache-Control': 'public, max-age=30, s-maxage=30, must-revalidate'
+
+// 2단계: 완전 무효화 - 실시간 업데이트 시
+'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+'Pragma': 'no-cache'
+'Expires': '0'
+
+// 클라이언트 사이드 캐시 버스터
+`/api/merry/picks?limit=${limit}&t=${Date.now()}`
 
 // 캐시 비우기 불가능한 항목 (DB 직접 관리)
 - stock_prices 테이블 (종가)
-- posts 테이블 (메르 포스트)
-- merry_mentioned_stocks (메르 언급 기록)
+- blog_posts 테이블 (메르 포스트)
+- post_stock_sentiments (감정 분석 결과)
 ```
 
 ### 4. 🧪 Playwright 테스트로 모든 테스트 완료 (필수)
