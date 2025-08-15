@@ -22,6 +22,7 @@ interface MerryPickStock {
   current_price?: number;
   price_change?: string;
   sentiment?: 'positive' | 'negative' | 'neutral';
+  description?: string; // 회사 사업 정보
 }
 
 interface MerryPicksProps {
@@ -186,7 +187,7 @@ export default function MerryPicks({
               메르's Pick
             </CardTitle>
             <Badge variant="outline" className="text-xs">
-              최근 언급 순서
+              최신 언급일 기준 랭킹
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -234,6 +235,12 @@ export default function MerryPicks({
                       <p className="text-xs text-muted-foreground font-mono">
                         {stock.ticker}
                       </p>
+                      {/* 회사 소개 표시 */}
+                      {stock.description && (
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {stock.description}
+                        </p>
+                      )}
                     </div>
 
                     {/* 현재가 (있는 경우) */}
