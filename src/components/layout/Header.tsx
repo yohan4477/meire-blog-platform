@@ -83,13 +83,13 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* 로고 */}
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">M</span>
+          <Link href="/" className="flex items-center space-x-1 sm:space-x-2 flex-shrink min-w-0">
+            <div className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-xs sm:text-sm lg:text-lg">M</span>
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-lg leading-none">요르의 투자 플랫폼</span>
-              <span className="text-xs text-muted-foreground">니가 뭘 알아. 니가 뭘 아냐고</span>
+            <div className="flex flex-col min-w-0 max-w-[160px] sm:max-w-none">
+              <span className="font-bold text-xs sm:text-sm lg:text-base leading-none whitespace-nowrap truncate">요르의 투자 플랫폼</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap truncate">니가 뭘 알아. 니가 뭘 아냐고</span>
             </div>
           </Link>
 
@@ -168,7 +168,7 @@ export default function Header() {
           </nav>
 
           {/* 검색 및 액션 */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
             <div className="relative hidden sm:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -176,19 +176,19 @@ export default function Header() {
                 className="pl-10 w-48 lg:w-64"
               />
             </div>
-            <Button variant="ghost" size="icon" className="sm:hidden">
-              <Search className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="sm:hidden h-8 w-8">
+              <Search className="h-4 w-4" />
             </Button>
 
             {/* 알림 시스템 */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-10 sm:w-10">
+                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                   {unreadCount > 0 && (
                     <Badge 
                       variant="destructive" 
-                      className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                      className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 text-xs flex items-center justify-center"
                     >
                       {unreadCount}
                     </Badge>
@@ -272,8 +272,8 @@ export default function Header() {
             {/* 모바일 메뉴 */}
             <Sheet>
               <SheetTrigger asChild className="xl:hidden">
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+                  <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span className="sr-only">메뉴 열기</span>
                 </Button>
               </SheetTrigger>
@@ -284,8 +284,8 @@ export default function Header() {
                       <span className="text-white font-bold text-lg">M</span>
                     </div>
                     <div className="flex flex-col text-left">
-                      <SheetTitle className="text-base">요르의 투자 플랫폼</SheetTitle>
-                      <SheetDescription className="text-xs">니가 뭘 알아. 니가 뭘 아냐고</SheetDescription>
+                      <SheetTitle className="text-sm sm:text-base whitespace-nowrap">요르의 투자 플랫폼</SheetTitle>
+                      <SheetDescription className="text-xs whitespace-nowrap">니가 뭘 알아. 니가 뭘 아냐고</SheetDescription>
                     </div>
                   </div>
                 </SheetHeader>

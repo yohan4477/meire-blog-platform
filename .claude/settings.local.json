@@ -39,7 +39,9 @@
       "Bash(start http://localhost:3004/merry/stocks/TSLA)",
       "Bash(start http://localhost:3005/merry/stocks/005930)",
       "Bash(start http://localhost:3005/merry/stocks/GOOGL)",
-      "Bash(start http://localhost:3005/merry/stocks/LLY)"
+      "Bash(start http://localhost:3005/merry/stocks/LLY)",
+      "Bash(del test-mobile-text.js)",
+      "Bash(cloudflared tunnel:*)"
     ],
     "deny": [],
     "ask": [],

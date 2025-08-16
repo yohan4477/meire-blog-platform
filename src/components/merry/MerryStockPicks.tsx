@@ -177,7 +177,9 @@ export default function MerryStockPicks() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            메르's Pick - 주목할 종목
+            <span className="text-base sm:text-lg font-semibold whitespace-nowrap sm:whitespace-normal">
+              메르's Pick<span className="hidden sm:inline"> - </span><span className="block sm:inline text-sm sm:text-base font-normal text-muted-foreground">주목할 종목</span>
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -197,7 +199,12 @@ export default function MerryStockPicks() {
     return (
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>메르's Pick</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            <span className="text-base sm:text-lg font-semibold whitespace-nowrap sm:whitespace-normal">
+              메르's Pick<span className="hidden sm:inline"> - </span><span className="block sm:inline text-sm sm:text-base font-normal text-muted-foreground">주목할 종목</span>
+            </span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-red-500">{error}</p>
@@ -212,7 +219,9 @@ export default function MerryStockPicks() {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-primary" />
-            메르's Pick - 주목할 종목
+            <span className="text-base sm:text-lg font-semibold whitespace-nowrap sm:whitespace-normal">
+              메르's Pick<span className="hidden sm:inline"> - </span><span className="block sm:inline text-sm sm:text-base font-normal text-muted-foreground">주목할 종목</span>
+            </span>
           </CardTitle>
           <Link href="/merry/stocks">
             <Button variant="ghost" size="sm" className="gap-1">
@@ -222,7 +231,7 @@ export default function MerryStockPicks() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          메르가 블로그에서 언급한 종목들 (최신 언급 순서)
+          최신 언급 순서
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
