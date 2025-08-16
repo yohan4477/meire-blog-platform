@@ -34,7 +34,7 @@ export default function Home() {
   const [merryPosts, setMerryPosts] = useState<any[]>([]);
   const [curatedNews, setCuratedNews] = useState<any[]>([]);
   const [dailyDigest, setDailyDigest] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('insights');
+  const [activeTab, setActiveTab] = useState('profile');
 
   // 🚀 병렬 API 호출로 성능 최적화
   useEffect(() => {
@@ -269,22 +269,14 @@ export default function Home() {
       {/* Main Content with Tabs */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 h-auto">
-            <TabsTrigger value="insights" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
-              <span className="hidden sm:inline">🤖 </span>
-              <span className="truncate">AI 인사이트</span>
-            </TabsTrigger>
-            <TabsTrigger value="posts" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
-              <span className="hidden sm:inline">📈 </span>
-              <span className="truncate">투자 분석</span>
-            </TabsTrigger>
-            <TabsTrigger value="merry" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
-              <span className="hidden sm:inline">🎭 </span>
-              <span className="truncate">메르 블로그</span>
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-auto">
             <TabsTrigger value="profile" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
               <span className="hidden sm:inline">👤 </span>
               <span className="truncate">메르 소개</span>
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
+              <span className="hidden sm:inline">🤖 </span>
+              <span className="truncate">AI 인사이트</span>
             </TabsTrigger>
           </TabsList>
 
@@ -378,156 +370,6 @@ export default function Home() {
             </div>
           </TabsContent>
 
-          <TabsContent value="posts" className="mt-6 space-y-6">
-            {/* 최근 포스트 */}
-            <div className="bg-card rounded-lg p-6">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold">📈 최근 투자 분석</h2>
-                <Button variant="ghost" asChild>
-                  <Link href="/posts">
-                    전체보기
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recentPosts.map((post) => (
-                  <Link key={post.id} href={`/analysis/${post.slug}`}>
-                    <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge className="mb-2">{post.category}</Badge>
-                          <Badge variant={post.rating.includes('분석') ? 'default' : post.rating.includes('트렌드') ? 'secondary' : 'outline'} className="text-xs">
-                            {post.rating}
-                          </Badge>
-                        </div>
-                        <h4 className="font-semibold mb-2 line-clamp-2 hover:text-primary transition-colors">{post.title}</h4>
-                        <p className="text-sm text-muted-foreground line-clamp-3">
-                          {post.content}
-                        </p>
-                      </div>
-                      <div className="flex justify-between items-center text-xs text-muted-foreground">
-                        <span className="font-medium">{post.author}</span>
-                        <div className="flex items-center gap-2">
-                          <span>{new Date(post.created_date).toLocaleDateString('ko-KR')}</span>
-                          <span>•</span>
-                          <span>{post.views?.toLocaleString()} 조회</span>
-                        </div>
-                      </div>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-
-              {/* 간단한 안내 섹션 */}
-              <div className="mt-12">
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-4">투자 데이터 분석</h3>
-                  <p className="text-muted-foreground">실시간 SEC 13F 데이터와 기관투자자 포트폴리오 분석</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="p-6">
-                    <h4 className="text-xl font-semibold mb-4">🏛️ 국민연금 포트폴리오</h4>
-                    <p className="text-muted-foreground mb-4">
-                      한국 국민연금공단의 해외주식 투자 현황을 실시간으로 추적합니다.
-                    </p>
-                    <Button asChild variant="outline">
-                      <Link href="/investment">
-                        자세히 보기
-                        <BarChart3 className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </Card>
-
-                  <Card className="p-6">
-                    <h4 className="text-xl font-semibold mb-4">🌍 글로벌 기관투자자</h4>
-                    <p className="text-muted-foreground mb-4">
-                      버크셔 해서웨이, 타이거 글로벌 등 주요 기관투자자 비교 분석
-                    </p>
-                    <Button asChild variant="outline">
-                      <Link href="/institutional-investors">
-                        비교하기
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </Card>
-
-                  <Card className="p-6">
-                    <h4 className="text-xl font-semibold mb-4">🤖 AI 에이전트</h4>
-                    <p className="text-muted-foreground mb-4">
-                      Bloomberg, Goldman Sachs, BlackRock AI 에이전트 워크플로우
-                    </p>
-                    <Button asChild variant="outline">
-                      <Link href="/agent-workflows">
-                        관리하기
-                        <Brain className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </Card>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="merry" className="mt-6 space-y-6">
-            {/* 메르 블로그 최신 포스트 */}
-            <div className="bg-card rounded-lg p-6">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold">🎭 메르 블로그</h2>
-                <Button variant="ghost" asChild>
-                  <Link href="/merry">
-                    전체보기
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-
-              {merryPosts.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  {merryPosts.map((post) => (
-                    <Card key={post.id} className="p-6 hover:shadow-lg transition-shadow">
-                      <div className="mb-4">
-                        <Badge variant="secondary" className="mb-2">{post.category}</Badge>
-                        <h4 className="font-semibold mb-2 line-clamp-2">
-                          <Link href={`/merry/${post.id}`} className="hover:text-primary transition-colors">
-                            {post.title}
-                          </Link>
-                        </h4>
-                        <p className="text-sm text-muted-foreground line-clamp-3">
-                          {post.excerpt || post.content}
-                        </p>
-                      </div>
-                      <div className="flex justify-between items-center text-xs text-muted-foreground">
-                        <span>{new Date(post.created_date).toLocaleDateString('ko-KR')}</span>
-                        <span>{post.views || 0} 조회</span>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>메르 블로그 포스트를 불러오는 중...</p>
-                </div>
-              )}
-
-              <Card className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-                <div className="text-center">
-                  <h3 className="text-xl font-semibold mb-2">우리형 메르의 일상</h3>
-                  <p className="text-muted-foreground mb-4">
-                    투자 이야기부터 일상의 소소한 순간들까지, 메르의 솔직한 이야기를 만나보세요
-                  </p>
-                  <Button asChild>
-                    <Link href="/merry">
-                      메르 블로그 구경하기
-                      <User className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          </TabsContent>
 
           <TabsContent value="profile" className="mt-6">
             <MerryProfileTab />
