@@ -23,9 +23,9 @@ export async function GET(
     const startTimestamp = Math.floor(startDate.getTime() / 1000);
     
     // Get sentiment data for the ticker within the time period
-    // First try Claude AI enhanced sentiment data, fallback to basic sentiment data
+    // ONLY Claude AI enhanced sentiment data (기본 키워드 분석 데이터 제거)
     const sentimentData = await new Promise((resolve, reject) => {
-      // Claude AI 감정 분석 데이터 조회 (우선순위)
+      // Claude AI 감정 분석 데이터만 조회
       stockDB.db.all(`
         SELECT 
           psc.ticker,
@@ -52,46 +52,13 @@ export async function GET(
         FROM post_stock_sentiments_claude psc
         JOIN blog_posts bp ON psc.post_id = bp.id
         WHERE psc.ticker = ? AND bp.created_date >= ?
-        
-        UNION ALL
-        
-        SELECT 
-          pss.ticker,
-          pss.sentiment,
-          pss.sentiment_score,
-          pss.confidence,
-          NULL as key_reasoning,
-          NULL as supporting_evidence,
-          pss.keywords as key_keywords,
-          NULL as context_quotes,
-          NULL as investment_perspective,
-          NULL as investment_timeframe,
-          NULL as conviction_level,
-          NULL as mention_context,
-          NULL as analysis_focus,
-          NULL as uncertainty_factors,
-          pss.analyzed_at,
-          bp.id as post_id,
-          bp.title as post_title,
-          bp.created_date,
-          bp.views,
-          bp.excerpt,
-          'basic' as data_source
-        FROM post_stock_sentiments pss
-        JOIN blog_posts bp ON pss.post_id = bp.id
-        WHERE pss.ticker = ? AND bp.created_date >= ?
-          AND NOT EXISTS (
-            SELECT 1 FROM post_stock_sentiments_claude psc 
-            WHERE psc.post_id = pss.post_id AND psc.ticker = pss.ticker
-          )
-        
-        ORDER BY created_date DESC
-      `, [ticker, startTimestamp, ticker, startTimestamp], (err, rows) => {
+        ORDER BY bp.created_date DESC
+      `, [ticker, startTimestamp], (err, rows) => {
         if (err) {
           console.error('Sentiment query failed:', err);
           reject(err);
         } else {
-          console.log(`✅ Found ${rows?.length || 0} sentiment records for ${ticker} (Claude: ${rows?.filter(r => r.data_source === 'claude').length || 0}, Basic: ${rows?.filter(r => r.data_source === 'basic').length || 0})`);
+          console.log(`✅ Found ${rows?.length || 0} Claude AI sentiment records for ${ticker}`);
           resolve(rows || []);
         }
       });
@@ -120,66 +87,61 @@ export async function GET(
         };
       }
       
-      // Claude AI 분석 데이터인지 기본 분석 데이터인지에 따라 다르게 처리
+      // Claude AI 분석 데이터 처리 (기본 키워드 분석 데이터는 완전 제거됨)
       const sentimentRecord = {
         sentiment: record.sentiment,
         score: record.sentiment_score,
         confidence: record.confidence,
-        data_source: record.data_source,
-        // Claude AI 분석 데이터일 때만 포함되는 정보
-        ...(record.data_source === 'claude' && {
-          key_reasoning: record.key_reasoning,
-          supporting_evidence: (() => {
-            try {
-              return record.supporting_evidence ? JSON.parse(record.supporting_evidence) : null;
-            } catch (e) {
-              console.warn('Failed to parse supporting_evidence:', e.message);
-              return null;
-            }
-          })(),
-          context_quotes: (() => {
-            try {
-              return record.context_quotes ? JSON.parse(record.context_quotes) : [];
-            } catch (e) {
-              console.warn('Failed to parse context_quotes:', e.message);
-              return [];
-            }
-          })(),
-          investment_perspective: (() => {
-            try {
-              return record.investment_perspective ? JSON.parse(record.investment_perspective) : [];
-            } catch (e) {
-              console.warn('Failed to parse investment_perspective:', e.message);
-              return [];
-            }
-          })(),
-          investment_timeframe: record.investment_timeframe,
-          conviction_level: record.conviction_level,
-          mention_context: record.mention_context,
-          analysis_focus: record.analysis_focus,
-          uncertainty_factors: (() => {
-            try {
-              return record.uncertainty_factors ? JSON.parse(record.uncertainty_factors) : [];
-            } catch (e) {
-              console.warn('Failed to parse uncertainty_factors:', e.message);
-              return [];
-            }
-          })()
-        }),
-        // 키워드는 두 소스 모두에서 처리
+        data_source: record.data_source, // 항상 'claude'
+        key_reasoning: record.key_reasoning,
+        supporting_evidence: (() => {
+          try {
+            return record.supporting_evidence ? JSON.parse(record.supporting_evidence) : null;
+          } catch (e) {
+            console.warn('Failed to parse supporting_evidence:', e.message);
+            return null;
+          }
+        })(),
+        context_quotes: (() => {
+          try {
+            return record.context_quotes ? JSON.parse(record.context_quotes) : [];
+          } catch (e) {
+            console.warn('Failed to parse context_quotes:', e.message);
+            return [];
+          }
+        })(),
+        investment_perspective: (() => {
+          try {
+            return record.investment_perspective ? JSON.parse(record.investment_perspective) : [];
+          } catch (e) {
+            console.warn('Failed to parse investment_perspective:', e.message);
+            return [];
+          }
+        })(),
+        investment_timeframe: record.investment_timeframe,
+        conviction_level: record.conviction_level,
+        mention_context: record.mention_context,
+        analysis_focus: record.analysis_focus,
+        uncertainty_factors: (() => {
+          try {
+            return record.uncertainty_factors ? JSON.parse(record.uncertainty_factors) : [];
+          } catch (e) {
+            console.warn('Failed to parse uncertainty_factors:', e.message);
+            return [];
+          }
+        })(),
         keywords: (() => {
           try {
-            const keywordData = record.key_keywords || record.keywords;
+            const keywordData = record.key_keywords;
             if (!keywordData || keywordData.trim() === '') {
-              return record.data_source === 'claude' ? [] : {};
+              return [];
             }
             return JSON.parse(keywordData);
           } catch (e) {
-            console.warn('Failed to parse keywords:', record.key_keywords || record.keywords, 'Error:', e.message);
-            return record.data_source === 'claude' ? [] : {};
+            console.warn('Failed to parse keywords:', record.key_keywords, 'Error:', e.message);
+            return [];
           }
         })(),
-        // 기본 컨텍스트 (Claude AI에서는 context_quotes가 더 구체적)
         context: record.context_snippet || null
       };
 

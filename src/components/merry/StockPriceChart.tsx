@@ -47,12 +47,17 @@ interface PricePoint {
     sentiment: string;
     score: number;
     confidence: number;
-    keywords: any;
-    context: string;
+    keywords?: any;
+    context?: string;
     key_reasoning?: string;
     supporting_evidence?: string[];
-    investment_perspective?: string;
+    investment_perspective?: string[];
     context_quotes?: string[];
+    investment_timeframe?: string;
+    conviction_level?: string;
+    analysis_focus?: string;
+    uncertainty_factors?: string[];
+    data_source?: string;
   }[];
   posts?: {
     id: number;
@@ -179,22 +184,27 @@ export default function StockPriceChart({
           setShowMarkers(false);
           setVisibleMarkerCount(0);
           
-          // 라인 애니메이션 완료 후 마커 애니메이션 시작
+          // 차트 데이터 준비 완료 후 잠시 대기
           setTimeout(() => {
-            setShowMarkers(true);
-            
-            // 마커들을 순차적으로 표시
-            const markersWithData = enrichedData.filter(point => 
-              (point.posts && point.posts.length > 0) || 
-              (point.sentiments && point.sentiments.length > 0)
-            );
-            
-            markersWithData.forEach((_, index) => {
-              setTimeout(() => {
-                setVisibleMarkerCount(prev => prev + 1);
-              }, index * 100);
-            });
-          }, 1200); // 라인 애니메이션 대부분 완료 후
+            // 라인 애니메이션 완료 후 마커 애니메이션 시작
+            setTimeout(() => {
+              setShowMarkers(true);
+              
+              // 마커들을 순차적으로 표시
+              const markersWithData = enrichedData.filter(point => 
+                (point.posts && point.posts.length > 0) || 
+                (point.sentiments && point.sentiments.length > 0)
+              );
+              
+              if (markersWithData.length > 0) {
+                markersWithData.forEach((_, index) => {
+                  setTimeout(() => {
+                    setVisibleMarkerCount(prev => prev + 1);
+                  }, index * 150); // 조금 더 여유있게
+                });
+              }
+            }, 1500); // 라인 애니메이션 완전 완료 후
+          }, 200); // 데이터 설정 후 약간의 지연
         }
       } catch (error) {
         // 에러 발생 시 처리
@@ -250,7 +260,7 @@ export default function StockPriceChart({
           </div>
         </div>
         
-        {/* 감정 분석 정보 (기존 기능 유지) */}
+        {/* 감정 분석 정보 (상세 근거 포함) */}
         {hassentiments && (
           <div className="space-y-2">
             <div className="text-xs font-semibold text-gray-700 mb-1">🎯 메르 감정 분석</div>
@@ -275,9 +285,51 @@ export default function StockPriceChart({
                     </span>
                   </div>
                   
+                  {/* 핵심 근거 */}
                   {sentiment.key_reasoning && (
                     <div className="text-gray-600 bg-gray-50 rounded-lg p-2">
-                      💡 {sentiment.key_reasoning}
+                      💡 <strong>핵심 근거:</strong><br />
+                      {sentiment.key_reasoning}
+                    </div>
+                  )}
+                  
+                  {/* 투자 관점 */}
+                  {sentiment.investment_perspective && sentiment.investment_perspective.length > 0 && (
+                    <div className="text-gray-600 bg-blue-50 rounded-lg p-2">
+                      📈 <strong>투자 관점:</strong><br />
+                      {sentiment.investment_perspective.slice(0, 2).join(', ')}
+                    </div>
+                  )}
+                  
+                  {/* 지지 증거 */}
+                  {sentiment.supporting_evidence && sentiment.supporting_evidence.length > 0 && (
+                    <div className="text-gray-600 bg-green-50 rounded-lg p-2">
+                      📊 <strong>지지 증거:</strong><br />
+                      {sentiment.supporting_evidence.slice(0, 2).join(', ')}
+                    </div>
+                  )}
+                  
+                  {/* 컨텍스트 인용 */}
+                  {sentiment.context_quotes && sentiment.context_quotes.length > 0 && (
+                    <div className="text-gray-600 bg-yellow-50 rounded-lg p-2">
+                      📝 <strong>메르 언급:</strong><br />
+                      "{sentiment.context_quotes[0].substring(0, 80)}..."
+                    </div>
+                  )}
+                  
+                  {/* 투자 기간 및 확신도 */}
+                  {(sentiment.investment_timeframe || sentiment.conviction_level) && (
+                    <div className="flex gap-2 text-xs">
+                      {sentiment.investment_timeframe && (
+                        <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                          기간: {sentiment.investment_timeframe}
+                        </span>
+                      )}
+                      {sentiment.conviction_level && (
+                        <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">
+                          확신: {sentiment.conviction_level}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -386,14 +438,33 @@ export default function StockPriceChart({
   if (loading) {
     return (
       <Card className="w-full">
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-            <div className="flex gap-2">
-              {['1M', '3M', '6M', '1Y'].map(period => (
-                <div key={period} className="h-10 bg-gray-200 rounded w-16"></div>
-              ))}
+        <CardContent className="p-0">
+          {/* 헤더 스켈레톤 */}
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+            <div className="animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-32 mb-2"></div>
+              <div className="flex items-center gap-3">
+                <div className="h-8 bg-gray-200 rounded w-24"></div>
+                <div className="h-6 bg-gray-200 rounded w-16"></div>
+              </div>
+            </div>
+          </div>
+          
+          {/* 차트 스켈레톤 */}
+          <div className="px-4 sm:px-6 py-4 sm:py-6">
+            <div className="animate-pulse">
+              <div className="h-48 sm:h-64 bg-gray-200 rounded-lg"></div>
+            </div>
+          </div>
+          
+          {/* 버튼 스켈레톤 */}
+          <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="flex justify-center">
+              <div className="flex bg-gray-50 rounded-xl p-1 gap-0.5 sm:gap-1">
+                {['1M', '3M', '6M', '1Y'].map(period => (
+                  <div key={period} className="h-10 bg-gray-200 rounded-lg w-12 sm:w-16"></div>
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>

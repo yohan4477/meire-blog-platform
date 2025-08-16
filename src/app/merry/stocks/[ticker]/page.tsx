@@ -240,13 +240,13 @@ export default function StockDetailPage() {
       {/* 종목 정보 */}
       <Card className="mb-6">
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="space-y-2 flex-1 min-w-0">
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold">{stock.name}</h1>
+                <h1 className="text-2xl lg:text-3xl font-bold truncate">{stock.name}</h1>
                 {getSentimentIcon(stock.sentiment)}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="outline" className="text-sm">
                   {stock.ticker}
                 </Badge>
@@ -259,14 +259,20 @@ export default function StockDetailPage() {
               </div>
             </div>
             
-            <div className="text-right">
-              <div className="text-2xl font-bold mb-1">
-                {stock.currency === 'USD' ? '$' : '₩'}{stock.currentPrice?.toLocaleString()}
-                <span className={`ml-2 text-lg ${stock.priceChange?.startsWith('+') ? 'text-green-500' : stock.priceChange?.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
-                  {stock.priceChange}
-                </span>
+            <div className="text-left lg:text-right flex-shrink-0">
+              <div className="flex flex-col lg:items-end">
+                <div className="text-xl lg:text-2xl font-bold mb-1 break-words">
+                  <span className="inline-block">
+                    {stock.currency === 'USD' ? '$' : '₩'}{stock.currentPrice?.toLocaleString()}
+                  </span>
+                  {stock.priceChange && (
+                    <span className={`block lg:inline lg:ml-2 text-base lg:text-lg mt-1 lg:mt-0 ${stock.priceChange?.startsWith('+') ? 'text-green-500' : stock.priceChange?.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
+                      {stock.priceChange}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">현재가</p>
               </div>
-              <p className="text-sm text-muted-foreground">현재가</p>
             </div>
           </div>
         </CardHeader>
