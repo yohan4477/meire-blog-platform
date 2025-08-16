@@ -1,0 +1,3958 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\y\\meire-blog-platform\\playwright.config.ts",
+    "rootDir": "C:/Users/y/meire-blog-platform/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": "C:\\Users\\y\\meire-blog-platform\\tests\\global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 6
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/y/meire-blog-platform/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 6
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "C:/Users/y/meire-blog-platform/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.2",
+    "workers": 6,
+    "webServer": {
+      "command": "npm run dev",
+      "port": 3004,
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "chart-click-test.spec.ts",
+      "file": "chart-click-test.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "📊 차트 클릭 상호작용 테스트 - 3초간 테스트",
+          "file": "chart-click-test.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "차트 마커 클릭 및 상호작용 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 43523,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-click-test.spec.ts",
+                            "column": 16,
+                            "line": 25
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  23 |     // 1. TSLA 페이지 방문\n  24 |     console.log('1️⃣ TSLA 차트 페이지 방문');\n> 25 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  26 |     await page.waitForLoadState('domcontentloaded');\n  27 |     \n  28 |     // 2. 차트 로딩 대기\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-click-test.spec.ts:25:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 차트 클릭 테스트 시작 - 3초간 집중 상호작용\n"
+                        },
+                        {
+                          "text": "1️⃣ TSLA 차트 페이지 방문\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:14:53.342Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-click-test-📊-차트-클릭--780d5-3초간-테스트-차트-마커-클릭-및-상호작용-테스트-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-adf14c184815b0311ac5",
+              "file": "chart-click-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 상세 상호작용 - 호버 및 클릭 분리 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 43805,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-click-test.spec.ts",
+                            "column": 16,
+                            "line": 159
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  157 |     \n  158 |     // TSLA 페이지 방문\n> 159 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n      |                ^\n  160 |     await page.waitForLoadState('domcontentloaded');\n  161 |     await page.waitForTimeout(2000);\n  162 |     \n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-click-test.spec.ts:159:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🎯 차트 호버/클릭 분리 테스트 시작\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:14:53.408Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-click-test-📊-차트-클릭--d889e-차트-상세-상호작용---호버-및-클릭-분리-테스트-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-f076f7840ed7adf925fa",
+              "file": "chart-click-test.spec.ts",
+              "line": 149,
+              "column": 7
+            },
+            {
+              "title": "차트 마커 클릭 및 상호작용 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 35159,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-click-test.spec.ts",
+                            "column": 16,
+                            "line": 25
+                          },
+                          "message": "Error: page.goto: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  23 |     // 1. TSLA 페이지 방문\n  24 |     console.log('1️⃣ TSLA 차트 페이지 방문');\n> 25 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  26 |     await page.waitForLoadState('domcontentloaded');\n  27 |     \n  28 |     // 2. 차트 로딩 대기\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-click-test.spec.ts:25:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 차트 클릭 테스트 시작 - 3초간 집중 상호작용\n"
+                        },
+                        {
+                          "text": "1️⃣ TSLA 차트 페이지 방문\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:26.624Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-click-test-📊-차트-클릭--780d5-3초간-테스트-차트-마커-클릭-및-상호작용-테스트-firefox\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-click-test-📊-차트-클릭--780d5-3초간-테스트-차트-마커-클릭-및-상호작용-테스트-firefox\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-25ece945d2b8af03ff06",
+              "file": "chart-click-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 상세 상호작용 - 호버 및 클릭 분리 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 4,
+                      "status": "timedOut",
+                      "duration": 35152,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-click-test.spec.ts",
+                            "column": 16,
+                            "line": 159
+                          },
+                          "message": "Error: page.goto: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  157 |     \n  158 |     // TSLA 페이지 방문\n> 159 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n      |                ^\n  160 |     await page.waitForLoadState('domcontentloaded');\n  161 |     await page.waitForTimeout(2000);\n  162 |     \n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-click-test.spec.ts:159:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🎯 차트 호버/클릭 분리 테스트 시작\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:27.800Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-click-test-📊-차트-클릭--d889e-차트-상세-상호작용---호버-및-클릭-분리-테스트-firefox\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-click-test-📊-차트-클릭--d889e-차트-상세-상호작용---호버-및-클릭-분리-테스트-firefox\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-d269598eb01d224a8940",
+              "file": "chart-click-test.spec.ts",
+              "line": 149,
+              "column": 7
+            },
+            {
+              "title": "차트 마커 클릭 및 상호작용 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.072Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-7992b6e8ea02a20af63e",
+              "file": "chart-click-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 상세 상호작용 - 호버 및 클릭 분리 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.073Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-ab1e69b8e0eaa6376481",
+              "file": "chart-click-test.spec.ts",
+              "line": 149,
+              "column": 7
+            },
+            {
+              "title": "차트 마커 클릭 및 상호작용 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.224Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-1023b01a13dc3cced901",
+              "file": "chart-click-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 상세 상호작용 - 호버 및 클릭 분리 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.233Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-e220be9e4df624927087",
+              "file": "chart-click-test.spec.ts",
+              "line": 149,
+              "column": 7
+            },
+            {
+              "title": "차트 마커 클릭 및 상호작용 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.392Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-cf0626828be875e0eced",
+              "file": "chart-click-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 상세 상호작용 - 호버 및 클릭 분리 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.393Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f65a41bf10384acffa2f-8266fb553fa563230e57",
+              "file": "chart-click-test.spec.ts",
+              "line": 149,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "chart-marker-debug.spec.ts",
+      "file": "chart-marker-debug.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "TSLA Chart Marker Debug Test",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "failed",
+                  "duration": 3709,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3007/merry/stocks/TSLA\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3007/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3007/merry/stocks/TSLA\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3007/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts:7:14",
+                    "location": {
+                      "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts",
+                      "column": 14,
+                      "line": 7
+                    },
+                    "snippet": "\u001b[0m \u001b[90m  5 |\u001b[39m   \n \u001b[90m  6 |\u001b[39m   \u001b[90m// Navigate to TSLA chart page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  7 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:3007/merry/stocks/TSLA'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m  8 |\u001b[39m   console\u001b[33m.\u001b[39mlog(\u001b[32m'📄 Navigated to TSLA page'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m  9 |\u001b[39m   \n \u001b[90m 10 |\u001b[39m   \u001b[90m// Wait for chart to load (with longer timeout)\u001b[39m\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts",
+                        "column": 14,
+                        "line": 7
+                      },
+                      "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3007/merry/stocks/TSLA\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3007/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n   5 |   \n   6 |   // Navigate to TSLA chart page\n>  7 |   await page.goto('http://localhost:3007/merry/stocks/TSLA');\n     |              ^\n   8 |   console.log('📄 Navigated to TSLA page');\n   9 |   \n  10 |   // Wait for chart to load (with longer timeout)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts:7:14"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "🚀 Starting TSLA chart marker analysis...\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:14:53.394Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-marker-debug-TSLA-Chart-Marker-Debug-Test-chromium\\test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-marker-debug-TSLA-Chart-Marker-Debug-Test-chromium\\video.webm"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-marker-debug-TSLA-Chart-Marker-Debug-Test-chromium\\error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts",
+                    "column": 14,
+                    "line": 7
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4dd30ab5cce0d3c42403-f13b70d72f7b59ebe951",
+          "file": "chart-marker-debug.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "TSLA Chart Marker Debug Test",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 18,
+                  "parallelIndex": 2,
+                  "status": "failed",
+                  "duration": 4971,
+                  "error": {
+                    "message": "Error: page.goto: NS_ERROR_CONNECTION_REFUSED\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3007/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n",
+                    "stack": "Error: page.goto: NS_ERROR_CONNECTION_REFUSED\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3007/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts:7:14",
+                    "location": {
+                      "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts",
+                      "column": 14,
+                      "line": 7
+                    },
+                    "snippet": "\u001b[0m \u001b[90m  5 |\u001b[39m   \n \u001b[90m  6 |\u001b[39m   \u001b[90m// Navigate to TSLA chart page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  7 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:3007/merry/stocks/TSLA'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m  8 |\u001b[39m   console\u001b[33m.\u001b[39mlog(\u001b[32m'📄 Navigated to TSLA page'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m  9 |\u001b[39m   \n \u001b[90m 10 |\u001b[39m   \u001b[90m// Wait for chart to load (with longer timeout)\u001b[39m\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts",
+                        "column": 14,
+                        "line": 7
+                      },
+                      "message": "Error: page.goto: NS_ERROR_CONNECTION_REFUSED\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3007/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n   5 |   \n   6 |   // Navigate to TSLA chart page\n>  7 |   await page.goto('http://localhost:3007/merry/stocks/TSLA');\n     |              ^\n   8 |   console.log('📄 Navigated to TSLA page');\n   9 |   \n  10 |   // Wait for chart to load (with longer timeout)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts:7:14"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "🚀 Starting TSLA chart marker analysis...\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:16:33.849Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-marker-debug-TSLA-Chart-Marker-Debug-Test-firefox\\test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-marker-debug-TSLA-Chart-Marker-Debug-Test-firefox\\video.webm"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-marker-debug-TSLA-Chart-Marker-Debug-Test-firefox\\error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-marker-debug.spec.ts",
+                    "column": 14,
+                    "line": 7
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4dd30ab5cce0d3c42403-3ee7f03c1cdd4cdb0334",
+          "file": "chart-marker-debug.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "TSLA Chart Marker Debug Test",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                  },
+                  "errors": [
+                    {
+                      "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:16:58.091Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4dd30ab5cce0d3c42403-4c7795b346cfacb96295",
+          "file": "chart-marker-debug.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "TSLA Chart Marker Debug Test",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Mobile Chrome",
+              "projectName": "Mobile Chrome",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                  },
+                  "errors": [
+                    {
+                      "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:16:58.256Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4dd30ab5cce0d3c42403-8c159c770feafc95dfae",
+          "file": "chart-marker-debug.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "TSLA Chart Marker Debug Test",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Mobile Safari",
+              "projectName": "Mobile Safari",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                  },
+                  "errors": [
+                    {
+                      "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:16:58.410Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4dd30ab5cce0d3c42403-a2f80240c46c26d66cfd",
+          "file": "chart-marker-debug.spec.ts",
+          "line": 3,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "chart-system.spec.ts",
+      "file": "chart-system.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "메르 차트 시스템 검증",
+          "file": "chart-system.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "홈페이지 로딩 및 메르s Pick 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 43528,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts",
+                            "column": 16,
+                            "line": 14
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/\", waiting until \"load\"\u001b[22m\n\n\n  12 |\n  13 |   test('홈페이지 로딩 및 메르s Pick 표시 확인', async ({ page }) => {\n> 14 |     await page.goto('http://localhost:3004');\n     |                ^\n  15 |     \n  16 |     // 페이지 제목 확인\n  17 |     await expect(page).toHaveTitle(/요르의 투자 블로그/);\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts:14:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:14:53.337Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-system-메르-차트-시스템-검증-홈페이지-로딩-및-메르s-Pick-표시-확인-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-c7c719579e507bbd0aa3",
+              "file": "chart-system.spec.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "테슬라 차트 페이지 로딩 및 차트 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "timedOut",
+                      "duration": 43856,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts",
+                            "column": 16,
+                            "line": 34
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  32 |     console.log('🚀 테슬라 차트 페이지 테스트 시작...');\n  33 |     \n> 34 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  35 |     \n  36 |     // 페이지 로딩 대기 (빠른 로딩)\n  37 |     await page.waitForLoadState('domcontentloaded');\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts:34:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 테슬라 차트 페이지 테스트 시작...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:14:53.429Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-system-메르-차트-시스템-검증-테슬라-차트-페이지-로딩-및-차트-표시-확인-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-2895152fc6daf810ee96",
+              "file": "chart-system.spec.ts",
+              "line": 31,
+              "column": 7
+            },
+            {
+              "title": "삼성전자 차트 페이지 및 한국 종목 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "timedOut",
+                      "duration": 43799,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts",
+                            "column": 16,
+                            "line": 59
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/005930\", waiting until \"load\"\u001b[22m\n\n\n  57 |     console.log('🚀 삼성전자 차트 페이지 테스트 시작...');\n  58 |     \n> 59 |     await page.goto('http://localhost:3004/merry/stocks/005930');\n     |                ^\n  60 |     \n  61 |     // 페이지 로딩 대기 (빠른 로딩)\n  62 |     await page.waitForLoadState('domcontentloaded');\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts:59:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 삼성전자 차트 페이지 테스트 시작...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:14:53.432Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-system-메르-차트-시스템-검증-삼성전자-차트-페이지-및-한국-종목-확인-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-45a5029e4c8a3c7f3768",
+              "file": "chart-system.spec.ts",
+              "line": 56,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 테스트 - 호버 및 툴팁",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 43900,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts",
+                            "column": 16,
+                            "line": 83
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/AAPL\", waiting until \"load\"\u001b[22m\n\n\n  81 |     console.log('🚀 차트 인터랙션 테스트 시작...');\n  82 |     \n> 83 |     await page.goto('http://localhost:3004/merry/stocks/AAPL');\n     |                ^\n  84 |     await page.waitForLoadState('networkidle');\n  85 |     \n  86 |     // 차트 영역 찾기 (더 안정적인 선택자)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts:83:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 차트 인터랙션 테스트 시작...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:14:59.963Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-system-메르-차트-시스템-검증-차트-인터랙션-테스트---호버-및-툴팁-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-1990cb04b987ec9d3aeb",
+              "file": "chart-system.spec.ts",
+              "line": 80,
+              "column": 7
+            },
+            {
+              "title": "관련 포스트 로딩 및 더보기 기능 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 43271,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts",
+                            "column": 16,
+                            "line": 109
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  107 |     console.log('🚀 관련 포스트 테스트 시작...');\n  108 |     \n> 109 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n      |                ^\n  110 |     await page.waitForLoadState('networkidle');\n  111 |     \n  112 |     // 관련 포스트 섹션 확인 (더 유연한 선택자 사용)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts:109:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 관련 포스트 테스트 시작...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:15:39.433Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-system-메르-차트-시스템-검증-관련-포스트-로딩-및-더보기-기능-확인-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-8c31f37250550cc81ee4",
+              "file": "chart-system.spec.ts",
+              "line": 106,
+              "column": 7
+            },
+            {
+              "title": "차트 데이터 로딩 성능 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 43303,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts",
+                            "column": 16,
+                            "line": 141
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/NVDA\", waiting until \"load\"\u001b[22m\n\n\n  139 |     const startTime = Date.now();\n  140 |     \n> 141 |     await page.goto('http://localhost:3004/merry/stocks/NVDA');\n      |                ^\n  142 |     await page.waitForLoadState('networkidle');\n  143 |     \n  144 |     const loadTime = Date.now() - startTime;\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts:141:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 성능 테스트 시작...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:15:39.445Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-system-메르-차트-시스템-검증-차트-데이터-로딩-성능-테스트-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-5d66c47ec5fe01a1c3b6",
+              "file": "chart-system.spec.ts",
+              "line": 136,
+              "column": 7
+            },
+            {
+              "title": "모바일 반응형 차트 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 5,
+                      "status": "timedOut",
+                      "duration": 43056,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts",
+                            "column": 16,
+                            "line": 164
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/042660\", waiting until \"load\"\u001b[22m\n\n\n  162 |     await page.setViewportSize({ width: 375, height: 667 });\n  163 |     \n> 164 |     await page.goto('http://localhost:3004/merry/stocks/042660');\n      |                ^\n  165 |     await page.waitForLoadState('networkidle');\n  166 |     \n  167 |     // 차트가 모바일에서도 표시되는지 확인\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts:164:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 모바일 반응형 테스트 시작...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:15:40.090Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-system-메르-차트-시스템-검증-모바일-반응형-차트-테스트-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-ff0abd4babc59983b758",
+              "file": "chart-system.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "홈페이지 로딩 및 메르s Pick 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 35121,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts",
+                            "column": 16,
+                            "line": 14
+                          },
+                          "message": "Error: page.goto: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/\", waiting until \"load\"\u001b[22m\n\n\n  12 |\n  13 |   test('홈페이지 로딩 및 메르s Pick 표시 확인', async ({ page }) => {\n> 14 |     await page.goto('http://localhost:3004');\n     |                ^\n  15 |     \n  16 |     // 페이지 제목 확인\n  17 |     await expect(page).toHaveTitle(/요르의 투자 블로그/);\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-system.spec.ts:14:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:41.437Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-system-메르-차트-시스템-검증-홈페이지-로딩-및-메르s-Pick-표시-확인-firefox\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-system-메르-차트-시스템-검증-홈페이지-로딩-및-메르s-Pick-표시-확인-firefox\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-57637e6e250f19dd5076",
+              "file": "chart-system.spec.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "테슬라 차트 페이지 로딩 및 차트 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:57.954Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-fc93fddd73649360a2ca",
+              "file": "chart-system.spec.ts",
+              "line": 31,
+              "column": 7
+            },
+            {
+              "title": "삼성전자 차트 페이지 및 한국 종목 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:57.955Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-6b26135647306bd3f117",
+              "file": "chart-system.spec.ts",
+              "line": 56,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 테스트 - 호버 및 툴팁",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:57.975Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-59ca65a32262da684419",
+              "file": "chart-system.spec.ts",
+              "line": 80,
+              "column": 7
+            },
+            {
+              "title": "관련 포스트 로딩 및 더보기 기능 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:57.976Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-d7d12e0345dc0a7fb92d",
+              "file": "chart-system.spec.ts",
+              "line": 106,
+              "column": 7
+            },
+            {
+              "title": "차트 데이터 로딩 성능 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:57.995Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-4bfd841b06ea6286d944",
+              "file": "chart-system.spec.ts",
+              "line": 136,
+              "column": 7
+            },
+            {
+              "title": "모바일 반응형 차트 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:57.996Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-7bd44e7d6bee4cad615b",
+              "file": "chart-system.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "홈페이지 로딩 및 메르s Pick 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.091Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-ab86eea71aed9c1a6ae0",
+              "file": "chart-system.spec.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "테슬라 차트 페이지 로딩 및 차트 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.110Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-5876b876990a8d78bd9f",
+              "file": "chart-system.spec.ts",
+              "line": 31,
+              "column": 7
+            },
+            {
+              "title": "삼성전자 차트 페이지 및 한국 종목 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.111Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-767f4c6faf8e13e0047a",
+              "file": "chart-system.spec.ts",
+              "line": 56,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 테스트 - 호버 및 툴팁",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.131Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-1c8ead681b6a43c28828",
+              "file": "chart-system.spec.ts",
+              "line": 80,
+              "column": 7
+            },
+            {
+              "title": "관련 포스트 로딩 및 더보기 기능 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.132Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-8046455f4862c3ed9efb",
+              "file": "chart-system.spec.ts",
+              "line": 106,
+              "column": 7
+            },
+            {
+              "title": "차트 데이터 로딩 성능 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.150Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-87e93c2ccdd2a4646714",
+              "file": "chart-system.spec.ts",
+              "line": 136,
+              "column": 7
+            },
+            {
+              "title": "모바일 반응형 차트 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.151Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-6fc94ebf4d174ff16a91",
+              "file": "chart-system.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "홈페이지 로딩 및 메르s Pick 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.257Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-819f22e980bb7f5717f7",
+              "file": "chart-system.spec.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "테슬라 차트 페이지 로딩 및 차트 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.276Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-26af580dd1ba94711529",
+              "file": "chart-system.spec.ts",
+              "line": 31,
+              "column": 7
+            },
+            {
+              "title": "삼성전자 차트 페이지 및 한국 종목 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.277Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-fdcbd4bdd55ee6d99ad6",
+              "file": "chart-system.spec.ts",
+              "line": 56,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 테스트 - 호버 및 툴팁",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.298Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-b18b8f08615160f4171f",
+              "file": "chart-system.spec.ts",
+              "line": 80,
+              "column": 7
+            },
+            {
+              "title": "관련 포스트 로딩 및 더보기 기능 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.299Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-c662617c7dbc56441cde",
+              "file": "chart-system.spec.ts",
+              "line": 106,
+              "column": 7
+            },
+            {
+              "title": "차트 데이터 로딩 성능 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.319Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-d28c9668bade172477e3",
+              "file": "chart-system.spec.ts",
+              "line": 136,
+              "column": 7
+            },
+            {
+              "title": "모바일 반응형 차트 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.319Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-f0a51af714f129d0e155",
+              "file": "chart-system.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "홈페이지 로딩 및 메르s Pick 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.411Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-a35322c71407497f97d7",
+              "file": "chart-system.spec.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "테슬라 차트 페이지 로딩 및 차트 표시 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.430Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-d6cf516e0fa2fb7ac462",
+              "file": "chart-system.spec.ts",
+              "line": 31,
+              "column": 7
+            },
+            {
+              "title": "삼성전자 차트 페이지 및 한국 종목 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.431Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-8e60d709f6a6ac422ea9",
+              "file": "chart-system.spec.ts",
+              "line": 56,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 테스트 - 호버 및 툴팁",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.449Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-05204882961c81e1de80",
+              "file": "chart-system.spec.ts",
+              "line": 80,
+              "column": 7
+            },
+            {
+              "title": "관련 포스트 로딩 및 더보기 기능 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.450Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-2184c791752be149840c",
+              "file": "chart-system.spec.ts",
+              "line": 106,
+              "column": 7
+            },
+            {
+              "title": "차트 데이터 로딩 성능 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.468Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-fe9e21b34b382cdb9d65",
+              "file": "chart-system.spec.ts",
+              "line": 136,
+              "column": 7
+            },
+            {
+              "title": "모바일 반응형 차트 테스트",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.469Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7baa770c93e1d6b00764-1b3f7b673958dc13a0a9",
+              "file": "chart-system.spec.ts",
+              "line": 158,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "chart-validation.spec.ts",
+      "file": "chart-validation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "차트 6개월 및 축 좌표 검증",
+          "file": "chart-validation.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TSLA 차트 6개월 범위 및 축 설정 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 43655,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-validation.spec.ts",
+                            "column": 16,
+                            "line": 7
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n   5 |     console.log('🚀 TSLA 차트 검증 시작...');\n   6 |     \n>  7 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n   8 |     await page.waitForLoadState('networkidle');\n   9 |     \n  10 |     // 더 긴 대기 시간으로 차트 로딩 완료 대기\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-validation.spec.ts:7:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 TSLA 차트 검증 시작...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:15:40.055Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-validation-차트-6개월-및-축-좌표-검증-TSLA-차트-6개월-범위-및-축-설정-확인-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-d7516523a43f4f606ab6",
+              "file": "chart-validation.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 및 툴팁 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 4,
+                      "status": "timedOut",
+                      "duration": 43734,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\chart-validation.spec.ts",
+                            "column": 16,
+                            "line": 90
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  88 |     console.log('🚀 차트 인터랙션 테스트 시작...');\n  89 |     \n> 90 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  91 |     await page.waitForLoadState('networkidle');\n  92 |     \n  93 |     // 차트 영역에서 호버 테스트\n    at C:\\Users\\y\\meire-blog-platform\\tests\\chart-validation.spec.ts:90:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 차트 인터랙션 테스트 시작...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:15:40.618Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\chart-validation-차트-6개월-및-축-좌표-검증-차트-인터랙션-및-툴팁-확인-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-7e66932bd102c6f634ce",
+              "file": "chart-validation.spec.ts",
+              "line": 87,
+              "column": 7
+            },
+            {
+              "title": "TSLA 차트 6개월 범위 및 축 설정 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.013Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-65d2842bb319f8e3e8a1",
+              "file": "chart-validation.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 및 툴팁 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.014Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-aef463d269305bb49828",
+              "file": "chart-validation.spec.ts",
+              "line": 87,
+              "column": 7
+            },
+            {
+              "title": "TSLA 차트 6개월 범위 및 축 설정 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.168Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-9af2390ef9b646cc7652",
+              "file": "chart-validation.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 및 툴팁 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.169Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-55a9810e3472be49dc9d",
+              "file": "chart-validation.spec.ts",
+              "line": 87,
+              "column": 7
+            },
+            {
+              "title": "TSLA 차트 6개월 범위 및 축 설정 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.336Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-6ac23b3875814372af2b",
+              "file": "chart-validation.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 및 툴팁 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.337Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-13110d93ef3bc4fe7b46",
+              "file": "chart-validation.spec.ts",
+              "line": 87,
+              "column": 7
+            },
+            {
+              "title": "TSLA 차트 6개월 범위 및 축 설정 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.486Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-811d591b466d0377ae94",
+              "file": "chart-validation.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "차트 인터랙션 및 툴팁 확인",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.487Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "52581b124bab5ef458f5-90bf50598ab81ac0c455",
+              "file": "chart-validation.spec.ts",
+              "line": 87,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "sentiment-analysis.spec.ts",
+      "file": "sentiment-analysis.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Sentiment Analysis Integration",
+          "file": "sentiment-analysis.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 45173,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts",
+                            "column": 16,
+                            "line": 13
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  11 |     \n  12 |     // Navigate to TSLA stock page\n> 13 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  14 |     \n  15 |     // Wait for page to load and chart to render\n  16 |     await page.waitForSelector('[data-testid=\"stock-price-chart\"]', { timeout: 10000 });\n    at C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts:13:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🧪 Testing sentiment analysis integration on TSLA chart...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:15:46.046Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-da445-lored-markers-on-TSLA-chart-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-406a215d7767d2e73279",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "should show sentiment information in chart tooltips",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 42707,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts",
+                            "column": 16,
+                            "line": 50
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  48 |     console.log('🧪 Testing sentiment information in chart tooltips...');\n  49 |     \n> 50 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  51 |     await page.waitForSelector('[data-testid=\"stock-price-chart\"]', { timeout: 10000 });\n  52 |     await page.waitForTimeout(3000);\n  53 |     \n    at C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-analysis.spec.ts:50:16"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🧪 Testing sentiment information in chart tooltips...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:24.867Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-analysis-Sentime-bd349-formation-in-chart-tooltips-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-1f20fb29a2c4fc209499",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 47,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.032Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-4e572d0fad016938aa69",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "should show sentiment information in chart tooltips",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.033Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-5f3da8110f76b99f040c",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 47,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.187Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-d466f41376b3d0797f1e",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "should show sentiment information in chart tooltips",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.188Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-64deff29685596dc67d8",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 47,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.354Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-082b2204bd10a6077bd3",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "should show sentiment information in chart tooltips",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.355Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-30d7a5fca19a93318c75",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 47,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment-colored markers on TSLA chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.507Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-8a09aa0b02fb78301f4f",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "should show sentiment information in chart tooltips",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.507Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "49159d5dee823e54cbb5-efe55a9bfc85d8cb5d5b",
+              "file": "sentiment-analysis.spec.ts",
+              "line": 47,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "sentiment-quick-test.spec.ts",
+      "file": "sentiment-quick-test.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Sentiment Analysis Quick Test",
+          "file": "sentiment-quick-test.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should verify sentiment API works and chart displays with sentiment data",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 32089,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-quick-test.spec.ts",
+                            "column": 50,
+                            "line": 8
+                          },
+                          "message": "Error: apiRequestContext.get: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - → GET http://localhost:3004/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.7258.5 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n\n   6 |     \n   7 |     // Test sentiment API first\n>  8 |     const sentimentResponse = await page.request.get('http://localhost:3004/api/merry/stocks/TSLA/sentiments?period=6mo');\n     |                                                  ^\n   9 |     expect(sentimentResponse.status()).toBe(200);\n  10 |     \n  11 |     const sentimentData = await sentimentResponse.json();\n    at C:\\Users\\y\\meire-blog-platform\\tests\\sentiment-quick-test.spec.ts:8:50"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🧪 Quick test: Sentiment analysis integration...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:24.995Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-quick-test-Senti-48f70-isplays-with-sentiment-data-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\sentiment-quick-test-Senti-48f70-isplays-with-sentiment-data-chromium\\video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "fa46b3795a5209cd80a9-7063ed5ba7c50a4385f9",
+              "file": "sentiment-quick-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should verify sentiment API works and chart displays with sentiment data",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.051Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "fa46b3795a5209cd80a9-e0cf1bbe2f07d6c213ef",
+              "file": "sentiment-quick-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should verify sentiment API works and chart displays with sentiment data",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.206Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "fa46b3795a5209cd80a9-c0be73a0cf568082faa2",
+              "file": "sentiment-quick-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should verify sentiment API works and chart displays with sentiment data",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.372Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "fa46b3795a5209cd80a9-4408f0099e2f40400fe1",
+              "file": "sentiment-quick-test.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should verify sentiment API works and chart displays with sentiment data",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-16T01:16:58.525Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "fa46b3795a5209cd80a9-a985b455504f127a6a86",
+              "file": "sentiment-quick-test.spec.ts",
+              "line": 4,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "simple-chart-test.spec.ts",
+      "file": "simple-chart-test.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "TSLA 차트 간단 검증",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 15,
+                  "parallelIndex": 5,
+                  "status": "timedOut",
+                  "duration": 42579,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "C:\\Users\\y\\meire-blog-platform\\tests\\simple-chart-test.spec.ts",
+                        "column": 14,
+                        "line": 6
+                      },
+                      "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  4 |   console.log('🚀 TSLA 간단 차트 테스트 시작...');\n  5 |   \n> 6 |   await page.goto('http://localhost:3004/merry/stocks/TSLA');\n    |              ^\n  7 |   await page.waitForLoadState('networkidle');\n  8 |   \n  9 |   // 콘솔 로그 캐치\n    at C:\\Users\\y\\meire-blog-platform\\tests\\simple-chart-test.spec.ts:6:14"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "🚀 TSLA 간단 차트 테스트 시작...\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:16:26.041Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\simple-chart-test-TSLA-차트-간단-검증-chromium\\video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4df14528f3c59bcd4fe4-5cb4991f2f562899880c",
+          "file": "simple-chart-test.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "TSLA 차트 간단 검증",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                  },
+                  "errors": [
+                    {
+                      "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:16:58.052Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4df14528f3c59bcd4fe4-b310a88a262ec9b6d0cf",
+          "file": "simple-chart-test.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "TSLA 차트 간단 검증",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                  },
+                  "errors": [
+                    {
+                      "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:16:58.206Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4df14528f3c59bcd4fe4-1b598372f8b9409717ec",
+          "file": "simple-chart-test.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "TSLA 차트 간단 검증",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Mobile Chrome",
+              "projectName": "Mobile Chrome",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                  },
+                  "errors": [
+                    {
+                      "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:16:58.373Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4df14528f3c59bcd4fe4-31ca4361e28ba7a19d68",
+          "file": "simple-chart-test.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "TSLA 차트 간단 검증",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Mobile Safari",
+              "projectName": "Mobile Safari",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                  },
+                  "errors": [
+                    {
+                      "message": "Error: worker process exited unexpectedly (code=3221225794, signal=null)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-16T01:16:58.525Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "4df14528f3c59bcd4fe4-22ee7660d64ea0274399",
+          "file": "simple-chart-test.spec.ts",
+          "line": 3,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-08-16T01:14:51.475Z",
+    "duration": 146414.79200000002,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 80,
+    "flaky": 0
+  }
+}

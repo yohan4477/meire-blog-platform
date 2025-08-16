@@ -467,6 +467,31 @@ export default function StockPriceChart({
             </div>
           )}
           
+          {/* 차트 마커 가이드 */}
+          <div className="mt-2 text-xs text-gray-500 space-y-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 border-2 border-green-500 rounded-full bg-transparent"></span>
+                긍정 감정
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 border-2 border-red-600 rounded-full bg-transparent"></span>
+                부정 감정
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 border-2 border-black rounded-full bg-transparent"></span>
+                중립 감정
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 border-2 border-blue-600 rounded-full bg-transparent"></span>
+                메르 언급
+              </span>
+            </div>
+            <div className="text-gray-400">
+              💡 차트의 원을 클릭하면 메르의 분석과 관련 포스트 정보를 확인할 수 있습니다
+            </div>
+          </div>
+          
           {/* 모바일 도움말 */}
           <div className="mt-2 sm:hidden text-xs text-gray-400">
             📱 길게 누르면 풀스크린, 드래그하면 확대
@@ -560,9 +585,9 @@ export default function StockPriceChart({
                 strokeWidth={2.5}
                 dot={false}
                 activeDot={{ 
-                  r: 5, 
+                  r: isMobile ? 8 : 7, 
                   fill: chartColor,
-                  strokeWidth: 3,
+                  strokeWidth: 4,
                   stroke: '#ffffff'
                 }}
                 animationBegin={0}
@@ -604,10 +629,10 @@ export default function StockPriceChart({
                     key={`mention-${index}`}
                     x={point.date}
                     y={point.price}
-                    r={4}
+                    r={isMobile ? 7 : 6}
                     fill="none"
                     stroke={markerColor}
-                    strokeWidth={2}
+                    strokeWidth={3}
                     style={{
                       opacity: 1,
                       transform: 'scale(1)',
