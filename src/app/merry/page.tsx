@@ -202,17 +202,58 @@ export default function MerryPage() {
                 <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
                 
                 <div className="flex flex-wrap gap-1 mb-4">
-                  {post.tags.slice(0, 3).map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      <Tag size={10} className="mr-1" />
-                      {tag}
-                    </Badge>
-                  ))}
-                  {post.tags.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{post.tags.length - 3}
-                    </Badge>
-                  )}
+                  {(() => {
+                    let tagsArray: string[] = [];
+                    
+                    try {
+                      if (post.tags) {
+                        if (typeof post.tags === 'string') {
+                          // JSON 문자열 파싱 시도
+                          try {
+                            const parsed = JSON.parse(post.tags);
+                            if (Array.isArray(parsed)) {
+                              tagsArray = parsed.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
+                            }
+                          } catch (parseError) {
+                            console.warn(`Failed to parse tags for post ${post.id}:`, parseError);
+                            tagsArray = [];
+                          }
+                        } else if (Array.isArray(post.tags)) {
+                          // 이미 배열인 경우
+                          tagsArray = post.tags.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
+                        }
+                      }
+                    } catch (error) {
+                      console.error(`Tag processing error for post ${post.id}:`, error);
+                      tagsArray = [];
+                    }
+                    
+                    // 최종 안전성 검증
+                    if (!Array.isArray(tagsArray)) {
+                      tagsArray = [];
+                    }
+                    
+                    return (
+                      <>
+                        {tagsArray.slice(0, 3).map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            <Tag size={10} className="mr-1" />
+                            {tag}
+                          </Badge>
+                        ))}
+                        {tagsArray.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{tagsArray.length - 3}
+                          </Badge>
+                        )}
+                        {tagsArray.length === 0 && (
+                          <Badge variant="outline" className="text-xs text-muted-foreground">
+                            태그 없음
+                          </Badge>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">

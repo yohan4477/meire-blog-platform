@@ -171,19 +171,87 @@ export function PostCard({ post, featured = false, compact = false }: PostCardPr
         )}
 
         {/* Tags */}
-        {!compact && post.tags.length > 0 && (
+        {!compact && (() => {
+          let tagsArray: string[] = [];
+          
+          try {
+            if (post.tags) {
+              if (typeof post.tags === 'string') {
+                // JSON 문자열 파싱 시도
+                try {
+                  const parsed = JSON.parse(post.tags);
+                  if (Array.isArray(parsed)) {
+                    tagsArray = parsed.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
+                  }
+                } catch (parseError) {
+                  console.warn(`Failed to parse tags for post ${post.id}:`, parseError);
+                  tagsArray = [];
+                }
+              } else if (Array.isArray(post.tags)) {
+                // 이미 배열인 경우
+                tagsArray = post.tags.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
+              }
+            }
+          } catch (error) {
+            console.error(`Tag processing error for post ${post.id}:`, error);
+            tagsArray = [];
+          }
+          
+          // 최종 안전성 검증
+          if (!Array.isArray(tagsArray)) {
+            tagsArray = [];
+          }
+          
+          return tagsArray.length > 0;
+        })() && (
           <div className="flex flex-wrap gap-1">
-            {post.tags.slice(0, 4).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                <Tag size={10} className="mr-1" />
-                {tag}
-              </Badge>
-            ))}
-            {post.tags.length > 4 && (
-              <Badge variant="outline" className="text-xs">
-                +{post.tags.length - 4}
-              </Badge>
-            )}
+            {(() => {
+              let tagsArray: string[] = [];
+              
+              try {
+                if (post.tags) {
+                  if (typeof post.tags === 'string') {
+                    // JSON 문자열 파싱 시도
+                    try {
+                      const parsed = JSON.parse(post.tags);
+                      if (Array.isArray(parsed)) {
+                        tagsArray = parsed.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
+                      }
+                    } catch (parseError) {
+                      console.warn(`Failed to parse tags for post ${post.id}:`, parseError);
+                      tagsArray = [];
+                    }
+                  } else if (Array.isArray(post.tags)) {
+                    // 이미 배열인 경우
+                    tagsArray = post.tags.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
+                  }
+                }
+              } catch (error) {
+                console.error(`Tag processing error for post ${post.id}:`, error);
+                tagsArray = [];
+              }
+              
+              // 최종 안전성 검증
+              if (!Array.isArray(tagsArray)) {
+                tagsArray = [];
+              }
+              
+              return (
+                <>
+                  {tagsArray.slice(0, 4).map((tag, index) => (
+                    <Badge key={index} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                      <Tag size={10} className="mr-1" />
+                      {tag}
+                    </Badge>
+                  ))}
+                  {tagsArray.length > 4 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{tagsArray.length - 4}
+                    </Badge>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 

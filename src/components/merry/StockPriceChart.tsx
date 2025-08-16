@@ -96,7 +96,6 @@ export default function StockPriceChart({
   const [currentPrice, setCurrentPrice] = useState<number>(0);
   const [changePercent, setChangePercent] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   // 다크 모드 감지
@@ -320,12 +319,33 @@ export default function StockPriceChart({
           </div>
         </div>
         
-        {/* 📝 제목 + 💡 핵심 근거 (모든 포스트 표시) */}
+        {/* 📝 제목 + 💡 핵심 근거 (모든 포스트 표시) + 분석 완료 상태 */}
         {data.postSentimentPairs && Array.isArray(data.postSentimentPairs) && data.postSentimentPairs.length > 0 && (
           <div className="space-y-2">
-            <div className="text-xs font-bold text-primary mb-2">
-              📰 메르 분석 ({data.postSentimentPairs.length}개)
-            </div>
+            {(() => {
+              // 감정 분석이 완료된 포스트 수 계산
+              const analyzedCount = data.postSentimentPairs.filter(pair => 
+                pair.sentiment && 
+                pair.sentiment.sentiment && 
+                pair.sentiment.sentiment !== 'unknown'
+              ).length;
+              const totalCount = data.postSentimentPairs.length;
+              
+              return (
+                <div className="text-xs font-bold text-primary mb-2 flex items-center gap-2">
+                  <span>📰 메르 분석 ({totalCount}개)</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    analyzedCount === totalCount 
+                      ? 'bg-green-100 text-green-700 border border-green-200' 
+                      : analyzedCount > 0 
+                      ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200'
+                  }`}>
+                    🤖 AI 분석: {analyzedCount}/{totalCount}
+                  </span>
+                </div>
+              );
+            })()}
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {data.postSentimentPairs.map((pair: any, index: number) => {
                 const sentiment = pair.sentiment;
@@ -420,17 +440,7 @@ export default function StockPriceChart({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    const touchDuration = Date.now() - (touchState.touchStartTime || 0);
-    
-    // 탭 (100ms 미만) = 툴팁 표시
-    // 길게 누르기 (500ms 이상) = 풀스크린 토글
-    if (touchDuration < 100) {
-      // 짧은 탭 - 툴팁 표시는 차트 라이브러리에서 처리
-    } else if (touchDuration > 500) {
-      // 길게 누르기 - 풀스크린 토글
-      setIsFullscreen(!isFullscreen);
-    }
-    
+    // 터치 종료 시 상태만 리셋
     setTouchState({ isTouch: false });
   };
 
@@ -477,7 +487,7 @@ export default function StockPriceChart({
   }
 
   return (
-    <Card className={`w-full transition-all duration-300 ${isFullscreen ? 'fixed inset-4 z-50' : ''}`}>
+    <Card className="w-full">
       <CardContent className="p-0">
         {/* 토스 스타일 헤더 (모바일 최적화) */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
@@ -529,8 +539,27 @@ export default function StockPriceChart({
                   분석 진행중
                 </span>
               </div>
-              <div className="text-gray-400 text-xs">
-                💡 원 클릭시 상세 정보 표시
+              <div className="text-gray-400 text-xs space-y-1">
+                <div>💡 원 클릭시 상세 정보 표시</div>
+                {(() => {
+                  // 전체 데이터에서 분석 상태 계산
+                  const allPostPairs = filteredData.flatMap(point => point.postSentimentPairs || []);
+                  const analyzedCount = allPostPairs.filter(pair => 
+                    pair.sentiment && 
+                    pair.sentiment.sentiment && 
+                    pair.sentiment.sentiment !== 'unknown'
+                  ).length;
+                  const totalCount = allPostPairs.length;
+                  
+                  if (totalCount > 0) {
+                    return (
+                      <div className="text-gray-400">
+                        🤖 전체 AI 분석: {analyzedCount}/{totalCount} ({Math.round((analyzedCount/totalCount)*100)}%)
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             </div>
             
@@ -556,8 +585,27 @@ export default function StockPriceChart({
                 분석 진행중
               </span>
             </div>
-            <div className="text-gray-400">
-              💡 차트의 원을 클릭하면 메르의 분석과 관련 포스트 정보를 확인할 수 있습니다
+            <div className="text-gray-400 space-y-1">
+              <div>💡 차트의 원을 클릭하면 메르의 분석과 관련 포스트 정보를 확인할 수 있습니다</div>
+              {(() => {
+                // 전체 데이터에서 분석 상태 계산
+                const allPostPairs = filteredData.flatMap(point => point.postSentimentPairs || []);
+                const analyzedCount = allPostPairs.filter(pair => 
+                  pair.sentiment && 
+                  pair.sentiment.sentiment && 
+                  pair.sentiment.sentiment !== 'unknown'
+                ).length;
+                const totalCount = allPostPairs.length;
+                
+                if (totalCount > 0) {
+                  return (
+                    <div className="text-gray-400">
+                      🤖 AI 분석 진행률: {analyzedCount}/{totalCount} ({Math.round((analyzedCount/totalCount)*100)}%)
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
           
@@ -571,13 +619,13 @@ export default function StockPriceChart({
           
           {/* 모바일 도움말 */}
           <div className="mt-2 sm:hidden text-xs text-gray-400">
-            📱 길게 누르면 풀스크린, 드래그하면 확대
+            📱 드래그하면 확대
           </div>
         </div>
 
         {/* 토스 스타일 차트 영역 */}
         <div 
-          className={`${isFullscreen ? 'h-96 md:h-[500px]' : 'h-64 sm:h-80'} p-2 sm:p-4`}
+          className="h-64 sm:h-80 p-2 sm:p-4"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}

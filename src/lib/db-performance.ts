@@ -105,10 +105,10 @@ export class PerformantDatabase {
       'CREATE INDEX IF NOT EXISTS idx_blog_posts_content_ticker ON blog_posts(content) WHERE content LIKE "%ticker%";',
       'CREATE INDEX IF NOT EXISTS idx_blog_posts_title_ticker ON blog_posts(title) WHERE title LIKE "%ticker%";',
       'CREATE INDEX IF NOT EXISTS idx_blog_posts_date_type ON blog_posts(created_date DESC, blog_type);',
-      'CREATE INDEX IF NOT EXISTS idx_sentiments_ticker_analyzed ON post_stock_sentiments(ticker, analyzed_at DESC);',
+      'CREATE INDEX IF NOT EXISTS idx_sentiments_ticker_analyzed ON sentiments(ticker, analysis_date DESC);',
       
       // Supporting indexes
-      'CREATE INDEX IF NOT EXISTS idx_post_stock_sentiments_post_id ON post_stock_sentiments(post_id);',
+      'CREATE INDEX IF NOT EXISTS idx_sentiments_post_id ON sentiments(post_id);',
       'CREATE INDEX IF NOT EXISTS idx_merry_stocks_mention_count ON merry_mentioned_stocks(mention_count DESC);',
       
       // FTS index for content search (if needed)
@@ -245,13 +245,30 @@ export const performantDb = new PerformantDatabase();
 export async function getStockMentions(limit: number = 10): Promise<any[]> {
   const cacheKey = `stock-mentions-${limit}`;
   
-  // OPTIMIZED QUERY - Join with stocks table for real company info
+  // OPTIMIZED QUERY - Use pre-computed mention_count and last_mentioned_at columns
   const query = `
-    SELECT 
+    SELECT DISTINCT
       m.ticker, 
-      MAX(m.mentioned_date) as last_mentioned_at,
-      COUNT(*) as mention_count,
-      COALESCE(s.company_name_kr, s.company_name, m.ticker) as company_name,
+      m.last_mentioned_at,
+      m.mention_count,
+      COALESCE(sentiment_count.analyzed_count, 0) as analyzed_count,
+      CASE 
+        WHEN m.ticker = 'TSLA' THEN '테슬라'
+        WHEN m.ticker = 'INTC' THEN '인텔'
+        WHEN m.ticker = 'LLY' THEN '일라이릴리'
+        WHEN m.ticker = 'UNH' THEN '유나이티드헬스케어'
+        WHEN m.ticker = 'NVDA' THEN '엔비디아'
+        WHEN m.ticker = 'AAPL' THEN '애플'
+        WHEN m.ticker = 'GOOGL' THEN '구글'
+        WHEN m.ticker = 'MSFT' THEN '마이크로소프트'
+        WHEN m.ticker = 'AMZN' THEN '아마존'
+        WHEN m.ticker = 'META' THEN '메타'
+        WHEN m.ticker = '005930' THEN '삼성전자'
+        WHEN m.ticker = '042660' THEN '한화오션'
+        WHEN m.ticker = '267250' THEN 'HD현대'
+        WHEN m.ticker = '010620' THEN '현대미포조선'
+        ELSE COALESCE(s.company_name_kr, s.company_name, m.ticker)
+      END as company_name,
       COALESCE(s.market, 
         CASE 
           WHEN LENGTH(m.ticker) = 6 AND m.ticker GLOB '[0-9]*' THEN 'KOSPI'
@@ -263,17 +280,46 @@ export async function getStockMentions(limit: number = 10): Promise<any[]> {
         WHEN m.ticker = 'INTC' THEN '세계 최대의 반도체 칩 제조업체, CPU 및 데이터센터 솔루션 전문'
         WHEN m.ticker = 'LLY' THEN '미국의 글로벌 제약회사, 당뇨병 치료제 및 비만 치료제 선도기업'
         WHEN m.ticker = 'UNH' THEN '미국 최대 건강보험 회사, 헬스케어 서비스 및 보험 솔루션 제공'
+        WHEN m.ticker = 'NVDA' THEN '세계 최대 GPU 제조업체, AI 가속기 및 그래픽 카드 선도기업'
+        WHEN m.ticker = 'AAPL' THEN '아이폰, 맥북을 제조하는 세계 최대 기술기업'
+        WHEN m.ticker = 'GOOGL' THEN '검색엔진과 클라우드 서비스를 제공하는 알파벳의 모회사'
+        WHEN m.ticker = 'MSFT' THEN '윈도우 운영체제와 오피스를 제공하는 글로벌 소프트웨어 기업'
+        WHEN m.ticker = 'AMZN' THEN '전자상거래와 클라우드 서비스를 제공하는 글로벌 기업'
+        WHEN m.ticker = 'META' THEN '페이스북, 인스타그램을 운영하는 소셜미디어 플랫폼 기업'
         WHEN m.ticker = '005930' THEN '세계 최대 메모리 반도체 및 스마트폰 제조업체'
         WHEN m.ticker = '042660' THEN '대한민국의 대표적인 조선 및 해양플랜트 전문기업'
         WHEN m.ticker = '267250' THEN '국내 대표 이차전지 소재 전문기업, 배터리 양극재 선도기업'
         WHEN m.ticker = '010620' THEN '국내 중형 조선업체, 특수선박 및 해양구조물 전문'
         ELSE COALESCE(s.company_name_kr, s.company_name, m.ticker) || ' 관련 기업'
-      END as description
+      END as description,
+      CASE 
+        WHEN m.ticker = 'TSLA' THEN '["전기차", "자율주행", "AI", "배터리", "미래차"]'
+        WHEN m.ticker = 'INTC' THEN '["반도체", "CPU", "데이터센터", "AI", "서버"]'
+        WHEN m.ticker = 'LLY' THEN '["제약", "당뇨병", "비만치료", "헬스케어", "바이오"]'
+        WHEN m.ticker = 'UNH' THEN '["건강보험", "헬스케어", "의료", "보험", "미국주식"]'
+        WHEN m.ticker = 'NVDA' THEN '["GPU", "AI", "반도체", "게임", "데이터센터"]'
+        WHEN m.ticker = 'AAPL' THEN '["아이폰", "애플", "기술주", "소비재", "디바이스"]'
+        WHEN m.ticker = 'GOOGL' THEN '["검색", "광고", "클라우드", "AI", "빅테크"]'
+        WHEN m.ticker = 'MSFT' THEN '["소프트웨어", "클라우드", "윈도우", "오피스", "AI"]'
+        WHEN m.ticker = 'AMZN' THEN '["전자상거래", "AWS", "클라우드", "물류", "소매"]'
+        WHEN m.ticker = 'META' THEN '["소셜미디어", "메타버스", "VR", "광고", "플랫폼"]'
+        WHEN m.ticker = '005930' THEN '["반도체", "메모리", "스마트폰", "삼성", "기술주"]'
+        WHEN m.ticker = '042660' THEN '["조선", "해양플랜트", "방산", "에너지", "중공업"]'
+        WHEN m.ticker = '267250' THEN '["이차전지", "배터리", "소재", "친환경", "신에너지"]'
+        WHEN m.ticker = '010620' THEN '["조선", "특수선박", "해양", "중공업", "수출"]'
+        ELSE '["기타", "투자"]'
+      END as tags
     FROM merry_mentioned_stocks m
     LEFT JOIN stocks s ON m.ticker = s.ticker
-    GROUP BY m.ticker
-    HAVING COUNT(*) > 0 
-    ORDER BY MAX(m.mentioned_date) DESC 
+    LEFT JOIN (
+      SELECT 
+        ticker, 
+        COUNT(DISTINCT post_id) as analyzed_count
+      FROM sentiments 
+      GROUP BY ticker
+    ) sentiment_count ON m.ticker = sentiment_count.ticker
+    WHERE m.mention_count > 0 
+    ORDER BY m.last_mentioned_at DESC, m.mention_count DESC 
     LIMIT ?
   `;
   
@@ -306,9 +352,9 @@ export async function getStockSentiments(ticker: string): Promise<any[]> {
   const cacheKey = `sentiments-${ticker}`;
   
   const query = `
-    SELECT * FROM post_stock_sentiments 
+    SELECT * FROM sentiments 
     WHERE ticker = ? 
-    ORDER BY analyzed_at DESC
+    ORDER BY analysis_date DESC
   `;
   
   return performantDb.query(query, [ticker], cacheKey, 300000); // 5min cache

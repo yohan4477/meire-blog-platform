@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-const { getStockDB } = require('../../../../lib/stock-db-sqlite3.js');
+// NOTE: StockDB require 제거로 성능 개선 (getStockMentions 최적화 함수 사용)
 import { performantDb, getStockMentions } from '../../../../lib/db-performance';
 import { edgeCache, setCacheHeaders, CACHE_KEYS, CACHE_TAGS } from '../../../../lib/edge-cache';
 
@@ -44,7 +44,7 @@ async function getCachedStockPrice(ticker: string, market: string) {
     }
   }
   
-  // 캐시 미스 - 새로운 데이터 가져오기
+  // 캐시 미스 - 새로운 데이터 가져오기 (타임아웃 추가)
   const priceData = await getStockPrice(ticker, market);
   
   // 성공한 경우에만 캐시 저장
@@ -58,12 +58,16 @@ async function getCachedStockPrice(ticker: string, market: string) {
   return priceData;
 }
 
-// 실제 주가 데이터를 가져오는 함수 (캐시 없이)
+// 실제 주가 데이터를 가져오는 함수 (타임아웃 최적화)
 async function getStockPrice(ticker: string, market: string) {
   try {
     // Yahoo Finance에서 실제 가격 가져오기
     const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
     const symbol = isKoreanStock ? `${ticker}.KS` : ticker;
+    
+    // 타임아웃 추가로 성능 개선
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
     
     const response = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${Math.floor(Date.now() / 1000) - 86400}&period2=${Math.floor(Date.now() / 1000)}&interval=1d`,
@@ -71,9 +75,12 @@ async function getStockPrice(ticker: string, market: string) {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         },
+        signal: controller.signal,
         next: { revalidate: 300 } // 5분 캐시
       }
     );
+    
+    clearTimeout(timeoutId);
 
     if (response.ok) {
       const data = await response.json();
@@ -102,7 +109,11 @@ async function getStockPrice(ticker: string, market: string) {
     console.warn(`⚠️ Failed to fetch real price for ${ticker}, using null`);
     return null;
   } catch (error) {
-    console.error(`❌ Error fetching price for ${ticker}:`, error);
+    if (error.name === 'AbortError') {
+      console.warn(`⏱️ Price fetch timeout for ${ticker}`);
+    } else {
+      console.error(`❌ Error fetching price for ${ticker}:`, error);
+    }
     return null;
   }
 }
@@ -113,7 +124,7 @@ async function loadStocksData(): Promise<any[]> {
   
   // 캐시가 유효한 경우 캐시 데이터 반환
   if (stocksCache && (now - stocksCache.timestamp) < CACHE_TTL) {
-    console.log('📦 Using cached stocks data');
+    console.log('🎯 Cache HIT for merry:picks:latest (0ms)');
     stocksCache.hitCount = (stocksCache.hitCount || 0) + 1;
     
     // 캐시 성능 모니터링
@@ -125,6 +136,7 @@ async function loadStocksData(): Promise<any[]> {
     return stocksCache.data;
   }
   
+  console.log('💾 Cache MISS for merry:picks:latest, fetching...');
   console.log('🔄 Loading fresh stocks data from SQLite DB');
   
   // 캐시 미스 카운트 증가
@@ -132,21 +144,12 @@ async function loadStocksData(): Promise<any[]> {
     stocksCache.missCount = (stocksCache.missCount || 0) + 1;
   }
   
-  // DB에서 메르's Pick 데이터 로드 - 글로벌 인스턴스 사용
-  const stockDB = getStockDB();
   let stockData = [];
   
   try {
     // PERFORMANCE OPTIMIZED: Use high-performance singleton with caching
     console.log('🚀 Using optimized high-performance database connection');
     stockData = await getStockMentions(10);
-    
-    // Fallback to legacy method if needed
-    if (!stockData || stockData.length === 0) {
-      console.log('📊 Fallback to legacy database method');
-      await stockDB.connect();
-      stockData = await stockDB.getMerryPickStocks(10);
-    }
     
     console.log(`✅ DB에서 ${stockData.length}개 종목 로드 완료 (최적화된 방식)`);
   } catch (error) {
@@ -156,43 +159,63 @@ async function loadStocksData(): Promise<any[]> {
       { 
         ticker: 'TSLA', 
         name: '테슬라', 
+        company_name: '테슬라',
         market: 'NASDAQ',
-        postCount: 42,
-        firstMention: '2024-12-20',
-        lastMention: '2025-08-09',
+        mention_count: 28,
+        analyzed_count: 3,
+        last_mentioned_at: '2025-08-07 07:59:00',
         sentiment: 'positive',
-        tags: ['전기차', 'AI', '자율주행'],
-        description: '일론 머스크가 이끄는 전기차와 자율주행 기술의 글로벌 선도기업',
-        recentPosts: []
+        tags: '["전기차", "자율주행", "AI", "배터리", "미래차"]',
+        description: '일론 머스크가 이끄는 전기차와 자율주행 기술의 글로벌 선도기업'
       }
     ];
   }
 
-  // 병렬 가격 가져오기 최적화
+  // 병렬 가격 가져오기 최적화 (타임아웃 제한)
   const pricePromises = stockData.map(async (stock) => {
-    const priceData = await getCachedStockPrice(stock.ticker, stock.market);
-    
-    if (priceData) {
-      stock.currentPrice = priceData.current;
-      stock.currency = priceData.currency;
-      stock.priceChange = priceData.change;
-    } else {
-      // 실제 가격을 가져올 수 없는 경우
-      stock.currentPrice = null;
-      stock.currency = stock.market === 'KOSPI' || stock.market === 'KOSDAQ' ? 'KRW' : 'USD';
-      stock.priceChange = null;
+    try {
+      const priceData = await getCachedStockPrice(stock.ticker, stock.market);
+      
+      if (priceData) {
+        stock.currentPrice = priceData.current;
+        stock.currency = priceData.currency;
+        stock.priceChange = priceData.change;
+      } else {
+        // 실제 가격을 가져올 수 없는 경우
+        stock.currentPrice = null;
+        stock.currency = stock.market === 'KOSPI' || stock.market === 'KOSDAQ' || stock.market === 'KRX' ? 'KRW' : 'USD';
+        stock.priceChange = null;
+      }
+      
+      // 데이터 일관성 확보
+      stock.name = stock.company_name || stock.name;
+      stock.mentions = stock.mention_count;
+      stock.lastMention = stock.last_mentioned_at;
+      
+      // 🔧 tags JSON 문자열을 배열로 변환
+      if (stock.tags && typeof stock.tags === 'string') {
+        try {
+          stock.tags = JSON.parse(stock.tags);
+        } catch (error) {
+          console.warn(`Failed to parse tags for ${stock.ticker}:`, error);
+          stock.tags = [];
+        }
+      } else if (!Array.isArray(stock.tags)) {
+        stock.tags = [];
+      }
+      
+      return stock;
+    } catch (error) {
+      console.warn(`⚠️ Error processing stock ${stock.ticker}:`, error);
+      return stock;
     }
-    
-    // mentions를 postCount로 변경
-    if (stock.postCount) {
-      stock.mentions = stock.postCount;
-    }
-    
-    return stock;
   });
 
-  // 모든 가격 정보를 병렬로 가져오기
-  await Promise.all(pricePromises);
+  // 모든 가격 정보를 병렬로 가져오기 (Promise.allSettled로 안정성 확보)
+  const results = await Promise.allSettled(pricePromises);
+  stockData = results
+    .filter(result => result.status === 'fulfilled')
+    .map(result => result.value);
 
   // 캐시 업데이트
   stocksCache = {
@@ -247,11 +270,16 @@ export async function GET(request: NextRequest) {
     // 캐시 메트릭 수집
     performanceMetrics.cacheMetrics = getCacheMetrics();
 
-    // 최근 언급 순서로 정렬 (CLAUDE.md 요구사항: 메르's Pick - 최근 언급 순서)
+    // 최신 언급일 기준 정렬 (last_mentioned_at DESC, mention_count DESC)
     stockData.sort((a, b) => {
-      const dateA = new Date(a.lastMention).getTime();
-      const dateB = new Date(b.lastMention).getTime();
-      return dateB - dateA; // 내림차순 (최근 날짜가 먼저)
+      // 최신 언급일 기준 먼저
+      const dateA = new Date(a.last_mentioned_at).getTime();
+      const dateB = new Date(b.last_mentioned_at).getTime();
+      if (dateA !== dateB) {
+        return dateB - dateA; // 최신 언급일 내림차순
+      }
+      // 같은 날짜면 언급 횟수 기준
+      return b.mention_count - a.mention_count;
     });
 
     // 필터링
@@ -282,13 +310,11 @@ export async function GET(request: NextRequest) {
     }
 
     // 성능 로그 (개발 환경에서만)
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`📊 Performance Metrics:`, {
-        ...performanceMetrics,
-        target: '< 500ms',
-        status: performanceMetrics.totalResponseTime < 500 ? '✅ GOOD' : '❌ SLOW'
-      });
-    }
+    console.log(`📊 Performance Metrics:`, {
+      ...performanceMetrics,
+      target: '< 500ms',
+      status: performanceMetrics.totalResponseTime < 500 ? '✅ GOOD' : '❌ SLOW'
+    });
 
     const response = NextResponse.json({
       success: true,
@@ -298,16 +324,7 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         hasMore: offset + limit < stockData.length
-      },
-      // Enhanced performance metrics
-      ...(process.env.NODE_ENV === 'development' && {
-        performance: {
-          ...performanceMetrics,
-          target: '<500ms',
-          achieved: performanceMetrics.totalResponseTime < 500 ? '✅ FAST' : '❌ SLOW',
-          optimization: 'EdgeCache + PerformantDB + SQLite3 WAL'
-        }
-      })
+      }
     });
     
     // Set optimized cache headers
@@ -319,18 +336,12 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     performanceMetrics.totalResponseTime = Date.now() - startTime;
-    console.error('종목 조회 오류:', error);
+    console.error('💥 종목 조회 오류:', error);
     console.error(`💥 Error Response Time: ${performanceMetrics.totalResponseTime}ms`);
     
     const errorResponse = NextResponse.json({
       success: false,
-      error: { message: '종목 데이터 조회 실패' },
-      ...(process.env.NODE_ENV === 'development' && {
-        performance: {
-          ...performanceMetrics,
-          errorDetails: error.message
-        }
-      })
+      error: { message: '종목 데이터 조회 실패', details: error.message }
     }, { status: 500 });
     
     // No cache on errors

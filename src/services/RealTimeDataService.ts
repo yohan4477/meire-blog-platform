@@ -390,7 +390,7 @@ export class RealTimeDataService {
     let controller: ReadableStreamDefaultController;
 
     const stream = new ReadableStream({
-      start(c) {
+      start: (c) => {
         controller = c;
         
         // 구독 시작
@@ -409,9 +409,9 @@ export class RealTimeDataService {
           clearInterval(heartbeat);
           this.unsubscribe(subscriptionId);
         };
-      }.bind(this),
+      },
       
-      cancel() {
+      cancel: () => {
         this.unsubscribe(subscriptionId);
       }
     });
