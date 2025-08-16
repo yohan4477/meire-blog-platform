@@ -22,14 +22,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 interface Stock {
   ticker: string;
-  name: string;
-  market: string;
-  mentions: number;
-  postCount: number;
-  firstMention: string;
-  lastMention: string;
-  sentiment: 'positive' | 'neutral' | 'negative';
-  tags: string[];
+  name?: string;
+  company_name: string;
+  market?: string;
+  mentions?: number;
+  mention_count: number;
+  postCount?: number;
+  firstMention?: string;
+  lastMention?: string;
+  last_mentioned_at: string;
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  tags?: string[];
   description: string;
   currentPrice: number;
   currency: string;
@@ -98,8 +101,8 @@ export default function MerryStocksPage() {
   };
 
   const filteredStocks = stocks.filter(stock => {
-    const matchesSearch = stock.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          stock.ticker.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (stock.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+                          (stock.ticker?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     const matchesMarket = marketFilter === 'all' || stock.market === marketFilter;
     const matchesSentiment = sentimentFilter === 'all' || stock.sentiment === sentimentFilter;
     
@@ -180,7 +183,7 @@ export default function MerryStocksPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">
-              {stocks.filter(s => s.market === 'KOSPI').length}
+              {stocks.filter(s => (s.market || 'NASDAQ') === 'KOSPI').length}
             </div>
             <div className="text-sm text-muted-foreground">국내 종목</div>
           </CardContent>
@@ -188,7 +191,7 @@ export default function MerryStocksPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">
-              {stocks.filter(s => ['NASDAQ', 'NYSE'].includes(s.market)).length}
+              {stocks.filter(s => ['NASDAQ', 'NYSE'].includes(s.market || 'NASDAQ')).length}
             </div>
             <div className="text-sm text-muted-foreground">미국 종목</div>
           </CardContent>
@@ -196,7 +199,7 @@ export default function MerryStocksPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">
-              {stocks.reduce((sum, s) => sum + (s.postCount || s.mentions), 0)}
+              {stocks.reduce((sum, s) => sum + (s.postCount || s.mentions || s.mention_count || 0), 0)}
             </div>
             <div className="text-sm text-muted-foreground">총 포스트 수</div>
           </CardContent>
@@ -212,13 +215,13 @@ export default function MerryStocksPage() {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-lg">{stock.name}</h3>
+                      <h3 className="font-semibold text-lg">{stock.name || stock.company_name}</h3>
                       {getSentimentIcon(stock.sentiment)}
                     </div>
                     <div className="flex gap-2 mb-2">
                       <Badge variant="outline">{stock.ticker}</Badge>
-                      <Badge className={getMarketColor(stock.market)}>
-                        {stock.market}
+                      <Badge className={getMarketColor(stock.market || 'NASDAQ')}>
+                        {stock.market || 'NASDAQ'}
                       </Badge>
                     </div>
                   </div>
@@ -231,7 +234,7 @@ export default function MerryStocksPage() {
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Hash className="w-3 h-3" />
-                      {stock.postCount || stock.mentions}개 포스트
+                      {stock.postCount || stock.mentions || stock.mention_count}개 포스트
                     </div>
                   </div>
                 </div>
@@ -241,20 +244,26 @@ export default function MerryStocksPage() {
                 </p>
                 
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {stock.tags.map(tag => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
+                  {stock.tags && stock.tags.length > 0 ? (
+                    stock.tags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge variant="outline" className="text-xs text-muted-foreground">
+                      태그 없음
                     </Badge>
-                  ))}
+                  )}
                 </div>
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    첫 언급: {new Date(stock.firstMention).toLocaleDateString('ko-KR')}
+                    첫 언급: {stock.firstMention ? new Date(stock.firstMention).toLocaleDateString('ko-KR') : '정보 없음'}
                   </span>
                   <span>
-                    최근: {new Date(stock.lastMention).toLocaleDateString('ko-KR')}
+                    최근: {(stock.lastMention || stock.last_mentioned_at) ? new Date(stock.lastMention || stock.last_mentioned_at).toLocaleDateString('ko-KR') : '정보 없음'}
                   </span>
                 </div>
               </CardContent>

@@ -185,119 +185,134 @@ class StockDB {
     });
   }
 
-  // 메르's Pick 종목 가져오기 (blog_posts 테이블 직접 사용)
+  // 메르's Pick 종목 가져오기 (최적화된 쿼리)
   async getMerryPickStocks(limit = 10) {
     if (!this.isConnected) await this.connect();
     
     return new Promise((resolve, reject) => {
-      // blog_posts 테이블에서 직접 계산
-      this.db.all(`
-        WITH mentioned_stocks AS (
-          SELECT 
-            '005930' as ticker, '삼성전자' as name_kr, 'KOSPI' as market, 'KRW' as currency, '삼성전자' as sector UNION ALL
-          SELECT 'TSLA', '테슬라', 'NASDAQ', 'USD', '전기차' UNION ALL
-          SELECT 'AAPL', '애플', 'NASDAQ', 'USD', '기술' UNION ALL
-          SELECT 'NVDA', '엔비디아', 'NASDAQ', 'USD', '반도체' UNION ALL
-          SELECT 'INTC', '인텔', 'NASDAQ', 'USD', '반도체' UNION ALL
-          SELECT 'LLY', '일라이릴리', 'NYSE', 'USD', '제약' UNION ALL
-          SELECT 'UNH', '유나이티드헬스케어', 'NYSE', 'USD', '헬스케어' UNION ALL
-          SELECT '042660', '한화오션', 'KOSPI', 'KRW', '조선' UNION ALL
-          SELECT '267250', 'HD현대', 'KOSPI', 'KRW', '중공업' UNION ALL
-          SELECT '010620', '현대미포조선', 'KOSPI', 'KRW', '조선' UNION ALL
-          SELECT 'GOOGL', '구글', 'NASDAQ', 'USD', '기술' UNION ALL
-          SELECT 'MSFT', '마이크로소프트', 'NASDAQ', 'USD', '기술' UNION ALL
-          SELECT 'META', '메타', 'NASDAQ', 'USD', '기술' UNION ALL
-          SELECT 'AMD', 'AMD', 'NASDAQ', 'USD', '반도체'
-        ),
-        stock_mentions AS (
-          SELECT 
-            ms.ticker,
-            ms.name_kr,
-            ms.market,
-            ms.currency,
-            ms.sector,
-            COUNT(bp.id) as post_count,
-            MIN(bp.created_date) as first_mention,
-            MAX(bp.created_date) as last_mention
-          FROM mentioned_stocks ms
-          LEFT JOIN blog_posts bp ON (
-            bp.title LIKE '%' || ms.ticker || '%' OR 
-            bp.content LIKE '%' || ms.ticker || '%' OR 
-            bp.title LIKE '%' || ms.name_kr || '%' OR 
-            bp.content LIKE '%' || ms.name_kr || '%'
-          )
-          GROUP BY ms.ticker, ms.name_kr, ms.market, ms.currency, ms.sector
-          HAVING COUNT(bp.id) > 0
-        )
-        SELECT 
-          ticker,
-          name_kr as name,
-          market,
-          currency,
-          post_count as postCount,
-          date(last_mention) as lastMention,
-          date(first_mention) as firstMention,
-          'positive' as sentiment,
-          sector
-        FROM stock_mentions
-        ORDER BY last_mention DESC
-        LIMIT ?
-      `, [limit], (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          // 회사별 실제 설명 매핑
-          const companyDescriptions = {
-            'TSLA': '전기차와 자율주행 기술의 글로벌 선도기업, 에너지 저장 및 태양광 사업도 운영',
-            '005930': '세계 최대 반도체 메모리 제조사이자 스마트폰, 디스플레이 등 다양한 IT 제품 생산',
-            'AAPL': '아이폰, 맥, 아이패드 등을 제조하는 세계 최대 기술 기업',
-            'MSFT': '윈도우 운영체제와 오피스 소프트웨어, 클라우드 서비스를 제공하는 글로벌 IT 기업',
-            'GOOGL': '구글 검색엔진과 유튜브, 안드로이드를 운영하는 인터넷 서비스 기업',
-            'AMZN': '전자상거래와 클라우드 컴퓨팅(AWS)을 주력으로 하는 글로벌 기업',
-            'META': '페이스북, 인스타그램, 왓츠앱을 운영하는 소셜미디어 플랫폼 기업',
-            'NVDA': 'GPU와 AI 칩 분야의 글로벌 리더, 자율주행과 데이터센터용 프로세서 제조',
-            'INTC': '반도체 업계의 선구자, CPU와 데이터센터 칩 제조 글로벌 기업',
-            'LLY': '당뇨병 치료제 및 신경계 질환 치료에 특화된 글로벌 제약회사',
-            'UNH': '미국 최대 건강보험 회사이자 헬스케어 서비스 제공업체',
-            '042660': '해양플랜트, 선박건조, 해상풍력 등 해양 에너지 솔루션 전문기업',
-            '267250': '건설장비, 로보틱스, 친환경 에너지 솔루션을 제공하는 중공업 기업',
-            '010620': '친환경 선박 및 해양플랜트 건조 전문 조선회사',
-            'AMD': 'CPU, GPU 제조업체로 인텔의 주요 경쟁사이자 게이밍/데이터센터 칩 전문기업'
-          };
-          
-          // 데이터 형식 변환
-          const formatted = (rows || []).map(row => {
-            const ticker = row.ticker;
-            const name = row.name;
-            let description = companyDescriptions[ticker] || companyDescriptions[name];
-            
-            // 회사 설명이 없으면 기본 설명 생성
-            if (!description) {
-              if (row.sector) {
-                description = `${row.sector} 분야의 주요 기업`;
+      // 미리 정의된 종목 데이터 (성능 최적화)
+      const predefinedStocks = [
+        { ticker: '005930', name_kr: '삼성전자', market: 'KOSPI', currency: 'KRW', sector: '반도체' },
+        { ticker: 'TSLA', name_kr: '테슬라', market: 'NASDAQ', currency: 'USD', sector: '전기차' },
+        { ticker: 'AAPL', name_kr: '애플', market: 'NASDAQ', currency: 'USD', sector: '기술' },
+        { ticker: 'NVDA', name_kr: '엔비디아', market: 'NASDAQ', currency: 'USD', sector: '반도체' },
+        { ticker: 'INTC', name_kr: '인텔', market: 'NASDAQ', currency: 'USD', sector: '반도체' },
+        { ticker: 'LLY', name_kr: '일라이릴리', market: 'NYSE', currency: 'USD', sector: '제약' },
+        { ticker: 'UNH', name_kr: '유나이티드헬스케어', market: 'NYSE', currency: 'USD', sector: '헬스케어' },
+        { ticker: '042660', name_kr: '한화오션', market: 'KOSPI', currency: 'KRW', sector: '조선' },
+        { ticker: '267250', name_kr: 'HD현대', market: 'KOSPI', currency: 'KRW', sector: '중공업' },
+        { ticker: '010620', name_kr: '현대미포조선', market: 'KOSPI', currency: 'KRW', sector: '조선' },
+        { ticker: 'GOOGL', name_kr: '구글', market: 'NASDAQ', currency: 'USD', sector: '기술' },
+        { ticker: 'MSFT', name_kr: '마이크로소프트', market: 'NASDAQ', currency: 'USD', sector: '기술' },
+        { ticker: 'META', name_kr: '메타', market: 'NASDAQ', currency: 'USD', sector: '기술' },
+        { ticker: 'AMD', name_kr: 'AMD', market: 'NASDAQ', currency: 'USD', sector: '반도체' }
+      ];
+
+      // 병렬 처리를 위한 Promise 배열
+      const stockPromises = predefinedStocks.map(stock => {
+        return new Promise((stockResolve) => {
+          // 개별 종목별 최적화된 쿼리
+          this.db.all(`
+            SELECT 
+              COUNT(*) as post_count,
+              MIN(created_date) as first_mention,
+              MAX(created_date) as last_mention
+            FROM blog_posts 
+            WHERE title LIKE ? OR content LIKE ? OR title LIKE ? OR content LIKE ?
+          `, [
+            `%${stock.ticker}%`, `%${stock.ticker}%`, 
+            `%${stock.name_kr}%`, `%${stock.name_kr}%`
+          ], (err, rows) => {
+            if (err) {
+              console.error(`Query error for ${stock.ticker}:`, err);
+              stockResolve(null);
+            } else {
+              const result = rows[0];
+              if (result && result.post_count > 0) {
+                stockResolve({
+                  ticker: stock.ticker,
+                  name: stock.name_kr,
+                  market: stock.market,
+                  currency: stock.currency,
+                  postCount: result.post_count,
+                  lastMention: result.last_mention ? result.last_mention.split(' ')[0] : null,
+                  firstMention: result.first_mention ? result.first_mention.split(' ')[0] : null,
+                  sentiment: 'positive',
+                  sector: stock.sector
+                });
               } else {
-                description = `${name} 관련 사업`;
+                stockResolve(null);
               }
             }
-
-            return {
-              ticker: row.ticker,
-              name: name,
-              market: row.market || 'NASDAQ',
-              currency: row.currency || 'USD',
-              postCount: row.postCount || 0,
-              firstMention: row.firstMention,
-              lastMention: row.lastMention,
-              sentiment: row.sentiment || 'neutral',
-              tags: [],
-              description: description,
-              recentPosts: [],
-              mentions: row.postCount || 0
-            };
           });
-          resolve(formatted);
-        }
+        });
       });
+
+      // 모든 종목 쿼리를 병렬로 실행
+      Promise.all(stockPromises).then(results => {
+        // null이 아닌 결과만 필터링
+        const validResults = results.filter(result => result !== null);
+        
+        // 회사별 실제 설명 매핑
+        const companyDescriptions = {
+          'TSLA': '전기차와 자율주행 기술의 글로벌 선도기업, 에너지 저장 및 태양광 사업도 운영',
+          '005930': '세계 최대 반도체 메모리 제조사이자 스마트폰, 디스플레이 등 다양한 IT 제품 생산',
+          'AAPL': '아이폰, 맥, 아이패드 등을 제조하는 세계 최대 기술 기업',
+          'MSFT': '윈도우 운영체제와 오피스 소프트웨어, 클라우드 서비스를 제공하는 글로벌 IT 기업',
+          'GOOGL': '구글 검색엔진과 유튜브, 안드로이드를 운영하는 인터넷 서비스 기업',
+          'AMZN': '전자상거래와 클라우드 컴퓨팅(AWS)을 주력으로 하는 글로벌 기업',
+          'META': '페이스북, 인스타그램, 왓츠앱을 운영하는 소셜미디어 플랫폼 기업',
+          'NVDA': 'GPU와 AI 칩 분야의 글로벌 리더, 자율주행과 데이터센터용 프로세서 제조',
+          'INTC': '반도체 업계의 선구자, CPU와 데이터센터 칩 제조 글로벌 기업',
+          'LLY': '당뇨병 치료제 및 신경계 질환 치료에 특화된 글로벌 제약회사',
+          'UNH': '미국 최대 건강보험 회사이자 헬스케어 서비스 제공업체',
+          '042660': '해양플랜트, 선박건조, 해상풍력 등 해양 에너지 솔루션 전문기업',
+          '267250': '건설장비, 로보틱스, 친환경 에너지 솔루션을 제공하는 중공업 기업',
+          '010620': '친환경 선박 및 해양플랜트 건조 전문 조선회사',
+          'AMD': 'CPU, GPU 제조업체로 인텔의 주요 경쟁사이자 게이밍/데이터센터 칩 전문기업'
+        };
+        
+        // 데이터 형식 변환 및 정렬
+        const formatted = validResults.map(row => {
+          const ticker = row.ticker;
+          const name = row.name;
+          let description = companyDescriptions[ticker] || companyDescriptions[name];
+          
+          // 회사 설명이 없으면 기본 설명 생성
+          if (!description) {
+            if (row.sector) {
+              description = `${row.sector} 분야의 주요 기업`;
+            } else {
+              description = `${name} 관련 사업`;
+            }
+          }
+
+          return {
+            ticker: row.ticker,
+            name: name,
+            market: row.market || 'NASDAQ',
+            currency: row.currency || 'USD',
+            postCount: row.postCount || 0,
+            firstMention: row.firstMention,
+            lastMention: row.lastMention,
+            sentiment: row.sentiment || 'neutral',
+            tags: [],
+            description: description,
+            recentPosts: [],
+            mentions: row.postCount || 0
+          };
+        });
+        
+        // 최신 언급일 순으로 정렬
+        formatted.sort((a, b) => {
+          const dateA = new Date(a.lastMention || '1970-01-01').getTime();
+          const dateB = new Date(b.lastMention || '1970-01-01').getTime();
+          return dateB - dateA;
+        });
+        
+        // 지정된 개수만큼 반환
+        resolve(formatted.slice(0, limit));
+      }).catch(reject);
     });
   }
 

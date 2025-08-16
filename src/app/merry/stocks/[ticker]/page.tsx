@@ -287,7 +287,7 @@ export default function StockDetailPage() {
               <div className="text-sm text-muted-foreground">언급된 포스트</div>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{stock.tags.length}</div>
+              <div className="text-2xl font-bold text-primary">{stock.tags?.length || 0}</div>
               <div className="text-sm text-muted-foreground">관련 태그</div>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -308,11 +308,15 @@ export default function StockDetailPage() {
           <div className="space-y-2">
             <h3 className="font-semibold">관련 태그</h3>
             <div className="flex flex-wrap gap-2">
-              {stock.tags.map(tag => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
+              {stock.tags && stock.tags.length > 0 ? (
+                stock.tags.map(tag => (
+                  <Badge key={tag} variant="secondary">
+                    {tag}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-sm text-muted-foreground">관련 태그 없음</span>
+              )}
             </div>
           </div>
         </CardContent>

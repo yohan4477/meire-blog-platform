@@ -11,11 +11,9 @@ export async function POST(request: NextRequest) {
 
     // 1. Next.js 캐시 클리어 (가능한 경우)
     try {
-      if (typeof revalidatePath !== 'undefined') {
-        const { revalidatePath } = await import('next/cache');
-        revalidatePath('/', 'layout');
-        clearOperations.push('Next.js cache');
-      }
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/', 'layout');
+      clearOperations.push('Next.js cache');
     } catch (error) {
       console.log('Next.js cache clear not available:', error);
     }

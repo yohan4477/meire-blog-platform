@@ -138,7 +138,7 @@ async function getPostContent(postId: number): Promise<string> {
       [postId]
     );
     
-    return posts.length > 0 ? posts[0].content : '';
+    return posts.length > 0 ? (posts[0]?.content || '') : '';
   } catch (error) {
     console.error('포스트 내용 조회 오류:', error);
     return '';
@@ -194,7 +194,7 @@ async function updateMerrysPick(): Promise<number> {
 
         if (mentionedPosts.length > 0) {
           // 최근 언급일과 언급 횟수 계산
-          const lastMentioned = mentionedPosts[0].created_date;
+          const lastMentioned = mentionedPosts[0]?.created_date || '';
           const mentionCount = mentionedPosts.length;
 
           // merry_mentioned_stocks 테이블 업데이트 또는 삽입

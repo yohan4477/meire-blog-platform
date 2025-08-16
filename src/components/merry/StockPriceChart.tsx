@@ -29,11 +29,11 @@ const tossColors = {
   success: '#2ed573',       // 성공
   warning: '#ffa502',       // 경고
   
-  // 감정 분석 마커 (기존 유지)
+  // 감정 분석 마커 (다크모드 대응)
   sentiment: {
     positive: '#16a34a',
     negative: '#dc2626', 
-    neutral: '#000000'  // 중립적인 감정은 검은색
+    neutral: '#6b7280'  // 중립적인 감정은 회색 (다크모드에서도 잘 보임)
   }
 } as const;
 
@@ -129,7 +129,7 @@ export default function StockPriceChart({
         const priceResponse = await fetch(`/api/stock-price?ticker=${ticker}&period=${timeRange}`);
         const priceResult = await priceResponse.json();
         
-        // 감정 분석 데이터 가져오기  
+        // 감정 분석 데이터 가져오기 (포스트-감정 쌍 구조)
         const sentimentResponse = await fetch(`/api/merry/stocks/${ticker}/sentiments?period=${timeRange?.toLowerCase() || '6mo'}`);
         const sentimentResult = await sentimentResponse.json();
         
@@ -151,21 +151,36 @@ export default function StockPriceChart({
           }
           
           // 감정 데이터, 포스트 데이터와 주가 데이터 결합
+          // 데이터 안전성 검증 추가
+          if (!priceResult.prices || !Array.isArray(priceResult.prices)) {
+            console.error('클사이트 가격 데이터가 배열이 아님:', priceResult.prices);
+            setPriceData([]);
+            setLoading(false);
+            return;
+          }
+          
           const enrichedData = priceResult.prices.map((point: any) => {
             const dateStr = point.date;
             const sentimentData = sentimentResult.sentimentByDate?.[dateStr];
             const postsData = postsByDate[dateStr] || [];
             
-            // 감정 분석이 있는 경우 감정 분석 포스트 사용, 없으면 일반 포스트 사용
-            // 중복 방지를 위해 둘 중 하나만 사용
-            const finalPosts = sentimentData?.posts && sentimentData.posts.length > 0 
-              ? sentimentData.posts 
+            // 새로운 구조: postSentimentPairs 사용
+            const postSentimentPairs = sentimentData?.postSentimentPairs || [];
+            
+            // 포스트-감정 쌍이 있으면 사용, 없으면 일반 포스트만 사용
+            const finalPosts = postSentimentPairs.length > 0 
+              ? postSentimentPairs.map(pair => pair.post)
               : postsData;
+              
+            const finalSentiments = postSentimentPairs.length > 0 
+              ? postSentimentPairs.map(pair => pair.sentiment)
+              : [];
             
             return {
               ...point,
-              sentiments: sentimentData?.sentiments || [],
-              posts: finalPosts
+              sentiments: finalSentiments,
+              posts: finalPosts,
+              postSentimentPairs: postSentimentPairs // 새로운 필드 추가
             };
           });
           
@@ -190,10 +205,11 @@ export default function StockPriceChart({
             setTimeout(() => {
               setShowMarkers(true);
               
-              // 마커들을 순차적으로 표시
+              // 마커들을 순차적으로 표시 (포스트-감정 쌍이 있는 데이터 포인트)
               const markersWithData = enrichedData.filter(point => 
                 (point.posts && point.posts.length > 0) || 
-                (point.sentiments && point.sentiments.length > 0)
+                (point.sentiments && point.sentiments.length > 0) ||
+                (point.postSentimentPairs && point.postSentimentPairs.length > 0)
               );
               
               if (markersWithData.length > 0) {
@@ -260,11 +276,14 @@ export default function StockPriceChart({
           </div>
         </div>
         
-        {/* 감정 분석 정보 (상세 근거 포함) */}
-        {hassentiments && (
-          <div className="space-y-2">
-            <div className="text-xs font-semibold text-gray-700 mb-1">🎯 메르 감정 분석</div>
-            {data.sentiments.slice(0, 2).map((sentiment: any, index: number) => {
+        {/* 포스트별 감정 분석 정보 (포스트 제목 + 핵심 근거 쌍) */}
+        {data.postSentimentPairs && Array.isArray(data.postSentimentPairs) && data.postSentimentPairs.length > 0 && (
+          <div className="space-y-3">
+            <div className="text-xs font-semibold text-gray-700 mb-2">🎯 포스트별 메르 분석</div>
+            {data.postSentimentPairs.slice(0, 2).map((pair: any, index: number) => {
+              const sentiment = pair.sentiment;
+              const post = pair.post;
+              
               const sentimentColor = sentiment.sentiment === 'positive' 
                 ? tossColors.sentiment.positive
                 : sentiment.sentiment === 'negative' 
@@ -275,8 +294,22 @@ export default function StockPriceChart({
                 : sentiment.sentiment === 'negative' ? '😰' : '😐';
               
               return (
-                <div key={index} className="text-xs space-y-1">
-                  <div className="flex items-center gap-1">
+                <div key={index} className="text-xs space-y-2 p-2 bg-gray-50 rounded-lg">
+                  {/* 포스트 제목 */}
+                  <div className="font-medium text-gray-800 line-clamp-1">
+                    📝 {post.title}
+                  </div>
+                  
+                  {/* 핵심 근거 */}
+                  {sentiment.key_reasoning && (
+                    <div className="text-gray-600 bg-white rounded-lg p-2 border">
+                      💡 <strong>핵심 근거:</strong><br />
+                      <span className="text-xs">{sentiment.key_reasoning}</span>
+                    </div>
+                  )}
+                  
+                  {/* 감정 분석 결과 */}
+                  <div className="flex items-center gap-2">
                     <span style={{ color: sentimentColor }} className="font-medium">
                       {sentimentIcon} {sentiment.sentiment.toUpperCase()}
                     </span>
@@ -285,41 +318,9 @@ export default function StockPriceChart({
                     </span>
                   </div>
                   
-                  {/* 핵심 근거 */}
-                  {sentiment.key_reasoning && (
-                    <div className="text-gray-600 bg-gray-50 rounded-lg p-2">
-                      💡 <strong>핵심 근거:</strong><br />
-                      {sentiment.key_reasoning}
-                    </div>
-                  )}
-                  
-                  {/* 투자 관점 */}
-                  {sentiment.investment_perspective && sentiment.investment_perspective.length > 0 && (
-                    <div className="text-gray-600 bg-blue-50 rounded-lg p-2">
-                      📈 <strong>투자 관점:</strong><br />
-                      {sentiment.investment_perspective.slice(0, 2).join(', ')}
-                    </div>
-                  )}
-                  
-                  {/* 지지 증거 */}
-                  {sentiment.supporting_evidence && sentiment.supporting_evidence.length > 0 && (
-                    <div className="text-gray-600 bg-green-50 rounded-lg p-2">
-                      📊 <strong>지지 증거:</strong><br />
-                      {sentiment.supporting_evidence.slice(0, 2).join(', ')}
-                    </div>
-                  )}
-                  
-                  {/* 컨텍스트 인용 */}
-                  {sentiment.context_quotes && sentiment.context_quotes.length > 0 && (
-                    <div className="text-gray-600 bg-yellow-50 rounded-lg p-2">
-                      📝 <strong>메르 언급:</strong><br />
-                      "{sentiment.context_quotes[0].substring(0, 80)}..."
-                    </div>
-                  )}
-                  
                   {/* 투자 기간 및 확신도 */}
                   {(sentiment.investment_timeframe || sentiment.conviction_level) && (
-                    <div className="flex gap-2 text-xs">
+                    <div className="flex gap-1 text-xs">
                       {sentiment.investment_timeframe && (
                         <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
                           기간: {sentiment.investment_timeframe}
@@ -335,6 +336,13 @@ export default function StockPriceChart({
                 </div>
               );
             })}
+            
+            {/* 더 많은 포스트가 있을 때 */}
+            {data.postSentimentPairs.length > 2 && (
+              <div className="text-xs text-gray-500 text-center">
+                외 {data.postSentimentPairs.length - 2}개 포스트 더 있음
+              </div>
+            )}
           </div>
         )}
         
@@ -515,7 +523,7 @@ export default function StockPriceChart({
                   부정
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 border border-black rounded-full bg-transparent"></span>
+                  <span className="w-2 h-2 border border-gray-500 rounded-full bg-transparent"></span>
                   중립
                 </span>
                 <span className="flex items-center gap-1">
@@ -528,34 +536,6 @@ export default function StockPriceChart({
               </div>
             </div>
             
-            <div className="flex items-center gap-1 sm:gap-2">
-              {/* 줌 리셋 */}
-              {(zoomDomain.start || zoomDomain.end) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={resetZoom}
-                  className="text-xs px-2 py-1 h-auto"
-                >
-                  <RotateCcw className="w-3 h-3 sm:mr-1" />
-                  <span className="hidden sm:inline">리셋</span>
-                </Button>
-              )}
-              
-              {/* 풀스크린 토글 */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsFullscreen(!isFullscreen)}
-                className="text-xs px-2 py-1 h-auto"
-              >
-                {isFullscreen ? (
-                  <Minimize2 className="w-3 h-3" />
-                ) : (
-                  <Maximize2 className="w-3 h-3" />
-                )}
-              </Button>
-            </div>
           </div>
           
           {/* 차트 마커 가이드 - 작은 화면에서는 가격 아래 배치 */}
@@ -570,7 +550,7 @@ export default function StockPriceChart({
                 부정 감정
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-3 h-3 border-2 border-black rounded-full bg-transparent"></span>
+                <span className="w-3 h-3 border-2 border-gray-500 rounded-full bg-transparent"></span>
                 중립 감정
               </span>
               <span className="flex items-center gap-1">
@@ -638,6 +618,14 @@ export default function StockPriceChart({
                   if (isMobile) {
                     // 모바일: 더 간단한 형식
                     if (timeRange === '1Y') {
+                      // 1월만 "25년" 표기, 나머지는 월만
+                      if (date.getMonth() === 0) { // 1월 (0-based)
+                        return date.toLocaleDateString('ko-KR', { year: '2-digit' });
+                      } else {
+                        return date.toLocaleDateString('ko-KR', { month: 'short' });
+                      }
+                    } else if (timeRange === '6M') {
+                      // 6M: 월만 표시
                       return date.toLocaleDateString('ko-KR', { month: 'short' });
                     }
                     return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
@@ -646,7 +634,15 @@ export default function StockPriceChart({
                     if (timeRange === '1M') {
                       return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
                     } else if (timeRange === '1Y') {
-                      return date.toLocaleDateString('ko-KR', { year: '2-digit', month: 'short' });
+                      // 1월만 "25년" 표기, 나머지는 월만
+                      if (date.getMonth() === 0) { // 1월 (0-based)
+                        return date.toLocaleDateString('ko-KR', { year: '2-digit' });
+                      } else {
+                        return date.toLocaleDateString('ko-KR', { month: 'short' });
+                      }
+                    } else if (timeRange === '6M') {
+                      // 6M: 월만 표시  
+                      return date.toLocaleDateString('ko-KR', { month: 'short' });
                     } else {
                       return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
                     }
@@ -695,15 +691,16 @@ export default function StockPriceChart({
               />
               
               {/* 언급된 정보 마커들 (빈 원으로 표시) */}
-              {showMarkers && filteredData.map((point, index) => {
-                // 포스트가 있거나 감정 분석이 있는 경우 빈 원 표시
+              {showMarkers && Array.isArray(filteredData) && filteredData.map((point, index) => {
+                // 포스트가 있거나 감정 분석이 있거나 포스트-감정 쌍이 있는 경우 빈 원 표시
                 if ((!point.posts || point.posts.length === 0) && 
-                    (!point.sentiments || point.sentiments.length === 0)) return null;
+                    (!point.sentiments || point.sentiments.length === 0) &&
+                    (!point.postSentimentPairs || point.postSentimentPairs.length === 0)) return null;
                 
                 // 마커 인덱스 계산 (데이터가 있는 포인트만 카운트)
-                const markersBeforeThis = filteredData.slice(0, index).filter(p => 
-                  (p.posts && p.posts.length > 0) || (p.sentiments && p.sentiments.length > 0)
-                ).length;
+                const markersBeforeThis = Array.isArray(filteredData) ? filteredData.slice(0, index).filter(p => 
+                  (p.posts && p.posts.length > 0) || (p.sentiments && p.sentiments.length > 0) || (p.postSentimentPairs && p.postSentimentPairs.length > 0)
+                ).length : 0;
                 
                 // 아직 표시할 시점이 아니면 렌더링하지 않음
                 if (markersBeforeThis >= visibleMarkerCount) return null;
@@ -711,13 +708,13 @@ export default function StockPriceChart({
                 // 감정이 있는 경우 색상 적용, 없으면 차트 색상과 동일
                 let markerColor = chartColor; // 감정 정보 없음 - 차트 가격선과 같은 색
                 if (point.sentiments && point.sentiments.length > 0) {
-                  const dominantSentiment = point.sentiments.reduce((prev, current) => 
-                    (current.confidence > prev.confidence) ? current : prev
-                  );
+                  const dominantSentiment = Array.isArray(point.sentiments) && point.sentiments.length > 0 ? point.sentiments.reduce((prev, current) => 
+                    (current && prev && current.confidence > prev.confidence) ? current : prev
+                  ) : null;
                   
-                  markerColor = dominantSentiment.sentiment === 'positive' 
+                  markerColor = dominantSentiment && dominantSentiment.sentiment === 'positive' 
                     ? tossColors.sentiment.positive    // 🟢 긍정: #16a34a
-                    : dominantSentiment.sentiment === 'negative' 
+                    : dominantSentiment && dominantSentiment.sentiment === 'negative' 
                     ? tossColors.sentiment.negative    // 🔴 부정: #dc2626
                     : tossColors.sentiment.neutral;    // ⚫ 중립: #000000 (검은색)
                   
@@ -728,10 +725,10 @@ export default function StockPriceChart({
                     key={`mention-${index}`}
                     x={point.date}
                     y={point.price}
-                    r={isMobile ? 7 : 6}
+                    r={isMobile ? 6 : 5}
                     fill="none"
                     stroke={markerColor}
-                    strokeWidth={3}
+                    strokeWidth={2}
                     style={{
                       opacity: 1,
                       transform: 'scale(1)',

@@ -65,8 +65,10 @@ export default function Home() {
         if (!curatedResponse.error) {
           try {
             const curatedData = await curatedResponse.json();
-            if (curatedData.success) {
+            if (curatedData.success && Array.isArray(curatedData.data)) {
               setCuratedNews(curatedData.data.slice(0, 3));
+            } else {
+              console.warn('큐레이션 뉴스 데이터가 배열이 아님:', curatedData);
             }
           } catch (jsonError) {
             console.warn('큐레이션 뉴스 JSON 파싱 실패:', jsonError);
@@ -311,9 +313,15 @@ export default function Home() {
                       <p className="text-muted-foreground mb-3">{dailyDigest.summary}</p>
                       <div className="flex flex-wrap gap-2">
                         <span className="text-sm font-medium text-muted-foreground">주요 섹터:</span>
-                        {dailyDigest.sectors_in_focus?.map((sector: string, index: number) => (
-                          <Badge key={index} variant="secondary">{sector}</Badge>
-                        ))}
+                        {Array.isArray(dailyDigest.sectors_in_focus) && dailyDigest.sectors_in_focus.length > 0 ? (
+                          dailyDigest.sectors_in_focus.map((sector: string, index: number) => (
+                            <Badge key={index} variant="secondary">{sector || '석터'}</Badge>
+                          ))
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            석터 정보 없음
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -322,7 +330,7 @@ export default function Home() {
 
               {/* 큐레이션된 콘텐츠 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {curatedNews.map((content) => (
+                {Array.isArray(curatedNews) && curatedNews.length > 0 ? curatedNews.map((content) => (
                   <Card key={content.id} className="p-6 hover:shadow-lg transition-shadow">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -353,11 +361,17 @@ export default function Home() {
                       </p>
                       
                       <div className="flex flex-wrap gap-1">
-                        {content.tags?.slice(0, 3).map((tag: string, index: number) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
+                        {Array.isArray(content.tags) && content.tags.length > 0 ? (
+                          content.tags.slice(0, 3).map((tag: string, index: number) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {tag || '태그'}
+                            </Badge>
+                          ))
+                        ) : (
+                          <Badge variant="outline" className="text-xs text-muted-foreground">
+                            태그 없음
                           </Badge>
-                        ))}
+                        )}
                       </div>
                       
                       <div className="text-xs text-muted-foreground">
@@ -365,7 +379,13 @@ export default function Home() {
                       </div>
                     </div>
                   </Card>
-                ))}
+                )) : (
+                  <Card className="p-6 col-span-full">
+                    <div className="text-center text-muted-foreground">
+                      <p>큐레이션된 뉴스를 불러오는 중입니다...</p>
+                    </div>
+                  </Card>
+                )}
               </div>
             </div>
           </TabsContent>

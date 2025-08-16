@@ -9,14 +9,17 @@ import Link from 'next/link';
 
 interface Stock {
   ticker: string;
-  name: string;
-  market: string;
-  mentions: number;
-  postCount: number;
-  firstMention: string;
-  lastMention: string;
-  sentiment: 'positive' | 'neutral' | 'negative';
-  tags: string[];
+  name?: string;
+  company_name: string;
+  market?: string;
+  mentions?: number;
+  mention_count: number;
+  postCount?: number;
+  firstMention?: string;
+  lastMention?: string;
+  last_mentioned_at: string;
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  tags?: string[];
   description: string;
   currentPrice: number;
   currency: string;
@@ -93,7 +96,7 @@ export default function MerryStockPicks() {
     
     // 오늘 언급 뱃지
     const today = new Date().toISOString().split('T')[0];
-    const lastMentionDate = stock.lastMention?.split(' ')[0];
+    const lastMentionDate = (stock.lastMention || stock.last_mentioned_at)?.split(' ')[0];
     if (lastMentionDate === today) {
       badges.push({
         icon: '🆕',
@@ -263,7 +266,7 @@ export default function MerryStockPicks() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 className="font-semibold text-base sm:text-lg group-hover:text-primary transition-colors truncate">
-                      {stock.name}
+                      {stock.name || stock.company_name}
                     </h3>
                     {getSentimentIcon(stock.sentiment)}
                     <Badge variant="outline" className="text-xs flex-shrink-0">
@@ -300,22 +303,38 @@ export default function MerryStockPicks() {
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Hash className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{stock.postCount || stock.mentions}개 포스트</span>
+                    <span className="truncate">{stock.postCount || stock.mentions || stock.mention_count}개 포스트</span>
                   </div>
                 </div>
               </div>
               
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3">
                 <div className="flex gap-1 flex-wrap">
-                  {stock.tags.slice(0, 3).map(tag => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
+                  {Array.isArray(stock.tags) && stock.tags.length > 0 ? (
+                    stock.tags.slice(0, 3).map((tag, tagIndex) => (
+                      <Badge key={`${stock.ticker}-tag-${tagIndex}`} variant="secondary" className="text-xs">
+                        {tag || '태그'}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge variant="outline" className="text-xs text-muted-foreground">
+                      태그 없음
                     </Badge>
-                  ))}
+                  )}
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
                   <Calendar className="w-3 h-3" />
-                  <span className="truncate">최근: {new Date(stock.lastMention).toLocaleDateString('ko-KR')}</span>
+                  <span className="truncate">
+                    최근: {(stock.lastMention || stock.last_mentioned_at) && typeof (stock.lastMention || stock.last_mentioned_at) === 'string' ? (
+                      (() => {
+                        try {
+                          return new Date(stock.lastMention || stock.last_mentioned_at).toLocaleDateString('ko-KR');
+                        } catch (e) {
+                          return '날짜 오류';
+                        }
+                      })()
+                    ) : '정보 없음'}
+                  </span>
                 </div>
               </div>
             </div>

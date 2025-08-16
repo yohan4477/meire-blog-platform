@@ -24,7 +24,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Header() {
@@ -32,6 +32,12 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef(null);
+  const searchRef = useRef(null);
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -71,6 +77,70 @@ export default function Header() {
       alert('비밀번호가 올바르지 않습니다.');
     }
   };
+
+  // 검색 기능
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearchOpen(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setIsSearchOpen(true);
+
+    try {
+      const response = await fetch(`/api/search/stocks?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setSearchResults(data.data || []);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    // 기존 타이머 클리어
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // 300ms 후에 검색 실행 (디바운싱)
+    searchTimeoutRef.current = setTimeout(() => {
+      handleSearch(query);
+    }, 300);
+  };
+
+  const handleSearchResultClick = (stock: any) => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setIsSearchOpen(false);
+    router.push(`/merry/stocks/${stock.ticker}`);
+  };
+
+  // 검색창 외부 클릭시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const navigationItems = [
     { href: "/", label: "홈", icon: Home },
@@ -169,12 +239,57 @@ export default function Header() {
 
           {/* 검색 및 액션 */}
           <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-            <div className="relative hidden sm:block">
+            <div className="relative hidden sm:block" ref={searchRef}>
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="검색..."
+                placeholder="종목 검색"
                 className="pl-10 w-48 lg:w-64"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => searchQuery && setIsSearchOpen(true)}
               />
+              
+              {/* 검색 결과 드롭다운 */}
+              {isSearchOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
+                  {isSearching ? (
+                    <div className="p-4 text-center text-gray-500">
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                        <span>검색 중...</span>
+                      </div>
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="py-2">
+                      {searchResults.map((stock: any, index) => (
+                        <button
+                          key={index}
+                          className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between transition-colors"
+                          onClick={() => handleSearchResultClick(stock)}
+                        >
+                          <div className="flex flex-col">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium text-gray-900">{stock.name}</span>
+                              <span className="text-sm text-gray-500">({stock.ticker})</span>
+                            </div>
+                            <div className="text-xs text-gray-400 mt-0.5">
+                              {stock.market} • 언급 {stock.mentionCount}회
+                            </div>
+                          </div>
+                          <div className="text-xs text-blue-600">
+                            보기 →
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : searchQuery ? (
+                    <div className="p-4 text-center text-gray-500">
+                      <p>"{searchQuery}"에 대한 검색 결과가 없습니다.</p>
+                      <p className="text-xs mt-1">테슬라, 삼성전자, 애플 등으로 검색해보세요.</p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
             <Button variant="ghost" size="icon" className="sm:hidden h-8 w-8">
               <Search className="h-4 w-4" />
@@ -359,9 +474,53 @@ export default function Header() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="검색..."
+                      placeholder="종목 검색"
                       className="pl-10 w-full"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
                     />
+                    
+                    {/* 모바일 검색 결과 */}
+                    {isSearchOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                        {isSearching ? (
+                          <div className="p-4 text-center text-gray-500">
+                            <div className="flex items-center justify-center space-x-2">
+                              <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                              <span>검색 중...</span>
+                            </div>
+                          </div>
+                        ) : searchResults.length > 0 ? (
+                          <div className="py-2">
+                            {searchResults.map((stock: any, index) => (
+                              <button
+                                key={index}
+                                className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between transition-colors"
+                                onClick={() => handleSearchResultClick(stock)}
+                              >
+                                <div className="flex flex-col">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-medium text-gray-900">{stock.name}</span>
+                                    <span className="text-sm text-gray-500">({stock.ticker})</span>
+                                  </div>
+                                  <div className="text-xs text-gray-400 mt-0.5">
+                                    {stock.market} • 언급 {stock.mentionCount}회
+                                  </div>
+                                </div>
+                                <div className="text-xs text-blue-600">
+                                  보기 →
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : searchQuery ? (
+                          <div className="p-4 text-center text-gray-500">
+                            <p>"{searchQuery}"에 대한 검색 결과가 없습니다.</p>
+                            <p className="text-xs mt-1">테슬라, 삼성전자, 애플 등으로 검색해보세요.</p>
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center justify-between">

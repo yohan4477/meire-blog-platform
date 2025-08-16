@@ -27,7 +27,6 @@ interface MerryAchievements {
   totalAnalyzed: number;
   corporateAchievements: Achievement[];
   daughterPortfolio: Portfolio;
-  stockPredictions: Prediction[];
   sectorInsights: SectorInsight[];
   marketTiming: MarketTiming[];
   investmentPhilosophy: InvestmentPhilosophy;
@@ -70,16 +69,6 @@ interface Holding {
   currentValue: number;
 }
 
-interface Prediction {
-  ticker: string;
-  predictionDate: string;
-  predictedPrice: number;
-  actualPrice: number;
-  accuracy: boolean;
-  timeframe: string;
-  reasoning: string;
-  category: string;
-}
 
 interface SectorInsight {
   sector: string;
@@ -128,12 +117,8 @@ export default function MerryProfileTab() {
       if (result.success) {
         setAchievements(result.data.achievements);
         
-        // 성공한 예측들을 기본으로 체크
-        const initialChecks: {[key: string]: boolean} = {};
-        result.data.achievements.stockPredictions.forEach((pred: Prediction, index: number) => {
-          initialChecks[`prediction-${index}`] = pred.accuracy;
-        });
-        setCheckedPredictions(initialChecks);
+        // 체크박스 초기화 (투자 예측 탭 제거됨)
+        setCheckedPredictions({});
       }
     } catch (error) {
       console.error('메르 업적 로딩 실패:', error);
@@ -232,46 +217,54 @@ export default function MerryProfileTab() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="career" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="career">회사 업적</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="career">메르 업적</TabsTrigger>
             <TabsTrigger value="portfolio">딸 포트폴리오</TabsTrigger>
-            <TabsTrigger value="predictions">투자 예측</TabsTrigger>
             <TabsTrigger value="philosophy">투자 철학</TabsTrigger>
           </TabsList>
 
-          {/* 회사 업적 탭 */}
+          {/* 메르 업적 탭 */}
           <TabsContent value="career" className="space-y-4">
             <div className="grid gap-4">
-              {achievements.corporateAchievements.map((achievement, index) => (
-                <Card key={index} className="border-l-4 border-l-primary">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        {getCategoryIcon(achievement.category)}
-                        <CardTitle className="text-lg">{achievement.title}</CardTitle>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${getImpactColor(achievement.impact)} text-white`}
-                        >
-                          {achievement.impact === 'high' ? '높은 임팩트' : 
-                           achievement.impact === 'medium' ? '중간 임팩트' : '낮은 임팩트'}
-                        </Badge>
+              {Array.isArray(achievements?.corporateAchievements) && achievements.corporateAchievements.length > 0 ? achievements.corporateAchievements.map((achievement, index) => (
+                  <Card key={index} className="border-l-4 border-l-primary">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          {getCategoryIcon(achievement?.category || 'default')}
+                          <CardTitle className="text-lg">{achievement?.title || '업적 제목 없음'}</CardTitle>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${getImpactColor(achievement?.impact || 'low')} text-white`}
+                          >
+                            {achievement?.impact === 'high' ? '높은 임팩트' : 
+                             achievement?.impact === 'medium' ? '중간 임팩트' : '낮은 임팩트'}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {achievement?.period || achievement?.date || '날짜 정보 없음'}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {achievement.period || achievement.date}
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {achievement?.description || '설명 정보 없음'}
+                      </p>
+                      <p className="text-sm">
+                        {achievement?.details || '상세 정보 없음'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )) : (
+                  <Card className="border-l-4 border-l-muted">
+                    <CardContent className="pt-6">
+                      <div className="text-center text-muted-foreground">
+                        <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>업적 정보를 불러오는 중입니다...</p>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {achievement.description}
-                    </p>
-                    <p className="text-sm">
-                      {achievement.details}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                )}
             </div>
           </TabsContent>
 
@@ -285,10 +278,10 @@ export default function MerryProfileTab() {
                     <span className="text-sm font-medium">총 자산</span>
                   </div>
                   <div className="text-2xl font-bold text-primary">
-                    {formatCurrency(achievements.daughterPortfolio.totalValue)}
+                    {formatCurrency(achievements.daughterPortfolio?.totalValue || 0)}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    투입: {formatCurrency(achievements.daughterPortfolio.totalInvested)}
+                    투입: {formatCurrency(achievements.daughterPortfolio?.totalInvested || 0)}
                   </div>
                 </CardContent>
               </Card>
@@ -300,10 +293,10 @@ export default function MerryProfileTab() {
                     <span className="text-sm font-medium">총 수익률</span>
                   </div>
                   <div className="text-2xl font-bold text-green-500">
-                    +{achievements.daughterPortfolio.returnRate.toFixed(1)}%
+                    +{(achievements.daughterPortfolio?.returnRate || 0).toFixed(1)}%
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    수익: {formatCurrency(achievements.daughterPortfolio.totalReturn)}
+                    수익: {formatCurrency(achievements.daughterPortfolio?.totalReturn || 0)}
                   </div>
                 </CardContent>
               </Card>
@@ -315,10 +308,10 @@ export default function MerryProfileTab() {
                     <span className="text-sm font-medium">투자 기간</span>
                   </div>
                   <div className="text-lg font-bold">
-                    {achievements.daughterPortfolio.period}
+                    {achievements.daughterPortfolio?.period || '정보 없음'}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    월 {formatCurrency(achievements.daughterPortfolio.monthlyContribution)} 적립
+                    월 {formatCurrency(achievements.daughterPortfolio?.monthlyContribution || 0)} 적립
                   </div>
                 </CardContent>
               </Card>
@@ -344,22 +337,22 @@ export default function MerryProfileTab() {
                   <div className="flex items-center justify-between">
                     <span>NASDAQ</span>
                     <div className="flex items-center gap-2">
-                      <Progress value={Math.min(achievements.daughterPortfolio.benchmark.nasdaq, 100)} className="w-32" />
-                      <span className="font-bold">+{achievements.daughterPortfolio.benchmark.nasdaq.toFixed(1)}%</span>
+                      <Progress value={Math.min(achievements.daughterPortfolio?.benchmark?.nasdaq || 0, 100)} className="w-32" />
+                      <span className="font-bold">+{(achievements.daughterPortfolio?.benchmark?.nasdaq || 0).toFixed(1)}%</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>S&P 500</span>
                     <div className="flex items-center gap-2">
-                      <Progress value={Math.min(achievements.daughterPortfolio.benchmark.sp500, 100)} className="w-32" />
-                      <span className="font-bold">+{achievements.daughterPortfolio.benchmark.sp500.toFixed(1)}%</span>
+                      <Progress value={Math.min(achievements.daughterPortfolio?.benchmark?.sp500 || 0, 100)} className="w-32" />
+                      <span className="font-bold">+{(achievements.daughterPortfolio?.benchmark?.sp500 || 0).toFixed(1)}%</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>KOSPI</span>
                     <div className="flex items-center gap-2">
-                      <Progress value={Math.min(achievements.daughterPortfolio.benchmark.kospi, 100)} className="w-32" />
-                      <span className="font-bold">+{achievements.daughterPortfolio.benchmark.kospi.toFixed(1)}%</span>
+                      <Progress value={Math.min(achievements.daughterPortfolio?.benchmark?.kospi || 0, 100)} className="w-32" />
+                      <span className="font-bold">+{(achievements.daughterPortfolio?.benchmark?.kospi || 0).toFixed(1)}%</span>
                     </div>
                   </div>
                 </div>
@@ -376,118 +369,44 @@ export default function MerryProfileTab() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {achievements.daughterPortfolio.topHoldings.map((holding, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline">{holding.ticker}</Badge>
-                        <div>
-                          <div className="font-medium">{holding.name}</div>
+                  {Array.isArray(achievements?.daughterPortfolio?.topHoldings) && achievements.daughterPortfolio.topHoldings.length > 0 ? (
+                    achievements.daughterPortfolio.topHoldings.map((holding, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline">{holding?.ticker || 'N/A'}</Badge>
+                          <div>
+                            <div className="font-medium">{holding?.name || '종목명 없음'}</div>
+                            <div className="text-sm text-muted-foreground">
+                              투입: {holding?.invested ? formatCurrency(holding.invested) : '정보 없음'}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold">
+                            {holding?.weight !== undefined ? `${holding.weight.toFixed(1)}%` : 'N/A'}
+                          </div>
+                          <div className={`text-sm ${(holding?.returnRate || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {holding?.returnRate !== undefined ? 
+                              `${holding.returnRate >= 0 ? '+' : ''}${holding.returnRate.toFixed(1)}%` : 
+                              'N/A'
+                            }
+                          </div>
                           <div className="text-sm text-muted-foreground">
-                            투입: {formatCurrency(holding.invested)}
+                            {holding?.currentValue ? formatCurrency(holding.currentValue) : '정보 없음'}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold">{holding.weight.toFixed(1)}%</div>
-                        <div className={`text-sm ${holding.returnRate >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {holding.returnRate >= 0 ? '+' : ''}{holding.returnRate.toFixed(1)}%
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatCurrency(holding.currentValue)}
-                        </div>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <p>보유 종목 정보가 없습니다.</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* 투자 예측 탭 */}
-          <TabsContent value="predictions" className="space-y-4">
-            <div className="space-y-4">
-              {achievements.stockPredictions.map((prediction, index) => (
-                <Card key={index} className="border-l-4 border-l-blue-500">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <Checkbox
-                          id={`prediction-${index}`}
-                          checked={checkedPredictions[`prediction-${index}`] || false}
-                          onCheckedChange={(checked) => 
-                            handlePredictionCheck(`prediction-${index}`, checked as boolean)
-                          }
-                        />
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline">{prediction.ticker}</Badge>
-                            <Badge 
-                              variant={prediction.accuracy ? "default" : "destructive"}
-                              className="text-xs"
-                            >
-                              {prediction.accuracy ? (
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                              ) : (
-                                <XCircle className="w-3 h-3 mr-1" />
-                              )}
-                              {prediction.accuracy ? '성공' : '실패'}
-                            </Badge>
-                            <Badge 
-                              variant={prediction.category === '강력 매수' ? 'default' : 
-                                      prediction.category === '매수' ? 'secondary' : 'destructive'}
-                              className="text-xs"
-                            >
-                              {prediction.category}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            예측일: {new Date(prediction.predictionDate).toLocaleDateString('ko-KR')} 
-                            ({prediction.timeframe})
-                          </div>
-                          <div className="text-sm mt-1">
-                            {prediction.reasoning}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-muted-foreground">목표가</div>
-                        <div className="font-bold">${formatNumber(prediction.predictedPrice)}</div>
-                        <div className="text-sm text-muted-foreground">실제가</div>
-                        <div className={`font-bold ${prediction.accuracy ? 'text-green-500' : 'text-red-500'}`}>
-                          ${formatNumber(prediction.actualPrice)}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* 섹터 인사이트 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">섹터 인사이트</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {achievements.sectorInsights.map((insight, index) => (
-                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant="outline">{insight.sector}</Badge>
-                        <Badge 
-                          variant={insight.accuracy ? "default" : "destructive"}
-                          className="text-xs"
-                        >
-                          {insight.accuracy ? '정확' : '부정확'}
-                        </Badge>
-                      </div>
-                      <p className="text-sm">{insight.insight}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* 투자 철학 탭 */}
           <TabsContent value="philosophy" className="space-y-4">
@@ -498,19 +417,26 @@ export default function MerryProfileTab() {
               <CardContent>
                 <div className="text-center p-6 bg-primary/5 rounded-lg mb-4">
                   <h3 className="text-xl font-bold text-primary mb-2">
-                    "{achievements.investmentPhilosophy.core}"
+                    "{achievements.investmentPhilosophy?.core || '장기 가치 투자'}"
                   </h3>
                 </div>
                 
                 <div className="space-y-3">
                   <h4 className="font-semibold">투자 원칙</h4>
                   <ul className="space-y-2">
-                    {achievements.investmentPhilosophy.principles.map((principle, index) => (
-                      <li key={index} className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="text-sm">{principle}</span>
+                    {Array.isArray(achievements?.investmentPhilosophy?.principles) && achievements.investmentPhilosophy.principles.length > 0 ? (
+                      achievements.investmentPhilosophy.principles.map((principle, index) => (
+                        <li key={index} className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <span className="text-sm">{principle || '원칙 정보 없음'}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-500">투자 원칙 정보가 없습니다.</span>
                       </li>
-                    ))}
+                    )}
                   </ul>
                 </div>
               </CardContent>
@@ -524,22 +450,53 @@ export default function MerryProfileTab() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
-                      {achievements.investmentPhilosophy.successRate.stockPicks}
+                      {achievements.investmentPhilosophy?.successRate?.stockPicks || 'N/A'}
                     </div>
                     <div className="text-sm text-muted-foreground">종목 선택</div>
                   </div>
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">
-                      {achievements.investmentPhilosophy.successRate.sectorRotation}
+                      {achievements.investmentPhilosophy?.successRate?.sectorRotation || 'N/A'}
                     </div>
                     <div className="text-sm text-muted-foreground">섹터 로테이션</div>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
                     <div className="text-2xl font-bold text-purple-600">
-                      {achievements.investmentPhilosophy.successRate.marketTiming}
+                      {achievements.investmentPhilosophy?.successRate?.marketTiming || 'N/A'}
                     </div>
                     <div className="text-sm text-muted-foreground">마켓 타이밍</div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 섹터 인사이트 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">섹터 인사이트</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {Array.isArray(achievements?.sectorInsights) && achievements.sectorInsights.length > 0 ? (
+                    achievements.sectorInsights.map((insight, index) => (
+                      <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline">{insight?.sector || '알 수 없음'}</Badge>
+                          <Badge 
+                            variant={insight?.accuracy ? "default" : "destructive"}
+                            className="text-xs"
+                          >
+                            {insight?.accuracy ? '정확' : '부정확'}
+                          </Badge>
+                        </div>
+                        <p className="text-sm">{insight?.insight || '정보 없음'}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <p>섹터 인사이트 정보가 없습니다.</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -550,18 +507,24 @@ export default function MerryProfileTab() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {achievements.recentActivities.map((activity, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <Calendar className="w-4 h-4 mt-1 text-muted-foreground" />
-                      <div>
-                        <div className="text-sm font-medium">{activity.activity}</div>
-                        <div className="text-sm text-muted-foreground">{activity.focus}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(activity.date).toLocaleDateString('ko-KR')}
+                  {Array.isArray(achievements?.recentActivities) && achievements.recentActivities.length > 0 ? (
+                    achievements.recentActivities.map((activity, index) => (
+                      <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                        <Calendar className="w-4 h-4 mt-1 text-muted-foreground" />
+                        <div>
+                          <div className="text-sm font-medium">{activity?.activity || '활동 정보 없음'}</div>
+                          <div className="text-sm text-muted-foreground">{activity?.focus || '포커스 정보 없음'}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {activity?.date ? new Date(activity.date).toLocaleDateString('ko-KR') : '날짜 정보 없음'}
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <p>최근 활동 정보가 없습니다.</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>

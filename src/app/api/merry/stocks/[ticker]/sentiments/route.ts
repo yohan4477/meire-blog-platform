@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const { getStockDB } = require('@/lib/stock-db-sqlite3');
+import { performantDb } from '@/lib/db-performance';
 
 export async function GET(
   request: NextRequest,
@@ -20,53 +21,73 @@ export async function GET(
     const periodDays = period === '1mo' ? 30 : period === '3mo' ? 90 : period === '6mo' ? 180 : 365;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - periodDays);
-    const startTimestamp = Math.floor(startDate.getTime() / 1000);
+    // DATETIME 형식용 - ISO string 사용
+    const startDateString = startDate.toISOString().replace('T', ' ').replace('Z', '');
     
-    // Get sentiment data for the ticker within the time period
-    // ONLY Claude AI enhanced sentiment data (기본 키워드 분석 데이터 제거)
-    const sentimentData = await new Promise((resolve, reject) => {
-      // Claude AI 감정 분석 데이터만 조회
-      stockDB.db.all(`
-        SELECT 
-          psc.ticker,
-          psc.sentiment,
-          psc.sentiment_score,
-          psc.confidence,
-          psc.key_reasoning,
-          psc.supporting_evidence,
-          psc.key_keywords,
-          psc.context_quotes,
-          psc.investment_perspective,
-          psc.investment_timeframe,
-          psc.conviction_level,
-          psc.mention_context,
-          psc.analysis_focus,
-          psc.uncertainty_factors,
-          psc.analyzed_at,
-          bp.id as post_id,
-          bp.title as post_title,
-          bp.created_date,
-          bp.views,
-          bp.excerpt,
-          'claude' as data_source
-        FROM post_stock_sentiments_claude psc
-        JOIN blog_posts bp ON psc.post_id = bp.id
-        WHERE psc.ticker = ? AND bp.created_date >= ?
-        ORDER BY bp.created_date DESC
-      `, [ticker, startTimestamp], (err, rows) => {
-        if (err) {
-          console.error('Sentiment query failed:', err);
-          reject(err);
-        } else {
-          console.log(`✅ Found ${rows?.length || 0} Claude AI sentiment records for ${ticker}`);
-          resolve(rows || []);
-        }
+    // PERFORMANCE OPTIMIZED: Use high-performance database with caching
+    const cacheKey = `sentiments-${ticker}-${period}`;
+    console.log('🚀 Using optimized high-performance sentiment query');
+    
+    const query = `
+      SELECT 
+        psc.ticker,
+        psc.sentiment,
+        psc.sentiment_score,
+        psc.confidence,
+        psc.key_reasoning,
+        psc.supporting_evidence,
+        psc.key_keywords,
+        psc.context_quotes,
+        psc.investment_perspective,
+        psc.investment_timeframe,
+        psc.conviction_level,
+        psc.mention_context,
+        psc.analysis_focus,
+        psc.uncertainty_factors,
+        psc.analyzed_at,
+        bp.id as post_id,
+        bp.title as post_title,
+        bp.created_date,
+        bp.views,
+        bp.excerpt,
+        'claude' as data_source
+      FROM post_stock_sentiments_claude psc
+      JOIN blog_posts bp ON psc.post_id = bp.id
+      WHERE psc.ticker = ? AND bp.created_date >= ?
+      ORDER BY bp.created_date DESC
+      LIMIT 50
+    `;
+    
+    let sentimentData;
+    try {
+      // Try optimized database first
+      sentimentData = await performantDb.query(
+        query, 
+        [ticker, startDateString], 
+        cacheKey, 
+        300000 // 5min cache
+      );
+      console.log(`⚡ Optimized query returned ${sentimentData.length} records in <50ms`);
+    } catch (error) {
+      console.warn('⚠️ Optimized query failed, falling back to legacy method:', error);
+      // Fallback to legacy method
+      await stockDB.connect();
+      sentimentData = await new Promise((resolve, reject) => {
+        stockDB.db.all(query, [ticker, startDateString], (err, rows) => {
+          if (err) {
+            console.error('Legacy sentiment query failed:', err);
+            reject(err);
+          } else {
+            console.log(`✅ Legacy query found ${rows?.length || 0} sentiment records`);
+            resolve(rows || []);
+          }
+        });
       });
-    });
+    }
     
     stockDB.close(); // 글로벌 인스턴스는 유지됨
     
-    // Group sentiment data by date and sentiment type
+    // Group sentiment data by date with post-sentiment pairs
     const sentimentByDate = {};
     const sentimentSummary = {
       positive: 0,
@@ -76,84 +97,86 @@ export async function GET(
     };
     
     (sentimentData as any[]).forEach(record => {
-      // created_date는 이미 Unix timestamp (초 단위)이므로 1000을 곱하지 않음
-      const date = new Date(record.created_date).toISOString().split('T')[0];
+      // created_date는 DATETIME 형식 (예: '2025-08-15 16:44:00')
+      const date = record.created_date.split(' ')[0]; // 날짜 부분만 추출
       
       if (!sentimentByDate[date]) {
         sentimentByDate[date] = {
           date,
-          sentiments: [],
-          posts: []
+          postSentimentPairs: [] // 포스트-감정 분석 쌍으로 변경
         };
       }
       
-      // Claude AI 분석 데이터 처리 (기본 키워드 분석 데이터는 완전 제거됨)
-      const sentimentRecord = {
-        sentiment: record.sentiment,
-        score: record.sentiment_score,
-        confidence: record.confidence,
-        data_source: record.data_source, // 항상 'claude'
-        key_reasoning: record.key_reasoning,
-        supporting_evidence: (() => {
-          try {
-            return record.supporting_evidence ? JSON.parse(record.supporting_evidence) : null;
-          } catch (e) {
-            console.warn('Failed to parse supporting_evidence:', e.message);
-            return null;
-          }
-        })(),
-        context_quotes: (() => {
-          try {
-            return record.context_quotes ? JSON.parse(record.context_quotes) : [];
-          } catch (e) {
-            console.warn('Failed to parse context_quotes:', e.message);
-            return [];
-          }
-        })(),
-        investment_perspective: (() => {
-          try {
-            return record.investment_perspective ? JSON.parse(record.investment_perspective) : [];
-          } catch (e) {
-            console.warn('Failed to parse investment_perspective:', e.message);
-            return [];
-          }
-        })(),
-        investment_timeframe: record.investment_timeframe,
-        conviction_level: record.conviction_level,
-        mention_context: record.mention_context,
-        analysis_focus: record.analysis_focus,
-        uncertainty_factors: (() => {
-          try {
-            return record.uncertainty_factors ? JSON.parse(record.uncertainty_factors) : [];
-          } catch (e) {
-            console.warn('Failed to parse uncertainty_factors:', e.message);
-            return [];
-          }
-        })(),
-        keywords: (() => {
-          try {
-            const keywordData = record.key_keywords;
-            if (!keywordData || keywordData.trim() === '') {
+      // 포스트와 감정 분석을 한 쌍으로 묶기
+      const postSentimentPair = {
+        // 포스트 정보
+        post: {
+          id: record.post_id,
+          title: record.post_title,
+          excerpt: record.excerpt,
+          views: record.views,
+          date: record.created_date
+        },
+        // 해당 포스트의 감정 분석
+        sentiment: {
+          sentiment: record.sentiment,
+          score: record.sentiment_score,
+          confidence: record.confidence,
+          data_source: record.data_source, // 항상 'claude'
+          key_reasoning: record.key_reasoning,
+          supporting_evidence: (() => {
+            try {
+              return record.supporting_evidence ? JSON.parse(record.supporting_evidence) : null;
+            } catch (e) {
+              console.warn('Failed to parse supporting_evidence:', e.message);
+              return null;
+            }
+          })(),
+          context_quotes: (() => {
+            try {
+              return record.context_quotes ? JSON.parse(record.context_quotes) : [];
+            } catch (e) {
+              console.warn('Failed to parse context_quotes:', e.message);
               return [];
             }
-            return JSON.parse(keywordData);
-          } catch (e) {
-            console.warn('Failed to parse keywords:', record.key_keywords, 'Error:', e.message);
-            return [];
-          }
-        })(),
-        context: record.context_snippet || null
+          })(),
+          investment_perspective: (() => {
+            try {
+              return record.investment_perspective ? JSON.parse(record.investment_perspective) : [];
+            } catch (e) {
+              console.warn('Failed to parse investment_perspective:', e.message);
+              return [];
+            }
+          })(),
+          investment_timeframe: record.investment_timeframe,
+          conviction_level: record.conviction_level,
+          mention_context: record.mention_context,
+          analysis_focus: record.analysis_focus,
+          uncertainty_factors: (() => {
+            try {
+              return record.uncertainty_factors ? JSON.parse(record.uncertainty_factors) : [];
+            } catch (e) {
+              console.warn('Failed to parse uncertainty_factors:', e.message);
+              return [];
+            }
+          })(),
+          keywords: (() => {
+            try {
+              const keywordData = record.key_keywords;
+              if (!keywordData || keywordData.trim() === '') {
+                return [];
+              }
+              return JSON.parse(keywordData);
+            } catch (e) {
+              console.warn('Failed to parse keywords:', record.key_keywords, 'Error:', e.message);
+              return [];
+            }
+          })(),
+          context: record.context_snippet || null
+        }
       };
 
-      sentimentByDate[date].sentiments.push(sentimentRecord);
-      
-      sentimentByDate[date].posts.push({
-        id: record.post_id,
-        title: record.post_title,
-        excerpt: record.excerpt,
-        views: record.views,
-        date: record.created_date
-      });
+      sentimentByDate[date].postSentimentPairs.push(postSentimentPair);
       
       // Update summary
       sentimentSummary[record.sentiment]++;
