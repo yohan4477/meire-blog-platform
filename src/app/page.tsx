@@ -196,7 +196,7 @@ export default function Home() {
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-6 sm:mb-8 px-4 break-keep">
               니가 뭘 알어. 니가 뭘 아냐고.<br />
-              AI 에이전트가 분석하는 국민연금, 기관투자자 포트폴리오 분석 플랫폼
+              요르가 말아주는 주식 분석 플랫폼
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center max-w-4xl mx-auto px-2">
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base">
@@ -206,7 +206,7 @@ export default function Home() {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base">
-                <Link href="/merry/stocks/TSLA" className="flex items-center justify-center">
+                <Link href="/merry/stocks" className="flex items-center justify-center">
                   <span className="truncate">📊 종목 분석</span>
                   <TrendingUp className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
@@ -216,73 +216,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 메르 AI 분석 시스템 - 매크로 트렌드 논리체인 */}
-      <section className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border-b">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3">🧠 메르 AI 분석 시스템</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              메르의 독특한 시각과 논리 전개를 AI가 학습하여 분석합니다<br/>
-              복잡한 사건들 사이의 숨은 연결고리와 투자 기회를 자동으로 발견합니다
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href='/api/merry/analysis'}>
-              <div className="flex items-start space-x-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
-                  <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">다차원 논리 분석</h3>
-                  <p className="text-sm text-muted-foreground">
-                    지정학, 기술, 문화, 경제를 아우르는 통찰
-                  </p>
-                </div>
-              </div>
-            </Card>
-            
-            <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-start space-x-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">메르식 사고 학습</h3>
-                  <p className="text-sm text-muted-foreground">
-                    독특한 관점과 예측 패턴을 AI가 학습
-                  </p>
-                </div>
-              </div>
-            </Card>
-            
-            <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-start space-x-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
-                  <Bell className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">감정 & 트렌드 분석</h3>
-                  <p className="text-sm text-muted-foreground">
-                    종목별 감정과 시장 트렌드 실시간 추적
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </div>
-          
-          <div className="text-center">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/merry/analysis">
-                AI 분석 대시보드 보기
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* 메르's Pick - 주목할 종목 */}
+      {/* 메르's Pick - 주목할 종목 (최상단 배치) */}
       <section className="bg-muted/50 border-b">
         <div className="container mx-auto px-4 py-6">
           <MerryStockPicks />

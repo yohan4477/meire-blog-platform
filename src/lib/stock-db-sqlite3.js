@@ -185,28 +185,72 @@ class StockDB {
     });
   }
 
-  // 메르's Pick 종목 가져오기 (최근 언급 순) - VIEW 사용
+  // 메르's Pick 종목 가져오기 (blog_posts 테이블 직접 사용)
   async getMerryPickStocks(limit = 10) {
     if (!this.isConnected) await this.connect();
     
     return new Promise((resolve, reject) => {
+      // blog_posts 테이블에서 직접 계산
       this.db.all(`
+        WITH mentioned_stocks AS (
+          SELECT 
+            '005930' as ticker, '삼성전자' as name_kr, 'KOSPI' as market, 'KRW' as currency, '삼성전자' as sector UNION ALL
+          SELECT 'TSLA', '테슬라', 'NASDAQ', 'USD', '전기차' UNION ALL
+          SELECT 'AAPL', '애플', 'NASDAQ', 'USD', '기술' UNION ALL
+          SELECT 'NVDA', '엔비디아', 'NASDAQ', 'USD', '반도체' UNION ALL
+          SELECT 'INTC', '인텔', 'NASDAQ', 'USD', '반도체' UNION ALL
+          SELECT 'LLY', '일라이릴리', 'NYSE', 'USD', '제약' UNION ALL
+          SELECT 'UNH', '유나이티드헬스케어', 'NYSE', 'USD', '헬스케어' UNION ALL
+          SELECT '042660', '한화오션', 'KOSPI', 'KRW', '조선' UNION ALL
+          SELECT '267250', 'HD현대', 'KOSPI', 'KRW', '중공업' UNION ALL
+          SELECT '010620', '현대미포조선', 'KOSPI', 'KRW', '조선' UNION ALL
+          SELECT 'GOOGL', '구글', 'NASDAQ', 'USD', '기술' UNION ALL
+          SELECT 'MSFT', '마이크로소프트', 'NASDAQ', 'USD', '기술' UNION ALL
+          SELECT 'META', '메타', 'NASDAQ', 'USD', '기술' UNION ALL
+          SELECT 'AMD', 'AMD', 'NASDAQ', 'USD', '반도체'
+        ),
+        stock_mentions AS (
+          SELECT 
+            ms.ticker,
+            ms.name_kr,
+            ms.market,
+            ms.currency,
+            ms.sector,
+            COUNT(bp.id) as post_count,
+            MIN(
+              CASE 
+                WHEN bp.created_date LIKE '%-%' THEN bp.created_date
+                ELSE datetime(bp.created_date/1000, 'unixepoch', 'localtime')
+              END
+            ) as first_mention,
+            MAX(
+              CASE 
+                WHEN bp.created_date LIKE '%-%' THEN bp.created_date
+                ELSE datetime(bp.created_date/1000, 'unixepoch', 'localtime')
+              END
+            ) as last_mention
+          FROM mentioned_stocks ms
+          LEFT JOIN blog_posts bp ON (
+            bp.title LIKE '%' || ms.ticker || '%' OR 
+            bp.content LIKE '%' || ms.ticker || '%' OR 
+            bp.title LIKE '%' || ms.name_kr || '%' OR 
+            bp.content LIKE '%' || ms.name_kr || '%'
+          )
+          GROUP BY ms.ticker, ms.name_kr, ms.market, ms.currency, ms.sector
+          HAVING COUNT(bp.id) > 0
+        )
         SELECT 
-          s.ticker,
-          s.company_name as name,
-          s.company_name_kr as nameKr,
-          s.market,
-          s.currency,
-          COALESCE(s.real_mention_count, old.mention_count, 0) as postCount,
-          s.last_mention_date as lastMention,
-          s.first_mention_date as firstMention,
+          ticker,
+          name_kr as name,
+          market,
+          currency,
+          post_count as postCount,
+          date(last_mention) as lastMention,
+          date(first_mention) as firstMention,
           'positive' as sentiment,
-          s.sector,
-          old.mention_count as legacy_mention_count
-        FROM stock_stats_view s
-        LEFT JOIN stocks old ON s.ticker = old.ticker
-        WHERE s.is_merry_mentioned = 1
-        ORDER BY s.last_mention_date DESC
+          sector
+        FROM stock_mentions
+        ORDER BY last_mention DESC
         LIMIT ?
       `, [limit], (err, rows) => {
         if (err) {
@@ -222,16 +266,19 @@ class StockDB {
             'AMZN': '전자상거래와 클라우드 컴퓨팅(AWS)을 주력으로 하는 글로벌 기업',
             'META': '페이스북, 인스타그램, 왓츠앱을 운영하는 소셜미디어 플랫폼 기업',
             'NVDA': 'GPU와 AI 칩 분야의 글로벌 리더, 자율주행과 데이터센터용 프로세서 제조',
-            '한와시스템': '방산 및 항공우주 분야의 종합 시스템 통합 업체',
-            '한화오션': '해양플랜트, 선박건조, 해상풍력 등 해양 에너지 솔루션 전문기업'
+            'INTC': '반도체 업계의 선구자, CPU와 데이터센터 칩 제조 글로벌 기업',
+            'LLY': '당뇨병 치료제 및 신경계 질환 치료에 특화된 글로벌 제약회사',
+            'UNH': '미국 최대 건강보험 회사이자 헬스케어 서비스 제공업체',
+            '042660': '해양플랜트, 선박건조, 해상풍력 등 해양 에너지 솔루션 전문기업',
+            '267250': '건설장비, 로보틱스, 친환경 에너지 솔루션을 제공하는 중공업 기업',
+            '010620': '친환경 선박 및 해양플랜트 건조 전문 조선회사',
+            'AMD': 'CPU, GPU 제조업체로 인텔의 주요 경쟁사이자 게이밍/데이터센터 칩 전문기업'
           };
           
           // 데이터 형식 변환
           const formatted = (rows || []).map(row => {
             const ticker = row.ticker;
-            const name = row.nameKr || row.name;
-            // legacy_mention_count가 있으면 사용, 없으면 real_mention_count 사용
-            const actualMentionCount = row.legacy_mention_count || row.postCount;
+            const name = row.name;
             let description = companyDescriptions[ticker] || companyDescriptions[name];
             
             // 회사 설명이 없으면 기본 설명 생성
@@ -239,30 +286,23 @@ class StockDB {
               if (row.sector) {
                 description = `${row.sector} 분야의 주요 기업`;
               } else {
-                description = `${name}의 사업 정보`;
+                description = `${name} 관련 사업`;
               }
             }
-            
-            // 날짜 정규화 (혼재된 형식 통일)
-            const normalizeDate = (dateStr) => {
-              if (!dateStr) return dateStr;
-              // 타임스탬프가 포함된 경우 날짜 부분만 추출
-              return dateStr.split(' ')[0];
-            };
 
             return {
               ticker: row.ticker,
               name: name,
               market: row.market || 'NASDAQ',
               currency: row.currency || 'USD',
-              postCount: actualMentionCount || 0,
-              firstMention: normalizeDate(row.firstMention),
-              lastMention: normalizeDate(row.lastMention),
+              postCount: row.postCount || 0,
+              firstMention: row.firstMention,
+              lastMention: row.lastMention,
               sentiment: row.sentiment || 'neutral',
               tags: [],
               description: description,
               recentPosts: [],
-              mentions: actualMentionCount || 0
+              mentions: row.postCount || 0
             };
           });
           resolve(formatted);

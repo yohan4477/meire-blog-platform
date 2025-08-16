@@ -222,7 +222,7 @@ export default function MerryStockPicks() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          메르가 블로그에서 언급한 종목들 (포스트 개수 기준 랭킹)
+          메르가 블로그에서 언급한 종목들 (최신 언급 순서)
         </p>
       </CardHeader>
       <CardContent className="space-y-3">

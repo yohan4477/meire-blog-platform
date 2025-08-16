@@ -149,14 +149,21 @@ export default function StockPriceChart({
             const sentimentData = sentimentResult.sentimentByDate?.[dateStr];
             const postsData = postsByDate[dateStr] || [];
             
+            // 감정 분석이 있는 경우 감정 분석 포스트 사용, 없으면 일반 포스트 사용
+            // 중복 방지를 위해 둘 중 하나만 사용
+            const finalPosts = sentimentData?.posts && sentimentData.posts.length > 0 
+              ? sentimentData.posts 
+              : postsData;
+            
             return {
               ...point,
               sentiments: sentimentData?.sentiments || [],
-              posts: [...(sentimentData?.posts || []), ...postsData]
+              posts: finalPosts
             };
           });
           
           setPriceData(enrichedData);
+          
           
           // 현재가 및 변동률 계산
           if (enrichedData.length >= 2) {
@@ -188,7 +195,7 @@ export default function StockPriceChart({
           }, 1200); // 라인 애니메이션 대부분 완료 후
         }
       } catch (error) {
-        console.error('데이터 로딩 실패:', error);
+        // 에러 발생 시 처리
       } finally {
         setLoading(false);
       }
@@ -197,10 +204,10 @@ export default function StockPriceChart({
     fetchData();
   }, [ticker, timeRange]);
 
-  // 차트 색상 결정
+  // 차트 색상 결정 - 토스 블루로 통일
   const chartColor = useMemo(() => {
-    return changePercent >= 0 ? tossColors.positive : tossColors.negative;
-  }, [changePercent]);
+    return tossColors.negative; // 토스 블루로 통일
+  }, []);
 
   // 필터링된 데이터 (줌 적용)
   const filteredData = useMemo(() => {
@@ -283,8 +290,21 @@ export default function StockPriceChart({
             <div className="text-xs font-medium text-gray-700 mb-1">
               📝 관련 포스트 ({data.posts.length}개)
             </div>
-            <div className="text-xs text-gray-600">
-              {data.posts[0].title.substring(0, 30)}...
+            <div className="text-xs text-gray-600 space-y-1">
+              {data.posts.length === 1 ? (
+                // 포스트가 1개일 때
+                <div>{data.posts[0].title.substring(0, 40)}...</div>
+              ) : (
+                // 포스트가 여러 개일 때
+                <>
+                  <div>{data.posts[0].title.substring(0, 35)}...</div>
+                  {data.posts.length > 1 && (
+                    <div className="text-gray-500">
+                      외 {data.posts.length - 1}개 포스트
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -576,6 +596,7 @@ export default function StockPriceChart({
                     : dominantSentiment.sentiment === 'negative' 
                     ? tossColors.sentiment.negative    // 🔴 부정: #dc2626
                     : tossColors.sentiment.neutral;    // ⚫ 중립: #000000 (검은색)
+                  
                 }
                 
                 return (
