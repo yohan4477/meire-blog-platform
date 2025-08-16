@@ -318,6 +318,7 @@ export default function StockDetailPage() {
           ticker={stock.ticker}
           timeRange={timeRange}
           onTimeRangeChange={handleTimeRangeChange}
+          stockName={stock.name}
         />
       </div>
 

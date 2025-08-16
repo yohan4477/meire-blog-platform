@@ -231,7 +231,7 @@ export default function MerryStockPicks() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          최신 언급 순서
+          (최신 언급순)
         </p>
       </CardHeader>
       <CardContent className="space-y-3">

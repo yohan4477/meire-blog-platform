@@ -66,12 +66,14 @@ interface StockPriceChartProps {
   ticker: string;
   timeRange: '1M' | '3M' | '6M' | '1Y';
   onTimeRangeChange: (range: '1M' | '3M' | '6M' | '1Y') => void;
+  stockName?: string; // 종목 이름 추가
 }
 
 export default function StockPriceChart({ 
   ticker, 
   timeRange, 
-  onTimeRangeChange 
+  onTimeRangeChange,
+  stockName
 }: StockPriceChartProps) {
   // 상태 관리
   const [priceData, setPriceData] = useState<PricePoint[]>([]);
@@ -404,9 +406,9 @@ export default function StockPriceChart({
       <CardContent className="p-0">
         {/* 토스 스타일 헤더 (모바일 최적화) */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">{ticker}</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">{stockName || ticker}</h2>
               <div className="flex items-center gap-2 sm:gap-3 mt-1">
                 <span className="text-xl sm:text-2xl font-bold" style={{ color: chartColor }}>
                   ${currentPrice.toLocaleString()}
@@ -427,6 +429,31 @@ export default function StockPriceChart({
                     {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
                   </span>
                 </div>
+              </div>
+            </div>
+            
+            {/* 차트 마커 가이드 - 큰 화면에서만 오른쪽 배치 */}
+            <div className="hidden xl:block text-xs text-gray-500 max-w-xs">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 border border-green-500 rounded-full bg-transparent"></span>
+                  긍정
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 border border-red-600 rounded-full bg-transparent"></span>
+                  부정
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 border border-black rounded-full bg-transparent"></span>
+                  중립
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 border border-blue-600 rounded-full bg-transparent"></span>
+                  분석 진행중
+                </span>
+              </div>
+              <div className="text-gray-400 text-xs">
+                💡 원 클릭시 상세 정보 표시
               </div>
             </div>
             
@@ -460,15 +487,8 @@ export default function StockPriceChart({
             </div>
           </div>
           
-          {/* 줌 정보 표시 */}
-          {(zoomDomain.start && zoomDomain.end) && (
-            <div className="mt-2 text-xs text-gray-500">
-              🔍 {new Date(zoomDomain.start).toLocaleDateString('ko-KR')} ~ {new Date(zoomDomain.end).toLocaleDateString('ko-KR')}
-            </div>
-          )}
-          
-          {/* 차트 마커 가이드 */}
-          <div className="mt-2 text-xs text-gray-500 space-y-1">
+          {/* 차트 마커 가이드 - 작은 화면에서는 가격 아래 배치 */}
+          <div className="xl:hidden mt-2 text-xs text-gray-500 space-y-1">
             <div className="flex items-center gap-3 flex-wrap">
               <span className="flex items-center gap-1">
                 <span className="w-3 h-3 border-2 border-green-500 rounded-full bg-transparent"></span>
@@ -484,13 +504,21 @@ export default function StockPriceChart({
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-3 h-3 border-2 border-blue-600 rounded-full bg-transparent"></span>
-                메르 언급
+                분석 진행중
               </span>
             </div>
             <div className="text-gray-400">
               💡 차트의 원을 클릭하면 메르의 분석과 관련 포스트 정보를 확인할 수 있습니다
             </div>
           </div>
+          
+          {/* 줌 정보 표시 */}
+          {(zoomDomain.start && zoomDomain.end) && (
+            <div className="mt-2 text-xs text-gray-500">
+              🔍 {new Date(zoomDomain.start).toLocaleDateString('ko-KR')} ~ {new Date(zoomDomain.end).toLocaleDateString('ko-KR')}
+            </div>
+          )}
+          
           
           {/* 모바일 도움말 */}
           <div className="mt-2 sm:hidden text-xs text-gray-400">
