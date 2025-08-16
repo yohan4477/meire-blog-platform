@@ -71,6 +71,7 @@ export default function StockDetailPage() {
   const ticker = params?.ticker as string;
   
   const [stock, setStock] = useState<Stock | null>(null);
+  const [timeRange, setTimeRange] = useState<'1M' | '3M' | '6M' | '1Y'>('1Y'); // 1Y 기본값 설정
   const [postsState, setPostsState] = useState<PostsState>({
     posts: [],
     total: 0,
@@ -153,6 +154,11 @@ export default function StockDetailPage() {
     if (!postsState.loadingMore && postsState.hasMore) {
       fetchRelatedPosts(postsState.currentOffset, false);
     }
+  };
+
+  // 시간 범위 변경 핸들러 추가
+  const handleTimeRangeChange = (range: '1M' | '3M' | '6M' | '1Y') => {
+    setTimeRange(range);
   };
 
   const getSentimentIcon = (sentiment: string) => {
@@ -310,10 +316,8 @@ export default function StockDetailPage() {
       <div className="mb-6">
         <StockPriceChart
           ticker={stock.ticker}
-          stockName={stock.name}
-          currency={stock.currency}
-          recentPosts={postsState.posts}
-          currentPrice={stock.currentPrice}
+          timeRange={timeRange}
+          onTimeRangeChange={handleTimeRangeChange}
         />
       </div>
 

@@ -33,7 +33,10 @@
       "Bash(cmd /c start:*)",
       "Bash(start http://localhost:3005/merry/stocks/TSLA)",
       "Bash(del test-circle-fix.js)",
-      "Bash(start http://localhost:3005/merry/stocks/INTC)"
+      "Bash(start http://localhost:3005/merry/stocks/INTC)",
+      "WebSearch",
+      "Bash(start http://localhost:3005)",
+      "Bash(start http://localhost:3004/merry/stocks/TSLA)"
     ],
     "deny": [],
     "ask": [],

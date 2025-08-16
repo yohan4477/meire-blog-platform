@@ -1,84 +1,41 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts';
-// Sheet 관련 import 제거 - 상세 정보 패널 필요 없음
-import { TrendingUp, TrendingDown, Calendar, DollarSign, BarChart3, Zap, Target, Activity, Info } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea, ReferenceDot } from 'recharts';
+import { TrendingUp, TrendingDown, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
 
-// 🎨 반응형 차트 테마 시스템 (다크모드/라이트모드 대응)
-const getChartTheme = (isDark: boolean = false) => ({
-  // 메인 배경 - 다크모드 조건부
-  background: {
-    primary: isDark ? '#0a0e1a' : '#ffffff',      // 차트 배경
-    secondary: isDark ? '#111827' : '#f8fafc',     // 카드 배경
-    tertiary: isDark ? '#1f2937' : '#f1f5f9',      // 패널 배경
-    elevated: isDark ? '#374151' : '#e2e8f0',      // 호버/활성 상태
-  },
+// 🎨 토스 스타일 디자인 시스템
+const tossColors = {
+  // 메인 차트 색상 (토스 브랜드 컬러)
+  positive: '#ff4757',      // 상승 (토스 레드)
+  negative: '#3742fa',      // 하락 (토스 블루)  
+  neutral: '#747d8c',       // 중립/보합
   
-  // 텍스트 색상 - 다크모드 조건부
-  text: {
-    primary: isDark ? '#f9fafb' : '#0f172a',       // 주요 텍스트
-    secondary: isDark ? '#d1d5db' : '#475569',     // 보조 텍스트
-    muted: isDark ? '#9ca3af' : '#64748b',         // 비활성 텍스트
-    accent: isDark ? '#60a5fa' : '#3b82f6',        // 강조 텍스트
-  },
+  // 배경 및 그리드
+  background: '#ffffff',
+  surface: '#f8f9fa',
+  gridLine: '#f1f2f6',
+  gridMajor: '#e9ecef',
   
-  // 차트 색상 - 다크모드 조건부
-  chart: {
-    line: '#3b82f6',                               // 메인 라인 (공통)
-    lineGlow: isDark ? '#1d4ed8' : '#3b82f6',      // 라인 글로우
-    grid: isDark ? '#374151' : '#e2e8f0',          // 그리드 라인
-    gridMajor: isDark ? '#4b5563' : '#cbd5e1',     // 주요 그리드
-    axis: isDark ? '#6b7280' : '#64748b',          // 축 색상
-    crosshair: isDark ? '#60a5fa' : '#3b82f6',     // 크로스헤어
-  },
+  // 텍스트
+  primary: '#2f3640',
+  secondary: '#747d8c', 
+  muted: '#a4b0be',
   
-  // 감정 분석 마커 - 다크모드 조건부
+  // 액센트 및 상태
+  accent: '#5352ed',        // 토스 보라
+  success: '#2ed573',       // 성공
+  warning: '#ffa502',       // 경고
+  
+  // 감정 분석 마커 (기존 유지)
   sentiment: {
-    positive: {
-      primary: '#10b981',                          // 긍정 (공통)
-      secondary: '#059669',                        // 어두운 긍정
-      glow: '#6ee7b7',                            // 글로우
-      background: isDark ? '#064e3b' : '#ecfdf5', // 배경
-    },
-    negative: {
-      primary: '#ef4444',                          // 부정 (공통)
-      secondary: '#dc2626',                        // 어두운 부정
-      glow: '#fca5a5',                            // 글로우
-      background: isDark ? '#7f1d1d' : '#fef2f2', // 배경
-    },
-    neutral: {
-      primary: isDark ? '#6b7280' : '#64748b',     // 중립
-      secondary: isDark ? '#4b5563' : '#475569',   // 어두운 중립
-      glow: isDark ? '#d1d5db' : '#94a3b8',       // 글로우
-      background: isDark ? '#374151' : '#f1f5f9', // 배경
-    },
-    warning: {
-      primary: '#f59e0b',                          // 경고 (데이터 부족)
-      secondary: '#d97706',                        // 어두운 경고
-      glow: '#fbbf24',                            // 글로우
-      background: isDark ? '#451a03' : '#fef3c7', // 배경
-    },
-  },
-  
-  // 인터랙션 색상 - 다크모드 조건부
-  interaction: {
-    hover: isDark ? '#1e40af' : '#2563eb',       // 호버
-    active: '#2563eb',                           // 활성 (공통)
-    focus: '#3b82f6',                            // 포커스 (공통)
-    selection: isDark ? '#1e3a8a' : '#dbeafe',   // 선택 영역
-  },
-  
-  // 그라데이션 - 다크모드 조건부
-  gradients: {
-    pricePositive: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    priceNegative: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-    chartGlow: `linear-gradient(90deg, transparent 0%, ${isDark ? '#3b82f6' : '#60a5fa'} 50%, transparent 100%)`,
+    positive: '#16a34a',
+    negative: '#dc2626', 
+    neutral: '#000000'  // 중립적인 감정은 검은색
   }
-});
+} as const;
 
 interface PricePoint {
   date: string;
@@ -92,2267 +49,603 @@ interface PricePoint {
     confidence: number;
     keywords: any;
     context: string;
+    key_reasoning?: string;
+    supporting_evidence?: string[];
+    investment_perspective?: string;
+    context_quotes?: string[];
   }[];
   posts?: {
     id: number;
     title: string;
     excerpt: string;
     views: number;
-    date: number;
   }[];
 }
 
 interface StockPriceChartProps {
   ticker: string;
-  stockName: string;
-  currency: string;
-  recentPosts?: any[];
-  currentPrice?: number;
+  timeRange: '1M' | '3M' | '6M' | '1Y';
+  onTimeRangeChange: (range: '1M' | '3M' | '6M' | '1Y') => void;
 }
 
 export default function StockPriceChart({ 
   ticker, 
-  stockName, 
-  currency, 
-  recentPosts = [], 
-  currentPrice = 0 
+  timeRange, 
+  onTimeRangeChange 
 }: StockPriceChartProps) {
+  // 상태 관리
   const [priceData, setPriceData] = useState<PricePoint[]>([]);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [allPosts, setAllPosts] = useState<any[]>([]);
-  const [sentimentData, setSentimentData] = useState<any>(null);
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
+  const [changePercent, setChangePercent] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [yAxisDomain, setYAxisDomain] = useState<[number, number] | null>(null);
-  const [zoomState, setZoomState] = useState<{
-    left?: string | number;
-    right?: string | number;
-    refAreaLeft?: string | number;
-    refAreaRight?: string | number;
-    top?: number;
-    bottom?: number;
-    isZooming?: boolean;
-  }>({});
-  const [zoomHistory, setZoomHistory] = useState<Array<{
-    xDomain: [string | number | undefined, string | number | undefined];
-    yDomain: [number, number] | null;
-  }>>([]);
-  const [timeRange, setTimeRange] = useState<string>('1Y');
-  const [priceChange, setPriceChange] = useState<{ 
-    value: number; 
-    percentage: number; 
-    isPositive: boolean; 
-  } | null>(null);
-  const [selectedPost, setSelectedPost] = useState<any | null>(null);
-  // Sheet 관련 state 제거 - 상세 정보 패널 필요 없음
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
-  // 🤳 모바일 터치 스와이핑 상태
-  const [touchInteraction, setTouchInteraction] = useState<{
-    isActive: boolean;
-    activePoint: PricePoint | null;
-    position: { x: number; y: number } | null;
-    touchStartX: number | null;
-    isSwiping: boolean;
-  }>({
-    isActive: false,
-    activePoint: null,
-    position: null,
-    touchStartX: null,
-    isSwiping: false,
-  });
-
-  // 필터링된 데이터 계산 - 줌 범위에 따른 데이터 필터링
-  const filteredData = useMemo(() => {
-    let data = priceData;
-    
-    // API가 이미 기간별 데이터를 제공하므로 프론트엔드에서 추가 시간 필터링 불필요
-    // 1. 시간 범위 기반 필터링 건너뛰기 (API에서 이미 처리됨)
-    console.log(`📊 [${timeRange}] Using API-filtered data: ${data.length} records`);
-    if (data.length > 0) {
-      console.log(`📅 [${timeRange}] Date range: ${data[0].date} ~ ${data[data.length - 1].date}`);
-    }
-    
-    // 2. X축 줌 범위가 있으면 추가 필터링
-    if (zoomState.left && zoomState.right) {
-      const startDate = new Date(zoomState.left).getTime();
-      const endDate = new Date(zoomState.right).getTime();
-      data = data.filter(d => {
-        const dataDate = new Date(d.date).getTime();
-        return dataDate >= startDate && dataDate <= endDate;
-      });
-      
-      console.log(`🔍 Zoom filtered data: ${data.length} days`);
-    }
-    
-    return data;
-  }, [priceData, timeRange, zoomState.left, zoomState.right]);
-
-  // 다크모드 감지 - 안전한 클라이언트 전용 실행
+  // 줌 상태 (토스 스타일 - 간단하게)
+  const [zoomDomain, setZoomDomain] = useState<{start?: string, end?: string}>({});
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomArea, setZoomArea] = useState<{start?: string, end?: string}>({});
+  
+  // 모바일 터치 상태
+  const [touchState, setTouchState] = useState<{
+    startX?: number;
+    startY?: number;
+    isTouch: boolean;
+    touchStartTime?: number;
+  }>({ isTouch: false });
+  
+  // 모바일 감지
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // 애니메이션 상태
+  const [showMarkers, setShowMarkers] = useState(false);
+  const [visibleMarkerCount, setVisibleMarkerCount] = useState(0);
+  
   useEffect(() => {
-    // 클라이언트 전용 실행 보장
-    if (typeof window === 'undefined') return;
-    
-    const checkDarkMode = () => {
-      try {
-        if (document?.documentElement?.classList) {
-          setIsDarkMode(document.documentElement.classList.contains('dark'));
-        }
-      } catch (error) {
-        console.warn('다크모드 감지 실패:', error);
-        setIsDarkMode(false); // 기본값
-      }
-    };
-    
-    checkDarkMode();
-    
-    // MutationObserver 안전한 생성
-    let observer: MutationObserver | null = null;
-    try {
-      if (typeof MutationObserver !== 'undefined' && document?.documentElement) {
-        observer = new MutationObserver(checkDarkMode);
-        observer.observe(document.documentElement, {
-          attributes: true,
-          attributeFilter: ['class']
-        });
-      }
-    } catch (error) {
-      console.warn('MutationObserver 생성 실패:', error);
+    if (typeof window !== 'undefined') {
+      setIsMobile(window.innerWidth < 640);
+      
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 640);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
     }
-    
-    return () => {
-      try {
-        observer?.disconnect();
-      } catch (error) {
-        console.warn('MutationObserver 정리 실패:', error);
-      }
-    };
   }, []);
 
+  // 데이터 로딩
   useEffect(() => {
-    console.log(`🔄 [DEBUG] StockPriceChart useEffect triggered - ticker: ${ticker}, timeRange: ${timeRange}`);
-    fetchAllPostsAndGenerateChart();
-  }, [ticker, currentPrice, timeRange]);
-
-  const fetchAllPostsAndGenerateChart = async () => {
-    console.log(`🚀 [DEBUG] fetchAllPostsAndGenerateChart called for ${ticker}, timeRange: ${timeRange}`);
-    try {
-      // 선택된 기간에 따른 포스트 가져오기
-      const period = timeRange.toLowerCase().replace(/(\d+)m$/, '$1mo').replace(/(\d+)y$/, '$1y'); // 6M -> 6mo, 1Y -> 1y
-      const cacheBuster = Date.now();
-      console.log(`📅 [${timeRange}] Fetching posts for period: ${timeRange} (API: ${period}) - Cache buster: ${cacheBuster}`);
-      
-      // 포스트와 감정 분석 데이터를 병렬로 가져오기
-      const [postsResponse, sentimentResponse] = await Promise.all([
-        fetch(`/api/merry/stocks/${ticker}/posts/full?period=${period}&t=${cacheBuster}`, {
-          cache: 'no-store'
-        }),
-        fetch(`/api/merry/stocks/${ticker}/sentiments?period=${period}&t=${cacheBuster}`, {
-          cache: 'no-store'
-        })
-      ]);
-      
-      // 🔧 Fix scope issue: declare sentimentDataResponse outside if blocks
-      let sentimentDataResponse = null;
-      
-      if (postsResponse.ok) {
-        const postsData = await postsResponse.json();
-        if (postsData.success) {
-          console.log(`📊 Loaded ${postsData.data.posts.length} posts for ${ticker} chart (${timeRange} period)`);
-          setAllPosts(postsData.data.posts);
-          
-          // 감정 분석 데이터 처리
-          if (sentimentResponse.ok) {
-            sentimentDataResponse = await sentimentResponse.json();
-            console.log(`🎯 Loaded sentiment data for ${ticker}:`, sentimentDataResponse);
-            console.log(`📅 Available sentiment dates:`, Object.keys(sentimentDataResponse?.sentimentByDate || {}));
-            console.log(`📊 Sentiment data structure:`, {
-              hasSentimentByDate: !!(sentimentDataResponse?.sentimentByDate),
-              dateCount: Object.keys(sentimentDataResponse?.sentimentByDate || {}).length,
-              firstDateExample: Object.keys(sentimentDataResponse?.sentimentByDate || {})[0],
-              firstDateData: sentimentDataResponse?.sentimentByDate?.[Object.keys(sentimentDataResponse?.sentimentByDate || {})[0]]
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // 주가 데이터 가져오기
+        const priceResponse = await fetch(`/api/stock-price?ticker=${ticker}&period=${timeRange}`);
+        const priceResult = await priceResponse.json();
+        
+        // 감정 분석 데이터 가져오기  
+        const sentimentResponse = await fetch(`/api/merry/stocks/${ticker}/sentiments?period=${timeRange?.toLowerCase() || '6mo'}`);
+        const sentimentResult = await sentimentResponse.json();
+        
+        // 포스트 데이터 가져오기 (모든 포스트)
+        const postsResponse = await fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0`);
+        const postsResult = await postsResponse.json();
+        
+        if (priceResult.success && priceResult.prices) {
+          // 포스트를 날짜별로 그룹화
+          const postsByDate: {[key: string]: any[]} = {};
+          if (postsResult.success && postsResult.data?.posts) {
+            postsResult.data.posts.forEach((post: any) => {
+              const postDate = new Date(post.created_date).toISOString().split('T')[0];
+              if (!postsByDate[postDate]) {
+                postsByDate[postDate] = [];
+              }
+              postsByDate[postDate].push(post);
             });
-            setSentimentData(sentimentDataResponse);
-          } else {
-            console.warn('🚨 감정 분석 데이터 로딩 실패:', sentimentResponse.status);
-            setSentimentData(null);
-            sentimentDataResponse = null;
           }
           
-          // 포스트 로드 후 차트 생성 (감정 데이터와 함께)
-          console.log(`🔗 Passing sentiment data to chart generation:`, {
-            hasSentimentData: !!sentimentDataResponse,
-            sentimentDates: Object.keys(sentimentDataResponse?.sentimentByDate || {}),
-            postsCount: postsData.data.posts.length
-          });
-          await generatePriceHistory(postsData.data.posts, sentimentDataResponse);
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('전체 포스트 로딩 실패:', error);
-    }
-    
-    // 포스트 로드 실패시 기본 차트 생성
-    await generatePriceHistory([]);
-  };
-
-  const generatePriceHistory = async (postsData?: any[], sentimentDataParam?: any) => {
-    try {
-      const chartData: PricePoint[] = [];
-
-      // 실제 주식 가격 API 호출 (선택된 기간)
-      console.log(`📊 [${timeRange}] Fetching stock price data for ${ticker} - Period: ${timeRange}`);
-      const priceData = await fetchRealStockPrices(ticker, stockName, timeRange);
-      
-      if (priceData && priceData.length > 0) {
-        console.log(`📈 [${timeRange}] Received ${priceData.length} price data points for ${ticker}`);
-        // API에서 받은 실제 가격 데이터 사용
-        priceData.forEach((dataPoint) => {
-          chartData.push({
-            date: dataPoint.date,
-            price: dataPoint.price,
-            isCurrentPrice: false
-          });
-        });
-
-        // 전달받은 postsData 또는 상태의 allPosts 사용
-        const postsToUse = postsData && postsData.length > 0 ? postsData : 
-                          allPosts.length > 0 ? allPosts : recentPosts;
-        
-        console.log(`🎯 Using ${postsToUse.length} posts for chart markers`);
-        
-        if (postsToUse && postsToUse.length > 0) {
-          console.log(`🎯 Processing ${postsToUse.length} posts for chart markers`);
-          console.log(`📈 Chart data range:`, {
-            totalPoints: chartData.length,
-            firstDate: chartData[0]?.date,
-            lastDate: chartData[chartData.length - 1]?.date,
-            sampleDates: chartData.slice(0, 5).map(p => p.date)
-          });
-          
-          let successfulMatches = 0;
-          let exactMatches = 0;
-          let approximateMatches = 0;
-          let failedMatches = 0;
-          
-          postsToUse.forEach((post, index) => {
-            let mentionDate: Date;
-            if (typeof post.created_date === 'number') {
-              mentionDate = new Date(post.created_date);
-            } else {
-              mentionDate = new Date(post.created_date);
-            }
+          // 감정 데이터, 포스트 데이터와 주가 데이터 결합
+          const enrichedData = priceResult.prices.map((point: any) => {
+            const dateStr = point.date;
+            const sentimentData = sentimentResult.sentimentByDate?.[dateStr];
+            const postsData = postsByDate[dateStr] || [];
             
-            const postDateStr = mentionDate.toISOString().split('T')[0];
-            console.log(`📅 Post ${index + 1}/${postsToUse.length}: "${post.title.substring(0, 30)}..." on ${postDateStr}`, {
-              rawTimestamp: post.created_date,
-              postId: post.id
-            });
-            
-            // 정확한 날짜 매칭을 먼저 시도
-            let matchingPoint = chartData.find(p => p.date === postDateStr);
-            
-            // 정확한 매칭이 없으면 가장 가까운 날짜 찾기 (±7일 범위)
-            if (!matchingPoint) {
-              const postTime = mentionDate.getTime();
-              const dayMs = 24 * 60 * 60 * 1000;
-              
-              let closestPoint = null;
-              let closestDistance = Infinity;
-              
-              chartData.forEach(point => {
-                const pointTime = new Date(point.date).getTime();
-                const distance = Math.abs(pointTime - postTime);
-                
-                // 7일 이내에서 가장 가까운 점 찾기
-                if (distance < 7 * dayMs && distance < closestDistance) {
-                  closestDistance = distance;
-                  closestPoint = point;
-                }
-              });
-              
-              matchingPoint = closestPoint;
-              if (matchingPoint) {
-                console.log(`🔗 Approximate match: "${post.title.substring(0, 30)}..." (${postDateStr}) → (${matchingPoint.date}) Distance: ${Math.round(closestDistance / dayMs * 10) / 10}d`);
-                approximateMatches++;
-                successfulMatches++;
-              } else {
-                console.log(`❌ No match within 7 days for "${post.title.substring(0, 30)}..." (${postDateStr})`);
-                failedMatches++;
-              }
-            } else {
-              console.log(`✅ Exact match: "${post.title.substring(0, 30)}..." on ${postDateStr}`);
-              exactMatches++;
-              successfulMatches++;
-            }
-            
-            if (matchingPoint) {
-              // 해당 날짜의 데이터 포인트에 언급 정보 추가
-              if (!matchingPoint.postTitle) {
-                matchingPoint.postTitle = post.title;
-                matchingPoint.postId = post.id;
-                
-                // 감정 분석 데이터 추가 (파라미터로 받은 데이터 사용)
-                const useSentimentData = sentimentDataParam || sentimentData;
-                const postDateStr = typeof matchingPoint.date === 'string' && matchingPoint.date.match(/^\d{4}-\d{2}-\d{2}$/)
-                  ? matchingPoint.date
-                  : new Date(matchingPoint.date).toISOString().split('T')[0];
-                console.log(`🔍 Looking for sentiment data on date: ${postDateStr}`, { 
-                  rawDate: matchingPoint.date,
-                  availableDates: Object.keys(useSentimentData?.sentimentByDate || {}),
-                  sentimentDataExists: !!useSentimentData,
-                  hasMatchingDate: !!(useSentimentData?.sentimentByDate && useSentimentData.sentimentByDate[postDateStr]),
-                  usingParameterData: !!sentimentDataParam
-                });
-                if (useSentimentData && useSentimentData.sentimentByDate && useSentimentData.sentimentByDate[postDateStr]) {
-                  matchingPoint.sentiments = useSentimentData.sentimentByDate[postDateStr].sentiments;
-                  matchingPoint.posts = useSentimentData.sentimentByDate[postDateStr].posts;
-                  console.log(`🎯 Added sentiment data to marker on ${postDateStr}:`, matchingPoint.sentiments);
-                  console.log(`✅ SUCCESS: Sentiment data added to chart point:`, {
-                    date: postDateStr,
-                    sentimentCount: matchingPoint.sentiments?.length || 0,
-                    firstSentiment: matchingPoint.sentiments?.[0]?.sentiment,
-                    postTitle: matchingPoint.postTitle?.substring(0, 30)
-                  });
-                } else {
-                  console.log(`❌ FAILED: No sentiment data found for date ${postDateStr}`, {
-                    sentimentDataExists: !!useSentimentData,
-                    availableDates: Object.keys(useSentimentData?.sentimentByDate || {}),
-                    hasPostDateInSentiment: !!(useSentimentData?.sentimentByDate && useSentimentData.sentimentByDate[postDateStr])
-                  });
-                }
-              } else {
-                // 여러 포스트가 같은 날짜에 있으면 제목 합치기
-                matchingPoint.postTitle = `${matchingPoint.postTitle} | ${post.title}`;
-                
-                // 감정 분석 데이터도 합치기 (파라미터로 받은 데이터 사용)
-                const useSentimentData = sentimentDataParam || sentimentData;
-                const postDateStr = typeof matchingPoint.date === 'string' && matchingPoint.date.match(/^\d{4}-\d{2}-\d{2}$/)
-                  ? matchingPoint.date
-                  : new Date(matchingPoint.date).toISOString().split('T')[0];
-                if (useSentimentData && useSentimentData.sentimentByDate && useSentimentData.sentimentByDate[postDateStr]) {
-                  if (!matchingPoint.sentiments) matchingPoint.sentiments = [];
-                  if (!matchingPoint.posts) matchingPoint.posts = [];
-                  
-                  matchingPoint.sentiments = [...matchingPoint.sentiments, ...useSentimentData.sentimentByDate[postDateStr].sentiments];
-                  matchingPoint.posts = [...matchingPoint.posts, ...useSentimentData.sentimentByDate[postDateStr].posts];
-                  console.log(`🎯 Merged sentiment data to existing marker on ${postDateStr}:`, matchingPoint.sentiments);
-                }
-              }
-            } else {
-              console.log(`⚠️ No matching chart point found for post "${post.title.substring(0, 30)}..." (${postDateStr})`);
-            }
+            return {
+              ...point,
+              sentiments: sentimentData?.sentiments || [],
+              posts: [...(sentimentData?.posts || []), ...postsData]
+            };
           });
           
-          const markersCount = chartData.filter(p => p.postTitle).length;
-          const sentimentMarkers = chartData.filter(p => p.sentiments && p.sentiments.length > 0).length;
+          setPriceData(enrichedData);
           
-          console.log(`📊 Chart Marker Statistics:`, {
-            postsProcessed: postsToUse.length,
-            exactMatches: exactMatches,
-            approximateMatches: approximateMatches,
-            failedMatches: failedMatches,
-            successfulMatches: successfulMatches,
-            markersCreated: markersCount,
-            sentimentMarkersCreated: sentimentMarkers,
-            successRate: `${Math.round((successfulMatches / postsToUse.length) * 100)}%`
-          });
-          
-          if (failedMatches > 0) {
-            console.warn(`⚠️ ${failedMatches} posts could not be matched to chart points (outside 7-day range)`);
+          // 현재가 및 변동률 계산
+          if (enrichedData.length >= 2) {
+            const latest = enrichedData[enrichedData.length - 1];
+            const previous = enrichedData[enrichedData.length - 2];
+            setCurrentPrice(latest.price);
+            setChangePercent(((latest.price - previous.price) / previous.price) * 100);
           }
+          
+          // 애니메이션 초기화
+          setShowMarkers(false);
+          setVisibleMarkerCount(0);
+          
+          // 라인 애니메이션 완료 후 마커 애니메이션 시작
+          setTimeout(() => {
+            setShowMarkers(true);
+            
+            // 마커들을 순차적으로 표시
+            const markersWithData = enrichedData.filter(point => 
+              (point.posts && point.posts.length > 0) || 
+              (point.sentiments && point.sentiments.length > 0)
+            );
+            
+            markersWithData.forEach((_, index) => {
+              setTimeout(() => {
+                setVisibleMarkerCount(prev => prev + 1);
+              }, index * 100);
+            });
+          }, 1200); // 라인 애니메이션 대부분 완료 후
         }
-
-        // 현재가 추가/업데이트 - 제거됨 (불필요한 마커 생성 방지)
-        // 차트에는 실제 데이터만 표시하고, 현재가 마커는 별도 UI로 처리
-
-        // 날짜순으로 정렬
-        chartData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-        // Y축 범위 최적화를 위한 최소/최대값 계산
-        calculateYAxisDomain(chartData);
-
-        // 가격 변화 계산 (첫째 날 vs 마지막 날)
-        if (chartData.length >= 2) {
-          const firstPrice = chartData[0].price;
-          const lastPrice = chartData[chartData.length - 1].price;
-          const change = lastPrice - firstPrice;
-          const changePercentage = (change / firstPrice) * 100;
-
-          setPriceChange({
-            value: change,
-            percentage: changePercentage,
-            isPositive: change >= 0
-          });
-        }
+      } catch (error) {
+        console.error('데이터 로딩 실패:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // CLAUDE.md 원칙: 실제 데이터만 사용, dummy data 금지
-      setPriceData(chartData); // 빈 배열이든 실제 데이터든 그대로 설정
-      setLoading(false);
-    } catch (error) {
-      console.error('가격 데이터 로딩 실패:', error);
-      setPriceData([]);
-      setLoading(false);
-    }
-  };
+    fetchData();
+  }, [ticker, timeRange]);
 
-  // 실제 주식 가격 API 호출 (기간별)
-  const fetchRealStockPrices = async (ticker: string, stockName: string, period: string = '6M') => {
-    try {
-      // 한국 주식과 미국 주식 구분
-      const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
-      
-      if (isKoreanStock) {
-        // 한국 주식: KIS API 또는 Yahoo Finance Korea 사용
-        return await fetchKoreanStockPrice(ticker, period);
-      } else {
-        // 미국 주식: Alpha Vantage 또는 Yahoo Finance 사용
-        return await fetchUSStockPrice(ticker, period);
-      }
-    } catch (error) {
-      console.error('주식 가격 API 호출 실패:', error);
-      return null;
-    }
-  };
+  // 차트 색상 결정
+  const chartColor = useMemo(() => {
+    return changePercent >= 0 ? tossColors.positive : tossColors.negative;
+  }, [changePercent]);
 
-  // 한국 주식 가격 (Yahoo Finance Korea)
-  const fetchKoreanStockPrice = async (ticker: string, period: string = '6M') => {
-    try {
-      // 기간을 API 형식으로 변환
-      const apiPeriod = period.toLowerCase().replace(/(\d+)m$/, '$1mo').replace(/(\d+)y$/, '$1y'); // 6M -> 6mo, 1Y -> 1y
-      const cacheBuster = Date.now();
-      console.log(`🇰🇷 [${period}] Fetching Korean stock price for ${ticker} - API period: ${apiPeriod}`);
-      const response = await fetch(`/api/stock-price?ticker=${ticker}.KS&period=${apiPeriod}&t=${cacheBuster}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
-      const data = await response.json();
-      
-      if (data.success && data.prices) {
-        console.log(`✅ [${period}] Received ${data.prices.length} Korean stock prices for ${ticker}`);
-        return data.prices;
-      }
-      console.warn(`⚠️ [${period}] No price data for ${ticker}`);
-      return null;
-    } catch (error) {
-      console.error(`❌ [${period}] 한국 주식 가격 조회 실패:`, error);
-      return null;
-    }
-  };
-
-  // 미국 주식 가격
-  const fetchUSStockPrice = async (ticker: string, period: string = '6M') => {
-    try {
-      // 기간을 API 형식으로 변환
-      const apiPeriod = period.toLowerCase().replace(/(\d+)m$/, '$1mo').replace(/(\d+)y$/, '$1y'); // 6M -> 6mo, 1Y -> 1y
-      const cacheBuster = Date.now();
-      console.log(`🇺🇸 [${period}] Fetching US stock price for ${ticker} - API period: ${apiPeriod}`);
-      const response = await fetch(`/api/stock-price?ticker=${ticker}&period=${apiPeriod}&t=${cacheBuster}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
-      const data = await response.json();
-      
-      if (data.success && data.prices) {
-        console.log(`✅ [${period}] Received ${data.prices.length} US stock prices for ${ticker}`);
-        return data.prices;
-      }
-      console.warn(`⚠️ [${period}] No price data for ${ticker}`);
-      return null;
-    } catch (error) {
-      console.error(`❌ [${period}] 미국 주식 가격 조회 실패:`, error);
-      return null;
-    }
-  };
-
-
-
-  const formatPrice = (price: number): string => {
-    const symbol = currency === 'USD' ? '$' : '₩';
-    return `${symbol}${price.toLocaleString()}`;
-  };
-
-  const formatDate = (dateStr: string): string => {
-    return new Date(dateStr).toLocaleDateString('ko-KR', {
-      month: 'short',
-      day: 'numeric'
+  // 필터링된 데이터 (줌 적용)
+  const filteredData = useMemo(() => {
+    if (!zoomDomain.start || !zoomDomain.end) return priceData;
+    
+    const startTime = new Date(zoomDomain.start).getTime();
+    const endTime = new Date(zoomDomain.end).getTime();
+    
+    return priceData.filter(point => {
+      const pointTime = new Date(point.date).getTime();
+      return pointTime >= startTime && pointTime <= endTime;
     });
-  };
+  }, [priceData, zoomDomain]);
 
-  // X축 전용 날짜 포맷터 - timeRange에 따라 다른 형식 적용
-  const formatXAxisDate = (dateStr: string): string => {
-    const date = new Date(dateStr);
-    
-    // 1Y는 년도 변경시 년도 표시, 일반 월은 월만 표시
-    if (timeRange === '1Y') {
-      // 1월이면서 년도가 현재 데이터 시작년도와 다르면 년도 표시
-      const month = date.getMonth();
-      const year = date.getFullYear();
-      const isYearTransition = month === 0; // 1월인 경우
-      
-      if (isYearTransition) {
-        // 년도를 축약해서 표시 (2025 -> 25년)
-        return `${year.toString().slice(2)}년`;
-      } else {
-        // 일반 월은 월만 표시
-        return date.toLocaleDateString('ko-KR', {
-          month: 'short'
-        });
-      }
-    }
-    
-    // 6M는 월 기준으로만 표시 (년도 제외)
-    if (timeRange === '6M') {
-      return date.toLocaleDateString('ko-KR', {
-        month: 'short'
-      });
-    }
-    
-    // 1M, 3M은 기존처럼 월/일 표시
-    return date.toLocaleDateString('ko-KR', {
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  // X축 틱 필터링 - 월이 시작하는 곳에서만 표시 (1Y에서는 년도 변경도 표시)
-  const getCustomTicks = (data: PricePoint[]) => {
-    if (timeRange !== '6M' && timeRange !== '1Y') {
-      return undefined; // 1M, 3M은 기본 틱 사용
-    }
-
-    const ticks: string[] = [];
-    let lastMonth = -1;
-    let lastYear = -1;
-    
-    data.forEach(point => {
-      const date = new Date(point.date);
-      const currentMonth = date.getMonth();
-      const currentYear = date.getFullYear();
-      
-      // 월이 바뀌었거나 (6M, 1Y 공통) 년도가 바뀌었을 때 (1Y만)
-      const shouldAddTick = currentMonth !== lastMonth || 
-        (timeRange === '1Y' && currentYear !== lastYear);
-      
-      if (shouldAddTick) {
-        ticks.push(point.date);
-        lastMonth = currentMonth;
-        lastYear = currentYear;
-      }
-    });
-    
-    return ticks;
-  };
-
-  // Y축 틱 필터링 - 정수 값만 표시하고 중복 제거
-  const getCustomYTicks = (data: PricePoint[]) => {
-    if (!data.length) return undefined;
-    
-    const prices = data.map(d => d.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const priceRange = maxPrice - minPrice;
-    
-    // 적절한 간격 계산 (약 6-8개 틱 표시)
-    const targetTickCount = 8;
-    const rawInterval = priceRange / (targetTickCount - 1);
-    
-    // 간격을 깔끔한 정수로 반올림 (1, 5, 10, 50, 100, 500, 1000 등)
-    let interval = 1;
-    if (rawInterval >= 1000) interval = Math.ceil(rawInterval / 1000) * 1000;
-    else if (rawInterval >= 500) interval = Math.ceil(rawInterval / 500) * 500;
-    else if (rawInterval >= 100) interval = Math.ceil(rawInterval / 100) * 100;
-    else if (rawInterval >= 50) interval = Math.ceil(rawInterval / 50) * 50;
-    else if (rawInterval >= 10) interval = Math.ceil(rawInterval / 10) * 10;
-    else if (rawInterval >= 5) interval = Math.ceil(rawInterval / 5) * 5;
-    else interval = Math.max(1, Math.ceil(rawInterval));
-    
-    // 시작점을 간격에 맞춰 조정
-    const startTick = Math.floor(minPrice / interval) * interval;
-    const endTick = Math.ceil(maxPrice / interval) * interval;
-    
-    const ticks: number[] = [];
-    for (let tick = startTick; tick <= endTick; tick += interval) {
-      ticks.push(tick);
-    }
-    
-    // 중복 제거 및 정수로 변환
-    const uniqueTicks = Array.from(new Set(ticks.map(t => Math.round(t))));
-    
-    console.log(`📊 Y-axis ticks: interval=${interval}, range=${minPrice.toFixed(0)}-${maxPrice.toFixed(0)}, ticks=${uniqueTicks.length}`);
-    
-    return uniqueTicks;
-  };
-
-  const handleMarkerClick = (data: PricePoint) => {
-    try {
-      if (data && data.postTitle && data.postId) {
-        // allPosts에서 해당 포스트 찾기
-        const post = allPosts.find(p => p.id === data.postId);
-        if (post) {
-          setSelectedPost(post);
-          // Sheet 열기 제거 - 툴팁만 표시
-        }
-      }
-    } catch (error) {
-      console.warn('마커 클릭 에러:', error);
-    }
-  };
-
-  // 🛡️ 안전한 테마 헬퍼 함수
-  const getSafeTheme = () => {
-    try {
-      return getChartTheme(isDarkMode ?? false);
-    } catch (error) {
-      console.warn('테마 로딩 에러:', error);
-      return getChartTheme(false); // 기본값으로 라이트 테마 사용
-    }
-  };
-
-  // 🚀 프로페셔널 툴팁 컴포넌트 (다크모드/라이트모드 대응)
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  // 토스 스타일 커스텀 툴팁
+  const TossTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
     
     const data = payload[0].payload;
-    const theme = getSafeTheme();
-    
-    // 언급된 날짜가 아니면 툴팁을 표시하지 않음
-    if (!data.postTitle) {
-      return null;
-    }
-
-    const getSentimentInfo = (sentiments: any[]) => {
-      if (!sentiments || sentiments.length === 0) return null;
-      
-      const counts = sentiments.reduce((acc, s) => {
-        acc[s.sentiment] = (acc[s.sentiment] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      const dominant = Object.entries(counts)
-        .sort(([,a], [,b]) => (b as number) - (a as number))[0];
-      
-      return {
-        type: dominant[0],
-        count: dominant[1],
-        total: sentiments.length,
-        avgConfidence: sentiments.reduce((sum, s) => sum + s.confidence, 0) / sentiments.length
-      };
-    };
-
-    const sentimentInfo = getSentimentInfo(data.sentiments || []);
+    const hassentiments = data.sentiments && data.sentiments.length > 0;
     
     return (
-      <div 
-        className="relative"
-        style={{
-          background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
-          border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
-          borderRadius: '12px',
-          padding: '16px',
-          maxWidth: '320px',
-          boxShadow: isDarkMode ? `
-            0 20px 25px -5px rgba(0, 0, 0, 0.3),
-            0 10px 10px -5px rgba(0, 0, 0, 0.2),
-            0 0 0 1px rgba(59, 130, 246, 0.1)
-          ` : `
-            0 20px 25px -5px rgba(0, 0, 0, 0.1),
-            0 10px 10px -5px rgba(0, 0, 0, 0.05),
-            0 0 0 1px rgba(59, 130, 246, 0.1)
-          `,
-          backdropFilter: 'blur(8px)',
-          zIndex: 1000,
-        }}
-      >
-        {/* 🎯 헤더 섹션 */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div 
-              className="w-2 h-2 rounded-full animate-pulse"
-              style={{ 
-                background: getChartTheme(isDarkMode).chart.line,
-                boxShadow: `0 0 8px ${getChartTheme(isDarkMode).chart.crosshair}50`
-              }}
-            />
-            <span 
-              className="text-xs font-medium tracking-wide"
-              style={{ color: getChartTheme(isDarkMode).text.secondary }}
-            >
-              {formatDate(label)}
-            </span>
+      <div className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 shadow-2xl max-w-xs sm:max-w-sm text-sm sm:text-base">
+        {/* 날짜 */}
+        <div className="text-xs font-medium text-gray-500 mb-2">
+          {new Date(data.date).toLocaleDateString('ko-KR', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            weekday: 'short' 
+          })}
+        </div>
+        
+        {/* 가격 정보 */}
+        <div className="mb-3">
+          <div className="text-lg sm:text-xl font-bold" style={{ color: chartColor }}>
+            ${data.price.toLocaleString()}
           </div>
         </div>
-
-        {/* 💰 가격 정보 */}
-        <div className="mb-4">
-          <div 
-            className="text-2xl font-bold tracking-tight"
-            style={{ 
-              color: getChartTheme(isDarkMode).text.primary,
-              textShadow: `0 0 10px ${getChartTheme(isDarkMode).chart.crosshair}30`
-            }}
-          >
-            {formatPrice(payload[0].value)}
-          </div>
-          {priceChange && (
-            <div className="flex items-center gap-2 mt-1">
-              <div 
-                className="text-sm font-medium"
-                style={{ 
-                  color: priceChange.isPositive 
-                    ? getChartTheme(isDarkMode).sentiment.positive.primary 
-                    : getChartTheme(isDarkMode).sentiment.negative.primary
-                }}
-              >
-                {priceChange.isPositive ? '+' : ''}{priceChange.percentage.toFixed(1)}%
-              </div>
-              <div 
-                className="text-xs px-2 py-0.5 rounded-full"
-                style={{ 
-                  background: priceChange.isPositive 
-                    ? getChartTheme(isDarkMode).sentiment.positive.background 
-                    : getChartTheme(isDarkMode).sentiment.negative.background,
-                  color: priceChange.isPositive 
-                    ? getChartTheme(isDarkMode).sentiment.positive.primary 
-                    : getChartTheme(isDarkMode).sentiment.negative.primary
-                }}
-              >
-                {formatPrice(Math.abs(priceChange.value))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 📝 포스트 정보 */}
-        {data.postTitle && (
-          <div 
-            className="rounded-lg p-3 mb-3 relative overflow-hidden"
-            style={{ 
-              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).interaction.selection}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
-              border: `1px solid ${getChartTheme(isDarkMode).chart.line}30`
-            }}
-          >
-            <div className="flex items-start gap-2 mb-2">
-              <Target className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: getChartTheme(isDarkMode).text.accent }} />
-              <div>
-                <div 
-                  className="text-xs font-medium mb-1"
-                  style={{ color: getChartTheme(isDarkMode).text.accent }}
-                >
-                  메르의 언급
-                </div>
-                <div 
-                  className="text-sm leading-relaxed line-clamp-2"
-                  style={{ color: getChartTheme(isDarkMode).text.primary }}
-                >
-                  {data.postTitle}
-                </div>
-              </div>
-            </div>
-
-            {/* 🎯 감정 분석 섹션 */}
-            {sentimentInfo && (
-              <div 
-                className="pt-3 mt-3"
-                style={{ borderTop: `1px solid ${getChartTheme(isDarkMode).chart.grid}` }}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-3 h-3" style={{ color: getChartTheme(isDarkMode).text.accent }} />
-                    <span 
-                      className="text-xs font-medium"
-                      style={{ color: getChartTheme(isDarkMode).text.secondary }}
-                    >
-                      감정 분석
+        
+        {/* 감정 분석 정보 (기존 기능 유지) */}
+        {hassentiments && (
+          <div className="space-y-2">
+            <div className="text-xs font-semibold text-gray-700 mb-1">🎯 메르 감정 분석</div>
+            {data.sentiments.slice(0, 2).map((sentiment: any, index: number) => {
+              const sentimentColor = sentiment.sentiment === 'positive' 
+                ? tossColors.sentiment.positive
+                : sentiment.sentiment === 'negative' 
+                ? tossColors.sentiment.negative 
+                : tossColors.sentiment.neutral;
+              
+              const sentimentIcon = sentiment.sentiment === 'positive' ? '😊' 
+                : sentiment.sentiment === 'negative' ? '😰' : '😐';
+              
+              return (
+                <div key={index} className="text-xs space-y-1">
+                  <div className="flex items-center gap-1">
+                    <span style={{ color: sentimentColor }} className="font-medium">
+                      {sentimentIcon} {sentiment.sentiment.toUpperCase()}
+                    </span>
+                    <span className="text-gray-500">
+                      신뢰도 {(sentiment.confidence * 100).toFixed(0)}%
                     </span>
                   </div>
-                  <div 
-                    className="text-xs px-2 py-0.5 rounded-full"
-                    style={{ 
-                      background: sentimentInfo.type === 'positive' ? '#16a34a' : sentimentInfo.type === 'negative' ? '#dc2626' : '#2563eb',
-                      color: '#ffffff'
-                    }}
-                  >
-                    {sentimentInfo.type.toUpperCase()}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <div style={{ color: getChartTheme(isDarkMode).text.muted }}>신뢰도</div>
-                    <div 
-                      className="font-medium"
-                      style={{ color: getChartTheme(isDarkMode).text.secondary }}
-                    >
-                      {(sentimentInfo.avgConfidence * 100).toFixed(0)}%
+                  
+                  {sentiment.key_reasoning && (
+                    <div className="text-gray-600 bg-gray-50 rounded-lg p-2">
+                      💡 {sentiment.key_reasoning}
                     </div>
-                  </div>
-                  <div>
-                    <div style={{ color: getChartTheme(isDarkMode).text.muted }}>분석 수</div>
-                    <div 
-                      className="font-medium"
-                      style={{ color: getChartTheme(isDarkMode).text.secondary }}
-                    >
-                      {sentimentInfo.total}개
-                    </div>
-                  </div>
+                  )}
                 </div>
-                
-                {/* 🔍 감정 판단 근거 표시 */}
-                {data.sentiments && data.sentiments[0] && (
-                  <div className="mt-3 space-y-2">
-                    {/* 핵심 판단 논리 */}
-                    {data.sentiments[0].key_reasoning && (
-                      <div 
-                        className="p-2 rounded-lg"
-                        style={{ 
-                          background: `${getChartTheme(isDarkMode).background.tertiary}80`,
-                          border: `1px solid ${getChartTheme(isDarkMode).chart.grid}50`
-                        }}
-                      >
-                        <div 
-                          className="text-xs font-medium mb-1 flex items-center gap-1"
-                          style={{ color: getChartTheme(isDarkMode).text.accent }}
-                        >
-                          <span>💡</span> 핵심 논리
-                        </div>
-                        <div 
-                          className="text-xs leading-relaxed"
-                          style={{ color: getChartTheme(isDarkMode).text.primary }}
-                        >
-                          {data.sentiments[0].key_reasoning}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* 지원 증거 */}
-                    {data.sentiments[0].supporting_evidence && (
-                      <div className="space-y-1">
-                        {data.sentiments[0].supporting_evidence.positive_factors?.length > 0 && (
-                          <div className="flex items-start gap-1">
-                            <span className="text-xs mt-0.5">✅</span>
-                            <div 
-                              className="text-xs"
-                              style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
-                            >
-                              {data.sentiments[0].supporting_evidence.positive_factors[0]}
-                            </div>
-                          </div>
-                        )}
-                        {data.sentiments[0].supporting_evidence.negative_factors?.length > 0 && (
-                          <div className="flex items-start gap-1">
-                            <span className="text-xs mt-0.5">❌</span>
-                            <div 
-                              className="text-xs"
-                              style={{ color: getChartTheme(isDarkMode).sentiment.negative.primary }}
-                            >
-                              {data.sentiments[0].supporting_evidence.negative_factors[0]}
-                            </div>
-                          </div>
-                        )}
-                        {data.sentiments[0].supporting_evidence.neutral_factors?.length > 0 && (
-                          <div className="flex items-start gap-1">
-                            <span className="text-xs mt-0.5">➖</span>
-                            <div 
-                              className="text-xs"
-                              style={{ color: getChartTheme(isDarkMode).text.secondary }}
-                            >
-                              {data.sentiments[0].supporting_evidence.neutral_factors[0]}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* 투자 관점 */}
-                    {data.sentiments[0].investment_perspective?.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {data.sentiments[0].investment_perspective.slice(0, 3).map((perspective: string, idx: number) => (
-                          <span 
-                            key={idx}
-                            className="text-xs px-2 py-0.5 rounded-full"
-                            style={{ 
-                              background: `${getChartTheme(isDarkMode).chart.line}20`,
-                              color: getChartTheme(isDarkMode).text.secondary,
-                              border: `1px solid ${getChartTheme(isDarkMode).chart.line}30`
-                            }}
-                          >
-                            {perspective}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* 컨텍스트 인용구 */}
-                    {data.sentiments[0].context_quotes?.length > 0 && (
-                      <div 
-                        className="mt-2 p-2 rounded italic text-xs"
-                        style={{ 
-                          background: `${getChartTheme(isDarkMode).background.tertiary}50`,
-                          color: getChartTheme(isDarkMode).text.muted,
-                          borderLeft: `3px solid ${getChartTheme(isDarkMode).chart.line}50`
-                        }}
-                      >
-                        "{data.sentiments[0].context_quotes[0]}"
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 클릭 유도 */}
-            {data.postId && (
-              <div className="mt-3 pt-2" style={{ borderTop: `1px dashed ${getChartTheme(isDarkMode).chart.grid}` }}>
-                <button 
-                  onClick={() => handleMarkerClick(data)}
-                  className="text-xs hover:underline transition-all duration-200"
-                  style={{ 
-                    color: getChartTheme(isDarkMode).text.accent,
-                  }}
-                >
-                  포스트 자세히 보기 →
-                </button>
-              </div>
-            )}
+              );
+            })}
           </div>
         )}
-
-
-        {/* 💫 글로우 효과 */}
-        <div 
-          className="absolute inset-0 rounded-xl pointer-events-none"
-          style={{
-            background: getChartTheme(isDarkMode).gradients.chartGlow,
-            opacity: 0.1,
-            zIndex: -1
-          }}
-        />
+        
+        {/* 관련 포스트 */}
+        {data.posts && data.posts.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="text-xs font-medium text-gray-700 mb-1">
+              📝 관련 포스트 ({data.posts.length}개)
+            </div>
+            <div className="text-xs text-gray-600">
+              {data.posts[0].title.substring(0, 30)}...
+            </div>
+          </div>
+        )}
       </div>
     );
   };
 
-  const calculateYAxisDomain = (data: PricePoint[], xDomain?: [string | number | undefined, string | number | undefined]) => {
-    let dataToUse = data;
-    
-    // X축 줌 범위가 있으면 해당 범위의 데이터만 필터링
-    if (xDomain && xDomain[0] && xDomain[1]) {
-      const startDate = new Date(xDomain[0]).getTime();
-      const endDate = new Date(xDomain[1]).getTime();
-      dataToUse = data.filter(d => {
-        const dataDate = new Date(d.date).getTime();
-        return dataDate >= startDate && dataDate <= endDate;
-      });
-    }
-    
-    const prices = dataToUse.map(d => d.price).filter(p => p > 0);
-    if (prices.length > 0) {
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
-      const priceRange = maxPrice - minPrice;
-      
-      // 시계열 변화를 더 잘 보이도록 padding 줄임
-      const padding = priceRange * 0.05; // 10% → 5%로 줄임
-      
-      const yAxisMin = Math.max(0, minPrice - padding);
-      const yAxisMax = maxPrice + padding;
-      
-      setYAxisDomain([yAxisMin, yAxisMax]);
-      console.log(`📊 Y-axis range: ${yAxisMin.toFixed(0)} - ${yAxisMax.toFixed(0)} (${dataToUse.length}/${data.length} points)`);
-    }
-  };
-
+  // 줌 이벤트 핸들러 (데스크탑)
   const handleMouseDown = (e: any) => {
-    if (!e) return;
-    const { activeLabel } = e;
-    if (activeLabel) {
-      setZoomState(prev => ({ ...prev, refAreaLeft: activeLabel, isZooming: true }));
-    }
+    if (touchState.isTouch || !e || !e.activeLabel) return;
+    setIsZooming(true);
+    setZoomArea({ start: e.activeLabel });
   };
 
   const handleMouseMove = (e: any) => {
-    if (!zoomState.isZooming || !e) return;
-    const { activeLabel } = e;
-    if (activeLabel && zoomState.refAreaLeft !== activeLabel) {
-      setZoomState(prev => ({ ...prev, refAreaRight: activeLabel }));
-    }
+    if (touchState.isTouch || !isZooming || !e || !e.activeLabel) return;
+    setZoomArea(prev => ({ ...prev, end: e.activeLabel }));
   };
 
   const handleMouseUp = () => {
-    if (!zoomState.isZooming) return;
-    
-    let { refAreaLeft, refAreaRight } = zoomState;
-    
-    if (refAreaLeft && refAreaRight && refAreaLeft !== refAreaRight) {
-      // 날짜 순서 확인 및 정렬
-      if (new Date(refAreaLeft).getTime() > new Date(refAreaRight).getTime()) {
-        [refAreaLeft, refAreaRight] = [refAreaRight, refAreaLeft];
-      }
-      
-      // 현재 상태를 히스토리에 저장
-      setZoomHistory(prev => [
-        ...prev,
-        {
-          xDomain: [zoomState.left, zoomState.right],
-          yDomain: yAxisDomain
-        }
-      ]);
-      
-      // 새로운 줌 범위 설정
-      setZoomState({
-        left: refAreaLeft,
-        right: refAreaRight
-      });
-      
-      // Y축 범위도 새로 계산
-      calculateYAxisDomain(priceData, [refAreaLeft, refAreaRight]);
-      
-      console.log(`🔍 Zoomed to: ${refAreaLeft} ~ ${refAreaRight}`);
+    if (touchState.isTouch || !isZooming || !zoomArea.start || !zoomArea.end) {
+      setIsZooming(false);
+      setZoomArea({});
+      return;
     }
-    
-    setZoomState(prev => ({ ...prev, refAreaLeft: undefined, refAreaRight: undefined, isZooming: false }));
-  };
 
-  // 🤳 모바일 터치 이벤트 핸들러들
-  const handleTouchStart = (e: React.TouchEvent) => {
-    // 강화된 안전성 검사
-    if (!e || !e.touches || e.touches.length === 0) {
-      console.warn('터치 이벤트 또는 터치 배열이 없음');
-      return;
-    }
+    // 줌 적용
+    const start = zoomArea.start;
+    const end = zoomArea.end;
     
-    const touch = e.touches[0];
-    if (!touch || typeof touch.clientX !== 'number' || typeof touch.clientY !== 'number') {
-      console.warn('유효하지 않은 터치 객체');
-      return;
-    }
-    
-    try {
-      const target = e.currentTarget;
-      if (!target || typeof target.getBoundingClientRect !== 'function') {
-        console.warn('유효하지 않은 터치 타겟');
-        return;
-      }
-      
-      const rect = target.getBoundingClientRect();
-      if (!rect || typeof rect.left !== 'number' || typeof rect.top !== 'number') {
-        console.warn('유효하지 않은 바운딩 렉트');
-        return;
-      }
-      
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-      
-      // 차트 영역 내부인지 확인
-      if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
-        console.warn('터치가 차트 영역 밖에 있음');
-        return;
-      }
-      
-      setTouchInteraction(prev => ({
-        ...prev,
-        isActive: true,
-        touchStartX: x,
-        isSwiping: false,
-        position: { x, y }
-      }));
-    } catch (error) {
-      console.error('터치 시작 처리 중 오류:', error);
-      // 오류 시 안전한 상태로 초기화
-      setTouchInteraction({
-        isActive: false,
-        activePoint: null,
-        position: null,
-        touchStartX: null,
-        isSwiping: false,
+    if (start !== end) {
+      setZoomDomain({
+        start: new Date(Math.min(new Date(start).getTime(), new Date(end).getTime())).toISOString().split('T')[0],
+        end: new Date(Math.max(new Date(start).getTime(), new Date(end).getTime())).toISOString().split('T')[0]
       });
     }
+    
+    setIsZooming(false);
+    setZoomArea({});
+  };
+  
+  // 모바일 터치 이벤트 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchState({
+      startX: touch.clientX,
+      startY: touch.clientY,
+      isTouch: true,
+      touchStartTime: Date.now()
+    });
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchInteraction.isActive) return;
-    
-    const touch = e.touches[0];
-    if (!touch) return; // 터치 없음 방지
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-    
-    // 스와이핑 거리 계산
-    const deltaX = Math.abs(x - (touchInteraction.touchStartX || 0));
-    
-    // 최소 스와이핑 거리를 넘으면 스와이핑 모드 활성화
-    if (deltaX > 10) {
-      setTouchInteraction(prev => ({ ...prev, isSwiping: true }));
-    }
-    
-    // 차트 데이터에서 현재 터치 위치에 해당하는 포인트 찾기 (안전 장치)
-    if (priceData && priceData.length > 0) {
-      const chartWidth = rect.width - 60; // 마진 고려
-      const dataIndex = Math.round((x - 30) / chartWidth * (priceData.length - 1));
-      const clampedIndex = Math.max(0, Math.min(dataIndex, priceData.length - 1));
-      const activePoint = priceData[clampedIndex];
-      
-      setTouchInteraction(prev => ({
-        ...prev,
-        position: { x, y },
-        activePoint: activePoint || null
-      }));
-    } else {
-      // 데이터 없을 때는 위치만 업데이트
-      setTouchInteraction(prev => ({
-        ...prev,
-        position: { x, y },
-        activePoint: null
-      }));
-    }
-    
-    // 기본 터치 스크롤 방지 (차트 위에서만)
-    if (touchInteraction.isSwiping) {
-      e.preventDefault();
-    }
+    e.preventDefault(); // 스크롤 방지
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // 짧은 지연 후 터치 상태 초기화 (부드러운 사라짐 효과)
-    setTimeout(() => {
-      setTouchInteraction({
-        isActive: false,
-        activePoint: null,
-        position: null,
-        touchStartX: null,
-        isSwiping: false,
-      });
-    }, 500);
-  };
-
-  const handleZoomOut = () => {
-    if (zoomHistory.length > 0) {
-      const lastState = zoomHistory[zoomHistory.length - 1];
-      setZoomState({
-        left: lastState.xDomain[0],
-        right: lastState.xDomain[1]
-      });
-      setYAxisDomain(lastState.yDomain);
-      setZoomHistory(prev => prev.slice(0, -1));
-    } else {
-      // 전체 범위로 리셋
-      setZoomState({});
-      calculateYAxisDomain(priceData);
-    }
-  };
-
-  const handleReset = () => {
-    setZoomState({});
-    setZoomHistory([]);
-    calculateYAxisDomain(priceData);
-    setTimeRange('1Y');
-  };
-
-  const handleTimeRangeChange = (range: string) => {
-    console.log(`📅 Changing time range to: ${range}`);
-    setTimeRange(range);
-    setZoomState({});
-    setZoomHistory([]);
-    setLoading(true);
+    const touchDuration = Date.now() - (touchState.touchStartTime || 0);
     
-    // 새로운 기간에 대한 데이터를 다시 가져옴 (useEffect가 트리거됨)
-    // fetchAllPostsAndGenerateChart()는 useEffect를 통해 자동 호출됨
+    // 탭 (100ms 미만) = 툴팁 표시
+    // 길게 누르기 (500ms 이상) = 풀스크린 토글
+    if (touchDuration < 100) {
+      // 짧은 탭 - 툴팁 표시는 차트 라이브러리에서 처리
+    } else if (touchDuration > 500) {
+      // 길게 누르기 - 풀스크린 토글
+      setIsFullscreen(!isFullscreen);
+    }
+    
+    setTouchState({ isTouch: false });
+  };
+
+  // 줌 리셋
+  const resetZoom = () => {
+    setZoomDomain({});
   };
 
   if (loading) {
     return (
-      <div 
-        className="w-full rounded-xl overflow-hidden relative"
-        style={{
-          background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
-          border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
-          boxShadow: `
-            0 20px 25px -5px rgba(0, 0, 0, 0.2),
-            0 10px 10px -5px rgba(0, 0, 0, 0.1),
-            0 0 0 1px rgba(59, 130, 246, 0.05)
-          `
-        }}
-      >
-        <div 
-          className="px-6 py-4 border-b"
-          style={{ 
-            borderColor: getChartTheme(isDarkMode).chart.grid,
-            background: `linear-gradient(90deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div 
-              className="p-2 rounded-lg animate-pulse"
-              style={{ background: `${getChartTheme(isDarkMode).chart.line}20` }}
-            >
-              <BarChart3 
-                className="w-5 h-5"
-                style={{ color: getChartTheme(isDarkMode).chart.line }}
-              />
-            </div>
-            <div>
-              <h3 
-                className="text-lg font-bold tracking-tight"
-                style={{ color: getChartTheme(isDarkMode).text.primary }}
-              >
-                가격 차트
-              </h3>
-              <p 
-                className="text-sm mt-1"
-                style={{ color: getChartTheme(isDarkMode).text.muted }}
-              >
-                차트 데이터를 불러오는 중입니다...
-              </p>
+      <Card className="w-full">
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="flex gap-2">
+              {['1M', '3M', '6M', '1Y'].map(period => (
+                <div key={period} className="h-10 bg-gray-200 rounded w-16"></div>
+              ))}
             </div>
           </div>
-        </div>
-        
-        <div className="p-6">
-          <div 
-            className="h-80 rounded-lg flex items-center justify-center relative overflow-hidden"
-            style={{
-              background: getChartTheme(isDarkMode).background.primary,
-              border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
-            }}
-          >
-            {/* 스켈레톤 로딩 애니메이션 */}
-            <div className="absolute inset-0">
-              <div 
-                className="w-full h-full opacity-20 animate-pulse"
-                style={{
-                  background: `linear-gradient(90deg, transparent 0%, ${getChartTheme(isDarkMode).chart.line}40 50%, transparent 100%)`,
-                  backgroundSize: '200% 100%',
-                }}
-              />
-            </div>
-            
-            <div className="text-center z-10">
-              <div 
-                className="w-12 h-12 rounded-full border-2 border-transparent border-t-current animate-spin mx-auto mb-4"
-                style={{ color: getChartTheme(isDarkMode).chart.line }}
-              />
-              <p 
-                className="text-sm font-medium"
-                style={{ color: getChartTheme(isDarkMode).text.secondary }}
-              >
-                차트를 불러오는 중...
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // CLAUDE.md 원칙: 실제 데이터 없으면 "정보 없음" 명확히 표시
-  if (priceData.length === 0) {
-    return (
-      <div 
-        className="w-full rounded-xl overflow-hidden relative"
-        style={{
-          background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
-          border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
-          boxShadow: `
-            0 20px 25px -5px rgba(0, 0, 0, 0.2),
-            0 10px 10px -5px rgba(0, 0, 0, 0.1),
-            0 0 0 1px rgba(59, 130, 246, 0.05)
-          `
-        }}
-      >
-        <div 
-          className="px-6 py-4 border-b"
-          style={{ 
-            borderColor: getChartTheme(isDarkMode).chart.grid,
-            background: `linear-gradient(90deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div 
-              className="p-2 rounded-lg"
-              style={{ background: `${getChartTheme(isDarkMode).chart.line}20` }}
-            >
-              <BarChart3 
-                className="w-5 h-5"
-                style={{ color: getChartTheme(isDarkMode).chart.line }}
-              />
-            </div>
-            <div>
-              <h3 
-                className="text-lg font-bold tracking-tight"
-                style={{ color: getChartTheme(isDarkMode).text.primary }}
-              >
-                {stockName} 가격 차트
-              </h3>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-6">
-          <div 
-            className="text-center py-12"
-            style={{ color: getChartTheme(isDarkMode).text.muted }}
-          >
-            <div 
-              className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center"
-              style={{ background: `${getChartTheme(isDarkMode).chart.grid}30` }}
-            >
-              <BarChart3 
-                className="w-8 h-8 opacity-50"
-                style={{ color: getChartTheme(isDarkMode).text.muted }}
-              />
-            </div>
-            <div className="space-y-3">
-              <h4 
-                className="text-xl font-semibold"
-                style={{ color: getChartTheme(isDarkMode).text.secondary }}
-              >
-                가격 정보 없음
-              </h4>
-              <p 
-                className="text-sm leading-relaxed max-w-sm mx-auto"
-                style={{ color: getChartTheme(isDarkMode).text.muted }}
-              >
-                {stockName}({ticker})의 6개월치 가격 데이터가<br/>
-                아직 준비되지 않았습니다.
-              </p>
-              <p 
-                className="text-xs mt-4"
-                style={{ 
-                  color: getChartTheme(isDarkMode).text.muted,
-                  opacity: 0.7 
-                }}
-              >
-                💡 메르가 언급한 종목만 차트 데이터를 제공합니다.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div 
-      className="w-full rounded-xl overflow-hidden relative"
-      style={{
-        background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
-        border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
-        boxShadow: `
-          0 20px 25px -5px rgba(0, 0, 0, 0.2),
-          0 10px 10px -5px rgba(0, 0, 0, 0.1),
-          0 0 0 1px rgba(59, 130, 246, 0.05)
-        `
-      }}
-    >
-      {/* 🎨 프로페셔널 헤더 */}
-      <div 
-        className="px-6 py-4 border-b relative"
-        style={{ 
-          borderColor: getChartTheme(isDarkMode).chart.grid,
-          background: `linear-gradient(90deg, ${getChartTheme(isDarkMode).background.secondary} 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div 
-              className="p-2 rounded-lg"
-              style={{ background: `${getChartTheme(isDarkMode).chart.line}20` }}
-            >
-              <BarChart3 
-                className="w-5 h-5"
-                style={{ color: getChartTheme(isDarkMode).chart.line }}
-              />
-            </div>
-            <div>
-              <h3 
-                className="text-lg font-bold tracking-tight"
-                style={{ color: getChartTheme(isDarkMode).text.primary }}
-              >
-                {stockName} 가격 차트
-              </h3>
-              <p 
-                className="text-sm mt-1"
-                style={{ color: getChartTheme(isDarkMode).text.muted }}
-              >
-                최근 {timeRange} 가격 변화 추이 및 메르의 언급 시점
-              </p>
-            </div>
-          </div>
-          
-          {/* 🏷️ 티커 & 성과 배지 */}
-          <div className="flex items-center gap-3">
-            <div 
-              className="px-3 py-1.5 rounded-lg text-sm font-medium"
-              style={{ 
-                background: `${getChartTheme(isDarkMode).text.accent}20`,
-                color: getChartTheme(isDarkMode).text.accent,
-                border: `1px solid ${getChartTheme(isDarkMode).text.accent}30`
-              }}
-            >
-              {ticker}
-            </div>
-            {priceChange && (
-              <div 
-                className="px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1.5"
-                style={{ 
-                  background: priceChange.isPositive 
-                    ? `${getChartTheme(isDarkMode).sentiment.positive.primary}20`
-                    : `${getChartTheme(isDarkMode).sentiment.negative.primary}20`,
-                  color: priceChange.isPositive 
-                    ? getChartTheme(isDarkMode).sentiment.positive.primary
-                    : getChartTheme(isDarkMode).sentiment.negative.primary,
-                  border: `1px solid ${priceChange.isPositive 
-                    ? getChartTheme(isDarkMode).sentiment.positive.primary
-                    : getChartTheme(isDarkMode).sentiment.negative.primary}30`
-                }}
-              >
-                {priceChange.isPositive ? (
-                  <TrendingUp className="w-3.5 h-3.5" />
-                ) : (
-                  <TrendingDown className="w-3.5 h-3.5" />
-                )}
-                {priceChange.isPositive ? '+' : ''}{priceChange.percentage.toFixed(1)}%
+    <Card className={`w-full transition-all duration-300 ${isFullscreen ? 'fixed inset-4 z-50' : ''}`}>
+      <CardContent className="p-0">
+        {/* 토스 스타일 헤더 (모바일 최적화) */}
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">{ticker}</h2>
+              <div className="flex items-center gap-2 sm:gap-3 mt-1">
+                <span className="text-xl sm:text-2xl font-bold" style={{ color: chartColor }}>
+                  ${currentPrice.toLocaleString()}
+                </span>
+                <div className="flex items-center gap-1">
+                  {changePercent >= 0 ? (
+                    <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" style={{ color: chartColor }} />
+                  ) : (
+                    <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" style={{ color: chartColor }} />
+                  )}
+                  <span 
+                    className="text-xs sm:text-sm font-semibold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg"
+                    style={{ 
+                      color: chartColor,
+                      backgroundColor: `${chartColor}15`
+                    }}
+                  >
+                    {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-        
-        {/* 💫 헤더 글로우 효과 */}
-        <div 
-          className="absolute inset-0 pointer-events-none opacity-10"
-          style={{
-            background: getChartTheme(isDarkMode).gradients.chartGlow,
-            zIndex: -1
-          }}
-        />
-      </div>
-      
-      <div className="p-4">
-        {/* 🎛️ 프로페셔널 컨트롤 패널 */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <span 
-              className="text-sm font-medium"
-              style={{ color: getChartTheme(isDarkMode).text.secondary }}
-            >
-              기간:
-            </span>
-            <div className="flex gap-1">
-              {['1M', '3M', '6M', '1Y'].map((range) => (
-                <button
-                  key={range}
-                  onClick={() => handleTimeRangeChange(range)}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 hover:scale-105"
-                  style={{ 
-                    background: timeRange === range 
-                      ? getChartTheme(isDarkMode).chart.line
-                      : 'transparent',
-                    color: timeRange === range 
-                      ? getChartTheme(isDarkMode).background.primary
-                      : getChartTheme(isDarkMode).text.secondary,
-                    border: `1px solid ${timeRange === range 
-                      ? getChartTheme(isDarkMode).chart.line
-                      : getChartTheme(isDarkMode).chart.grid}`,
-                    boxShadow: timeRange === range 
-                      ? `0 0 10px ${getChartTheme(isDarkMode).chart.line}30`
-                      : 'none'
-                  }}
-                >
-                  {range}
-                </button>
-              ))}
             </div>
             
-            {/* 📊 실제 데이터 범위 표시 */}
-            <div className="mt-2 text-xs flex items-center gap-2">
-              <Info className="w-3 h-3" style={{ color: getChartTheme(isDarkMode).text.muted }} />
-              <span style={{ color: getChartTheme(isDarkMode).text.muted }}>
-                실제 데이터: {filteredData.length > 0 ? formatDate(filteredData[0]?.date || '') : '-'} ~ {filteredData.length > 0 ? formatDate(filteredData[filteredData.length - 1]?.date || '') : '-'} ({filteredData.length}일)
-              </span>
-              {filteredData.length > 0 && filteredData.length < (timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : timeRange === '6M' ? 180 : 365) && (
-                <span 
-                  className="px-2 py-0.5 rounded text-xs"
-                  style={{ 
-                    background: `${getChartTheme(isDarkMode).sentiment.warning.primary}20`,
-                    color: getChartTheme(isDarkMode).sentiment.warning.primary
-                  }}
+            <div className="flex items-center gap-1 sm:gap-2">
+              {/* 줌 리셋 */}
+              {(zoomDomain.start || zoomDomain.end) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetZoom}
+                  className="text-xs px-2 py-1 h-auto"
                 >
-                  데이터 부족
-                </span>
+                  <RotateCcw className="w-3 h-3 sm:mr-1" />
+                  <span className="hidden sm:inline">리셋</span>
+                </Button>
               )}
+              
+              {/* 풀스크린 토글 */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="text-xs px-2 py-1 h-auto"
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-3 h-3" />
+                ) : (
+                  <Maximize2 className="w-3 h-3" />
+                )}
+              </Button>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            {(zoomState.left && zoomState.right) && (
-              <div 
-                className="px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
-                style={{ 
-                  background: `${getChartTheme(isDarkMode).interaction.focus}20`,
-                  color: getChartTheme(isDarkMode).interaction.focus,
-                  border: `1px solid ${getChartTheme(isDarkMode).interaction.focus}30`
-                }}
-              >
-                📅 {formatDate(zoomState.left.toString())} ~ {formatDate(zoomState.right.toString())}
-              </div>
-            )}
-            {zoomHistory.length > 0 && (
-              <button 
-                onClick={handleZoomOut}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 hover:scale-105"
-                style={{ 
-                  background: 'transparent',
-                  color: getChartTheme(isDarkMode).text.secondary,
-                  border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
-                }}
-              >
-                ↶ 뒤로
-              </button>
-            )}
-            <button 
-              onClick={handleReset}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 hover:scale-105"
-              style={{ 
-                background: 'transparent',
-                color: getChartTheme(isDarkMode).text.secondary,
-                border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
-              }}
-            >
-              🔄 초기화
-            </button>
+          {/* 줌 정보 표시 */}
+          {(zoomDomain.start && zoomDomain.end) && (
+            <div className="mt-2 text-xs text-gray-500">
+              🔍 {new Date(zoomDomain.start).toLocaleDateString('ko-KR')} ~ {new Date(zoomDomain.end).toLocaleDateString('ko-KR')}
+            </div>
+          )}
+          
+          {/* 모바일 도움말 */}
+          <div className="mt-2 sm:hidden text-xs text-gray-400">
+            📱 길게 누르면 풀스크린, 드래그하면 확대
           </div>
         </div>
-        
-        {/* 📊 차트 컨테이너 - 다크 배경 + 터치 이벤트 */}
+
+        {/* 토스 스타일 차트 영역 */}
         <div 
-          className="h-72 w-full rounded-lg relative overflow-hidden"
-          data-testid="stock-price-chart"
-          style={{
-            background: getChartTheme(isDarkMode).background.primary,
-            border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
-            boxShadow: `inset 0 2px 4px rgba(0, 0, 0, 0.2)`
-          }}
+          className={`${isFullscreen ? 'h-96 md:h-[500px]' : 'h-64 sm:h-80'} p-2 sm:p-4`}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
-              data={priceData} 
-              margin={{ top: 15, right: 15, left: 15, bottom: 25 }}
+              data={filteredData}
+              margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
-              isAnimationActive={false}
             >
-              {/* 🎨 프로페셔널 그리드 시스템 */}
+              {/* 최소한의 그리드 (토스 스타일) */}
               <CartesianGrid 
-                strokeDasharray="1 3"
-                stroke={getChartTheme(isDarkMode).chart.grid}
-                strokeWidth={0.5}
-                opacity={0.6}
-                horizontal={true}
+                strokeDasharray="none" 
+                stroke={tossColors.gridLine}
                 vertical={false}
+                strokeWidth={1}
               />
               
-              {/* 📅 X축 (시간) - TradingView 스타일 */}
+              {/* X축 (토스 스타일 - 중복 제거) */}
               <XAxis 
-                dataKey="date" 
-                tickFormatter={formatXAxisDate}
-                ticks={getCustomTicks(filteredData)}
-                tickCount={timeRange === '6M' || timeRange === '1Y' ? undefined : 8}
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
                 tick={{ 
-                  fontSize: 11, 
-                  fill: getChartTheme(isDarkMode).text.muted,
-                  fontWeight: 500 
+                  fontSize: isMobile ? 9 : 11, 
+                  fill: tossColors.muted,
+                  fontWeight: 500
                 }}
-                axisLine={{ 
-                  stroke: getChartTheme(isDarkMode).chart.axis, 
-                  strokeWidth: 1 
-                }}
-                tickLine={{ 
-                  stroke: getChartTheme(isDarkMode).chart.axis, 
-                  strokeWidth: 1 
-                }}
-                domain={zoomState.left && zoomState.right ? [zoomState.left, zoomState.right] : 
-                  filteredData.length > 0 ? [filteredData[0].date, filteredData[filteredData.length - 1].date] : ['dataMin', 'dataMax']}
-                type="category"
-                allowDataOverflow
-                height={40}
                 interval="preserveStartEnd"
+                tickCount={isMobile ? 4 : 6}
+                tickFormatter={(value) => {
+                  const date = new Date(value);
+                  
+                  if (isMobile) {
+                    // 모바일: 더 간단한 형식
+                    if (timeRange === '1Y') {
+                      return date.toLocaleDateString('ko-KR', { month: 'short' });
+                    }
+                    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+                  } else {
+                    // 데스크탑: 상세한 형식
+                    if (timeRange === '1M') {
+                      return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+                    } else if (timeRange === '1Y') {
+                      return date.toLocaleDateString('ko-KR', { year: '2-digit', month: 'short' });
+                    } else {
+                      return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+                    }
+                  }
+                }}
               />
               
-              {/* 💰 Y축 (가격) - 전문적인 가격 표시 */}
+              {/* Y축 (토스 스타일 - 가격 표시 개선) */}
               <YAxis 
-                domain={yAxisDomain || ['dataMin - 2', 'dataMax + 2']}
-                tickFormatter={(value) => formatPrice(Math.round(value))}
-                ticks={getCustomYTicks(filteredData)}
-                tick={{ 
-                  fontSize: 11, 
-                  fill: getChartTheme(isDarkMode).text.muted,
-                  fontWeight: 500 
-                }}
-                axisLine={{ 
-                  stroke: getChartTheme(isDarkMode).chart.axis, 
-                  strokeWidth: 1 
-                }}
-                tickLine={{ 
-                  stroke: getChartTheme(isDarkMode).chart.axis, 
-                  strokeWidth: 1 
-                }}
-                width={100}
                 orientation="right"
-                allowDecimals={false}
-              />
-              
-              {/* 🎯 고급 툴팁 시스템 - 고정 위치 */}
-              <Tooltip 
-                content={<CustomTooltip />}
-                animationDuration={200}
-                animationEasing="ease-out"
-                allowEscapeViewBox={{ x: false, y: false }}
-                offset={0}
-                isAnimationActive={false}
-                cursor={false}
-                wrapperStyle={{ 
-                  zIndex: 1000,
-                  pointerEvents: 'none',
-                  position: 'fixed',
-                  top: '20px',
-                  left: '20px'
+                axisLine={false}
+                tickLine={false}
+                tick={{ 
+                  fontSize: isMobile ? 9 : 11, 
+                  fill: tossColors.muted,
+                  fontWeight: 500
                 }}
+                tickCount={isMobile ? 4 : 6}
+                tickFormatter={(value) => {
+                  if (value >= 1000) {
+                    return isMobile ? `$${(value / 1000).toFixed(0)}K` : `$${(value / 1000).toFixed(1)}K`;
+                  } else {
+                    return isMobile ? `$${Math.round(value)}` : `$${value.toFixed(0)}`;
+                  }
+                }}
+                domain={['dataMin * 0.98', 'dataMax * 1.02']}
+                width={isMobile ? 50 : 65}
               />
               
-              {/* 📊 메인 가격 라인 - 글로우 효과 */}
-              <Line 
-                type="monotone" 
-                dataKey="price" 
-                stroke={getChartTheme(isDarkMode).chart.line}
+              {/* 메인 라인 (토스 스타일) */}
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke={chartColor}
                 strokeWidth={2.5}
-                style={{}}
-                isAnimationActive={false}
-                dot={(props: any) => {
-                  const { cx, cy, payload } = props;
-                  
-                  // 🎯 포스트 언급 마커 (감정 분석 기반 고급 시각화)
-                  if (payload.postTitle && !payload.isCurrentPrice) {
-                    console.log(`🎨 Rendering marker for: ${payload.postTitle}`, { 
-                      sentiments: payload.sentiments,
-                      hasSentiments: !!(payload.sentiments && payload.sentiments.length > 0),
-                      sentimentCount: payload.sentiments?.length || 0
-                    });
-                    // 감정 분석에 따른 마커 스타일 결정
-                    const currentTheme = getChartTheme(isDarkMode);
-                    let markerTheme = currentTheme.sentiment.neutral; // 기본값은 중립
-                    let intensity = 0.7;
-                    
-                    if (payload.sentiments && payload.sentiments.length > 0) {
-                      const sentimentCounts = payload.sentiments.reduce((acc: any, s: any) => {
-                        acc[s.sentiment] = (acc[s.sentiment] || 0) + 1;
-                        return acc;
-                      }, {});
-                      
-                      const dominantSentiment = Object.entries(sentimentCounts)
-                        .sort(([,a], [,b]) => (b as number) - (a as number))[0][0];
-                      
-                      console.log(`🎯 Sentiment analysis for marker:`, { 
-                        sentimentCounts, 
-                        dominantSentiment,
-                        markerThemeBefore: markerTheme.primary,
-                        willUseSentiment: currentTheme.sentiment[dominantSentiment as keyof typeof currentTheme.sentiment]?.primary
-                      });
-                      
-                      // 🎨 명시적인 감정별 색상 매핑
-                      if (dominantSentiment === 'positive') {
-                        markerTheme = currentTheme.sentiment.positive;
-                      } else if (dominantSentiment === 'negative') {
-                        markerTheme = currentTheme.sentiment.negative;
-                      } else if (dominantSentiment === 'neutral') {
-                        markerTheme = currentTheme.sentiment.neutral;
-                      } else {
-                        // 알 수 없는 감정의 경우 기본값
-                        console.warn(`⚠️ Unknown sentiment: ${dominantSentiment}`);
-                        markerTheme = currentTheme.sentiment.neutral;
-                      }
-                      
-                      // 감정 강도에 따른 시각적 효과 조정
-                      const avgConfidence = payload.sentiments.reduce((sum: number, s: any) => sum + s.confidence, 0) / payload.sentiments.length;
-                      intensity = Math.max(0.5, avgConfidence);
-                      
-                      console.log(`🎨 Final marker style:`, { 
-                        markerThemeAfter: markerTheme.primary, 
-                        intensity,
-                        avgConfidence 
-                      });
-                    } else {
-                      console.log(`⚪ No sentiment data, using neutral marker:`, { 
-                        neutralColor: markerTheme.primary,
-                        currentTheme: currentTheme,
-                        isDarkMode: isDarkMode
-                      });
-                    }
-                    
-                    // 🔧 색상이 제대로 적용되는지 강제 확인
-                    console.log(`🔧 Final marker theme check:`, {
-                      markerThemePrimary: markerTheme.primary,
-                      shouldBeGreen: currentTheme.sentiment.positive.primary,
-                      shouldBeRed: currentTheme.sentiment.negative.primary,
-                      shouldBeNeutral: currentTheme.sentiment.neutral.primary
-                    });
-                    
-                    return (
-                      <g>
-                        {/* 외부 글로우 효과 - 다크모드 조건부 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={12} 
-                          fill={markerTheme.primary}
-                          opacity={isDarkMode ? 0.1 * intensity : 0.05 * intensity}
-                        />
-                        
-                        {/* 중간 링 - 다크모드 조건부 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={8} 
-                          fill="none" 
-                          stroke={markerTheme.primary}
-                          strokeWidth={1}
-                          opacity={isDarkMode ? 0.3 * intensity : 0.2 * intensity}
-                        />
-                        
-                        {/* 투명한 클릭 영역 확대 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={14} 
-                          fill="transparent" 
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => handleMarkerClick(payload)}
-                        />
-                        
-                        {/* 메인 마커 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={5} 
-                          fill="none" 
-                          stroke={markerTheme.primary} 
-                          strokeWidth={2.5}
-                          style={{ 
-                            cursor: 'pointer', 
-                            pointerEvents: 'none'
-                          }}
-                        />
-                        
-                        {/* 내부 점 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={2} 
-                          fill={markerTheme.secondary}
-                          style={{ pointerEvents: 'none' }}
-                        />
-                        
-                        {/* 감정 분석 인디케이터 */}
-                        {payload.sentiments && payload.sentiments.length > 0 && (
-                          <>
-                            <circle 
-                              cx={cx + 7} 
-                              cy={cy - 7} 
-                              r={3} 
-                              fill={markerTheme.background}
-                              stroke={markerTheme.primary}
-                              strokeWidth={1.5}
-                              style={{}}
-                            />
-                            <circle 
-                              cx={cx + 7} 
-                              cy={cy - 7} 
-                              r={1.5} 
-                              fill={markerTheme.primary}
-                            />
-                          </>
-                        )}
-                      </g>
-                    );
-                  }
-                  
-                  // 현재가 마커 제거됨 - 불필요한 원형 마커 방지
-                  
-                  return null;
+                dot={false}
+                activeDot={{ 
+                  r: 5, 
+                  fill: chartColor,
+                  strokeWidth: 3,
+                  stroke: '#ffffff'
                 }}
-                dot={(props: any) => {
-                  const { cx, cy, payload } = props;
-                  
-                  // 🎯 포스트 언급 마커 (감정 분석 기반 고급 시각화)
-                  if (payload.postTitle) {
-                    console.log(`🎨 Rendering marker for: ${payload.postTitle}`, { 
-                      sentiments: payload.sentiments,
-                      hasSentiments: !!(payload.sentiments && payload.sentiments.length > 0),
-                      sentimentCount: payload.sentiments?.length || 0
-                    });
-                    // 감정 분석에 따른 마커 스타일 결정
-                    const currentTheme = getChartTheme(isDarkMode);
-                    let markerTheme = currentTheme.sentiment.neutral; // 기본값은 중립
-                    let intensity = 0.7;
-                    
-                    if (payload.sentiments && payload.sentiments.length > 0) {
-                      const sentimentCounts = { positive: 0, negative: 0, neutral: 0 };
-                      payload.sentiments.forEach((s: any) => {
-                        if (sentimentCounts[s.sentiment as keyof typeof sentimentCounts] !== undefined) {
-                          sentimentCounts[s.sentiment as keyof typeof sentimentCounts]++;
-                        }
-                      });
-                      
-                      const dominantSentiment = Object.entries(sentimentCounts)
-                        .sort(([,a], [,b]) => (b as number) - (a as number))[0][0];
-                      
-                      console.log(`🎯 Sentiment analysis for marker:`, { 
-                        sentimentCounts, 
-                        dominantSentiment,
-                        markerThemeBefore: markerTheme.primary,
-                        willUseSentiment: currentTheme.sentiment[dominantSentiment as keyof typeof currentTheme.sentiment]?.primary
-                      });
-                      
-                      // 🎨 명시적인 감정별 색상 매핑
-                      if (dominantSentiment === 'positive') {
-                        markerTheme = currentTheme.sentiment.positive;
-                      } else if (dominantSentiment === 'negative') {
-                        markerTheme = currentTheme.sentiment.negative;
-                      } else if (dominantSentiment === 'neutral') {
-                        markerTheme = currentTheme.sentiment.neutral;
-                      } else {
-                        // 알 수 없는 감정의 경우 기본값
-                        console.warn(`⚠️ Unknown sentiment: ${dominantSentiment}`);
-                        markerTheme = currentTheme.sentiment.neutral;
-                      }
-                      
-                      // 감정 강도에 따른 시각적 효과 조정
-                      const avgConfidence = payload.sentiments.reduce((sum: number, s: any) => sum + s.confidence, 0) / payload.sentiments.length;
-                      intensity = Math.max(0.5, avgConfidence);
-                      
-                      console.log(`🎨 Final marker style:`, { 
-                        markerThemeAfter: markerTheme.primary, 
-                        intensity,
-                        avgConfidence 
-                      });
-                    } else {
-                      console.log(`⚪ No sentiment data, using neutral marker:`, { 
-                        neutralColor: markerTheme.primary,
-                        currentTheme: currentTheme,
-                        isDarkMode: isDarkMode
-                      });
-                    }
-                    
-                    // 🔧 색상이 제대로 적용되는지 강제 확인
-                    console.log(`🔧 Final marker theme check:`, {
-                      markerThemePrimary: markerTheme.primary,
-                      shouldBeGreen: currentTheme.sentiment.positive.primary,
-                      shouldBeRed: currentTheme.sentiment.negative.primary,
-                      shouldBeNeutral: currentTheme.sentiment.neutral.primary
-                    });
-                    
-                    return (
-                      <g>
-                        {/* 외부 글로우 효과 - 다크모드 조건부 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={12} 
-                          fill={markerTheme.primary}
-                          opacity={isDarkMode ? 0.1 * intensity : 0.05 * intensity}
-                        />
-                        
-                        {/* 중간 링 - 다크모드 조건부 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={8} 
-                          fill="none" 
-                          stroke={markerTheme.primary}
-                          strokeWidth={1}
-                          opacity={isDarkMode ? 0.3 * intensity : 0.2 * intensity}
-                        />
-                        
-                        {/* 투명한 클릭 영역 확대 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={14} 
-                          fill="transparent" 
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => handleMarkerClick(payload)}
-                        />
-                        
-                        {/* 메인 마커 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={5} 
-                          fill="none" 
-                          stroke={markerTheme.primary} 
-                          strokeWidth={2.5}
-                          style={{ 
-                            cursor: 'pointer', 
-                            filter: `drop-shadow(0 0 6px ${markerTheme.glow}80)`
-                          }}
-                        />
-                        
-                        {/* 내부 점 */}
-                        <circle 
-                          cx={cx} 
-                          cy={cy} 
-                          r={2} 
-                          fill={markerTheme.secondary}
-                          style={{ pointerEvents: 'none' }}
-                        />
-                        
-                        {/* 감정 분석 인디케이터 */}
-                        {payload.sentiments && payload.sentiments.length > 0 && (
-                          <>
-                            <circle 
-                              cx={cx + 7} 
-                              cy={cy - 7} 
-                              r={3} 
-                              fill={markerTheme.background}
-                              stroke={markerTheme.primary}
-                              strokeWidth={1.5}
-                              style={{}}
-                            />
-                            <circle 
-                              cx={cx + 7} 
-                              cy={cy - 7} 
-                              r={1.5} 
-                              fill={markerTheme.primary}
-                            />
-                          </>
-                        )}
-                      </g>
-                    );
-                  }
-                  
-                  // 현재가 마커 제거됨 - 불필요한 원형 마커 방지
-                  
-                  return null;
-                }}
-                dotSize={0}
-                activeDot={false}
-                name=""
-                connectNulls={false}
+                animationBegin={0}
+                animationDuration={1500}
+                animationEasing="ease-out"
               />
               
-              {/* 🔍 줌 선택 영역 */}
-              {zoomState.refAreaLeft && zoomState.refAreaRight && (
+              {/* 언급된 정보 마커들 (빈 원으로 표시) */}
+              {showMarkers && filteredData.map((point, index) => {
+                // 포스트가 있거나 감정 분석이 있는 경우 빈 원 표시
+                if ((!point.posts || point.posts.length === 0) && 
+                    (!point.sentiments || point.sentiments.length === 0)) return null;
+                
+                // 마커 인덱스 계산 (데이터가 있는 포인트만 카운트)
+                const markersBeforeThis = filteredData.slice(0, index).filter(p => 
+                  (p.posts && p.posts.length > 0) || (p.sentiments && p.sentiments.length > 0)
+                ).length;
+                
+                // 아직 표시할 시점이 아니면 렌더링하지 않음
+                if (markersBeforeThis >= visibleMarkerCount) return null;
+                
+                // 감정이 있는 경우 색상 적용, 없으면 차트 색상과 동일
+                let markerColor = chartColor; // 감정 정보 없음 - 차트 가격선과 같은 색
+                if (point.sentiments && point.sentiments.length > 0) {
+                  const dominantSentiment = point.sentiments.reduce((prev, current) => 
+                    (current.confidence > prev.confidence) ? current : prev
+                  );
+                  
+                  markerColor = dominantSentiment.sentiment === 'positive' 
+                    ? tossColors.sentiment.positive    // 🟢 긍정: #16a34a
+                    : dominantSentiment.sentiment === 'negative' 
+                    ? tossColors.sentiment.negative    // 🔴 부정: #dc2626
+                    : tossColors.sentiment.neutral;    // ⚫ 중립: #000000 (검은색)
+                }
+                
+                return (
+                  <ReferenceDot
+                    key={`mention-${index}`}
+                    x={point.date}
+                    y={point.price}
+                    r={4}
+                    fill="none"
+                    stroke={markerColor}
+                    strokeWidth={2}
+                    style={{
+                      opacity: 1,
+                      transform: 'scale(1)',
+                      transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+                    }}
+                  />
+                );
+              })}
+              
+              {/* 현재가 참조선 */}
+              <ReferenceLine 
+                y={currentPrice} 
+                stroke={chartColor}
+                strokeDasharray="3 3"
+                strokeOpacity={0.5}
+                strokeWidth={1}
+                animationBegin={1000}
+                animationDuration={600}
+                animationEasing="ease-out"
+              />
+              
+              {/* 줌 영역 표시 */}
+              {isZooming && zoomArea.start && zoomArea.end && (
                 <ReferenceArea
-                  x1={zoomState.refAreaLeft}
-                  x2={zoomState.refAreaRight}
-                  stroke={getChartTheme(isDarkMode).interaction.selection}
-                  strokeOpacity={0.8}
-                  fill={getChartTheme(isDarkMode).interaction.selection}
-                  fillOpacity={0.15}
-                  strokeWidth={1}
-                  strokeDasharray="3 3"
+                  x1={zoomArea.start}
+                  x2={zoomArea.end}
+                  fill={tossColors.accent}
+                  fillOpacity={0.1}
+                  stroke={tossColors.accent}
+                  strokeOpacity={0.3}
                 />
               )}
+              
+              <Tooltip content={<TossTooltip />} />
             </LineChart>
           </ResponsiveContainer>
-          
-          {/* 🤳 모바일 터치 인터랙션 오버레이 - 언급한 날짜에만 표시 */}
-          {touchInteraction.isActive && touchInteraction.activePoint && touchInteraction.position && 
-           touchInteraction.activePoint.postTitle && (
-            <div 
-              className="absolute pointer-events-none z-10"
-              style={{
-                left: touchInteraction.position.x - 75,
-                top: touchInteraction.position.y - 120,
-                transform: 'translateY(-100%)',
-                transition: 'all 0.2s ease-out'
-              }}
-            >
-              {/* 터치 포인트 인디케이터 */}
-              <div 
-                className="absolute w-3 h-3 rounded-full animate-ping"
-                style={{
-                  background: getChartTheme(isDarkMode).interaction.focus,
-                  left: '50%',
-                  top: '100%',
-                  transform: 'translate(-50%, 10px)',
-                  opacity: 0.7
-                }}
-              />
-              <div 
-                className="absolute w-2 h-2 rounded-full"
-                style={{
-                  background: getChartTheme(isDarkMode).interaction.focus,
-                  left: '50%',
-                  top: '100%',
-                  transform: 'translate(-50%, 11px)'
-                }}
-              />
-              
-              {/* 정보 카드 */}
-              <div 
-                className="px-4 py-3 rounded-xl shadow-xl border backdrop-blur-sm"
-                style={{
-                  background: `${getChartTheme(isDarkMode).background.secondary}f0`,
-                  border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`,
-                  minWidth: '150px'
-                }}
-              >
-                {/* 날짜 */}
-                <div 
-                  className="text-xs font-medium mb-1 text-center"
-                  style={{ color: getChartTheme(isDarkMode).text.muted }}
-                >
-                  📅 {formatDate(touchInteraction.activePoint.date)}
-                </div>
-                
-                {/* 가격 */}
-                <div 
-                  className="text-lg font-bold text-center mb-2"
-                  style={{ color: getChartTheme(isDarkMode).text.primary }}
-                >
-                  {formatPrice(touchInteraction.activePoint.price)}
-                </div>
-                
-                {/* 포스트 정보 */}
-                {touchInteraction.activePoint.postTitle && (
-                  <div 
-                    className="text-xs text-center p-2 rounded-lg"
-                    style={{ 
-                      background: `${getChartTheme(isDarkMode).interaction.focus}20`,
-                      color: getChartTheme(isDarkMode).interaction.focus
-                    }}
-                  >
-                    📝 {touchInteraction.activePoint.postTitle}
-                  </div>
-                )}
-                
-                {/* 감정 분석 정보 */}
-                {touchInteraction.activePoint.sentiments && touchInteraction.activePoint.sentiments.length > 0 && (
-                  <div className="mt-2 pt-2 border-t" style={{ borderColor: getChartTheme(isDarkMode).chart.grid }}>
-                    <div 
-                      className="text-xs text-center"
-                      style={{ color: getChartTheme(isDarkMode).text.secondary }}
-                    >
-                      🎯 {touchInteraction.activePoint.sentiments[0].sentiment.toUpperCase()}
-                      <span className="ml-1" style={{ color: getChartTheme(isDarkMode).text.muted }}>
-                        ({(touchInteraction.activePoint.sentiments[0].confidence * 100).toFixed(0)}%)
-                      </span>
-                    </div>
-                  </div>
-                )}
-                
-                
-                {/* 터치 힌트 - 언급한 날에만 표시 */}
-                {touchInteraction.activePoint.postTitle && (
-                  <div 
-                    className="text-xs text-center mt-2 opacity-75"
-                    style={{ color: getSafeTheme().text.muted }}
-                  >
-                    👆 스와이프하여 다른 지점 보기
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* 📈 프로페셔널 통계 대시보드 */}
-        <div 
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2 pt-2"
-          style={{ borderTop: `1px solid ${getChartTheme(isDarkMode).chart.grid}` }}
-        >
-          {/* 첫 언급가 */}
-          <div 
-            className="text-center p-3 rounded-lg relative overflow-hidden"
-            style={{ 
-              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).background.tertiary} 0%, ${getChartTheme(isDarkMode).background.secondary} 100%)`,
-              border: `1px solid ${getChartTheme(isDarkMode).chart.grid}`
-            }}
-          >
-            <div 
-              className="text-xl font-bold tracking-tight"
-              style={{ color: getChartTheme(isDarkMode).text.primary }}
-            >
-              {formatPrice(priceData[0]?.price || 0)}
+        {/* 토스 스타일 기간 선택 (모바일 최적화) */}
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className="flex justify-center">
+            <div className="flex bg-gray-50 rounded-xl p-1 gap-0.5 sm:gap-1">
+              {(['1M', '3M', '6M', '1Y'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => onTimeRangeChange(period)}
+                  className={`px-3 sm:px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 min-w-[50px] ${
+                    timeRange === period
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {period}
+                </button>
+              ))}
             </div>
-            <div 
-              className="text-sm font-medium mt-1"
-              style={{ color: getChartTheme(isDarkMode).text.secondary }}
-            >
-              첫 언급가
-            </div>
-            <div 
-              className="text-xs mt-2 flex items-center justify-center gap-1"
-              style={{ color: getChartTheme(isDarkMode).text.muted }}
-            >
-              <Calendar className="w-3 h-3" />
-              {formatDate(priceData[0]?.date || '')}
-            </div>
-          </div>
-
-          {/* 현재가 */}
-          <div 
-            className="text-center p-3 rounded-lg relative overflow-hidden"
-            style={{ 
-              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.positive.background}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
-              border: `1px solid ${getChartTheme(isDarkMode).sentiment.positive.primary}30`
-            }}
-          >
-            <div 
-              className="text-xl font-bold tracking-tight flex items-center justify-center gap-2"
-              style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
-            >
-              <Activity className="w-4 h-4" />
-              {formatPrice(priceData[priceData.length - 1]?.price || 0)}
-            </div>
-            <div 
-              className="text-sm font-medium mt-1"
-              style={{ color: getChartTheme(isDarkMode).sentiment.positive.primary }}
-            >
-              현재가
-            </div>
-            <div 
-              className="text-xs mt-2 flex items-center justify-center gap-1"
-              style={{ color: getChartTheme(isDarkMode).text.muted }}
-            >
-              <Calendar className="w-3 h-3" />
-              {formatDate(priceData[priceData.length - 1]?.date || '')}
-            </div>
-          </div>
-
-          {/* 가격 변동 */}
-          <div 
-            className="text-center p-3 rounded-lg relative overflow-hidden"
-            style={{ 
-              background: priceChange?.isPositive 
-                ? `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.positive.background}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`
-                : `linear-gradient(135deg, ${getChartTheme(isDarkMode).sentiment.negative.background}40 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
-              border: `1px solid ${priceChange?.isPositive 
-                ? getChartTheme(isDarkMode).sentiment.positive.primary
-                : getChartTheme(isDarkMode).sentiment.negative.primary}30`
-            }}
-          >
-            <div 
-              className="text-xl font-bold tracking-tight flex items-center justify-center gap-2"
-              style={{ 
-                color: priceChange?.isPositive 
-                  ? getChartTheme(isDarkMode).sentiment.positive.primary
-                  : getChartTheme(isDarkMode).sentiment.negative.primary
-              }}
-            >
-              {priceChange?.isPositive ? (
-                <TrendingUp className="w-4 h-4" />
-              ) : (
-                <TrendingDown className="w-4 h-4" />
-              )}
-              {priceChange ? formatPrice(Math.abs(priceChange.value)) : '-'}
-            </div>
-            <div 
-              className="text-sm font-medium mt-1"
-              style={{ color: getChartTheme(isDarkMode).text.secondary }}
-            >
-              가격 변동
-            </div>
-            <div 
-              className="text-xs mt-2 font-medium"
-              style={{ 
-                color: priceChange?.isPositive 
-                  ? getChartTheme(isDarkMode).sentiment.positive.primary
-                  : getChartTheme(isDarkMode).sentiment.negative.primary
-              }}
-            >
-              {priceChange ? `${priceChange.isPositive ? '+' : '-'}${Math.abs(priceChange.percentage).toFixed(1)}%` : '-'}
-            </div>
-          </div>
-
-          {/* 언급 통계 */}
-          <div 
-            className="text-center p-3 rounded-lg relative overflow-hidden"
-            style={{ 
-              background: `linear-gradient(135deg, ${getChartTheme(isDarkMode).text.accent}20 0%, ${getChartTheme(isDarkMode).background.tertiary} 100%)`,
-              border: `1px solid ${getChartTheme(isDarkMode).text.accent}30`
-            }}
-          >
-            <div 
-              className="text-xl font-bold tracking-tight flex items-center justify-center gap-2"
-              style={{ color: getChartTheme(isDarkMode).text.accent }}
-            >
-              <Target className="w-4 h-4" />
-              {allPosts.length > 0 ? allPosts.length : recentPosts.length}개
-            </div>
-            <div 
-              className="text-sm font-medium mt-1"
-              style={{ color: getChartTheme(isDarkMode).text.secondary }}
-            >
-              최근 {timeRange} 언급
-            </div>
-            <div 
-              className="text-xs mt-2 flex items-center justify-center gap-1"
-              style={{ color: getChartTheme(isDarkMode).text.muted }}
-            >
-              <Calendar className="w-3 h-3" />
-              {priceData.filter(p => p.postTitle).length}회 언급
-            </div>
-            {(zoomState.left && zoomState.right) && (
-              <div 
-                className="text-xs mt-1 font-medium"
-                style={{ color: getChartTheme(isDarkMode).interaction.focus }}
-              >
-                🔍 줌: {formatDate(zoomState.left.toString())} ~ {formatDate(zoomState.right.toString())}
-              </div>
-            )}
           </div>
         </div>
-
-        {/* 📝 데이터 설명 및 안내 */}
-        {filteredData.length > 0 && filteredData.length < (timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : 180) && (
-          <div 
-            className="mt-2 p-2 rounded-lg border-l-4"
-            style={{ 
-              background: `${getChartTheme(isDarkMode).sentiment.warning.primary}10`,
-              borderLeftColor: getChartTheme(isDarkMode).sentiment.warning.primary,
-              border: `1px solid ${getChartTheme(isDarkMode).sentiment.warning.primary}30`
-            }}
-          >
-            <div className="flex items-start gap-3">
-              <Info 
-                className="w-5 h-5 mt-0.5"
-                style={{ color: getChartTheme(isDarkMode).sentiment.warning.primary }}
-              />
-              <div>
-                <h4 
-                  className="text-sm font-medium mb-1"
-                  style={{ color: getChartTheme(isDarkMode).sentiment.warning.primary }}
-                >
-                  📊 데이터 범위 안내
-                </h4>
-                <p 
-                  className="text-xs leading-relaxed"
-                  style={{ color: getChartTheme(isDarkMode).text.secondary }}
-                >
-                  현재 {timeRange} 차트와 다른 기간 차트가 동일하게 보이는 이유는 데이터베이스에 저장된 가격 데이터가 
-                  <strong className="mx-1" style={{ color: getChartTheme(isDarkMode).text.primary }}>
-                    {formatDate(filteredData[0]?.date || '')} ~ {formatDate(filteredData[filteredData.length - 1]?.date || '')}
-                  </strong>
-                  ({filteredData.length}일)로 제한되어 있기 때문입니다. 
-                  더 많은 히스토리컬 데이터가 축적되면 기간별 차이가 나타날 예정입니다.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
