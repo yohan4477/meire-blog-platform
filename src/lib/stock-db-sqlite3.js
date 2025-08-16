@@ -217,18 +217,8 @@ class StockDB {
             ms.currency,
             ms.sector,
             COUNT(bp.id) as post_count,
-            MIN(
-              CASE 
-                WHEN bp.created_date LIKE '%-%' THEN bp.created_date
-                ELSE datetime(bp.created_date/1000, 'unixepoch', 'localtime')
-              END
-            ) as first_mention,
-            MAX(
-              CASE 
-                WHEN bp.created_date LIKE '%-%' THEN bp.created_date
-                ELSE datetime(bp.created_date/1000, 'unixepoch', 'localtime')
-              END
-            ) as last_mention
+            MIN(bp.created_date) as first_mention,
+            MAX(bp.created_date) as last_mention
           FROM mentioned_stocks ms
           LEFT JOIN blog_posts bp ON (
             bp.title LIKE '%' || ms.ticker || '%' OR 
