@@ -19,6 +19,17 @@ const tossColors = {
   gridLine: '#f1f2f6',
   gridMajor: '#e9ecef',
   
+  // 다크 모드 색상
+  dark: {
+    background: '#0f0f0f',
+    surface: '#1a1a1a',
+    gridLine: '#333333',     // 옅은 회색 점선
+    gridMajor: '#444444',
+    primary: '#ffffff',      // 종목명 텍스트 (흰색)
+    secondary: '#d1d5db',
+    muted: '#9ca3af',
+  },
+  
   // 텍스트
   primary: '#2f3640',
   secondary: '#747d8c', 
@@ -86,6 +97,33 @@ export default function StockPriceChart({
   const [changePercent, setChangePercent] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // 다크 모드 감지
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const isDark = document.documentElement.classList.contains('dark') || 
+                    window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDarkMode(isDark);
+    };
+    
+    checkDarkMode();
+    
+    // 다크모드 변경 감지
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', checkDarkMode);
+    
+    return () => {
+      observer.disconnect();
+      mediaQuery.removeEventListener('change', checkDarkMode);
+    };
+  }, []);
   
   // 줌 상태 (토스 스타일 - 간단하게)
   const [zoomDomain, setZoomDomain] = useState<{start?: string, end?: string}>({});
@@ -201,7 +239,10 @@ export default function StockPriceChart({
           
           // 차트 데이터 준비 완료 후 잠시 대기
           setTimeout(() => {
-            // 라인 애니메이션 완료 후 마커 애니메이션 시작
+            // 라인 애니메이션 완료 후 마커 애니메이션 시작 (기간별 타이밍)
+            const lineAnimationDuration = timeRange === '1M' ? 1000 : 
+                                         timeRange === '3M' ? 1200 : 
+                                         timeRange === '6M' ? 1500 : 1800;
             setTimeout(() => {
               setShowMarkers(true);
               
@@ -213,13 +254,16 @@ export default function StockPriceChart({
               );
               
               if (markersWithData.length > 0) {
+                const markerDelay = timeRange === '1M' ? 100 : 
+                                   timeRange === '3M' ? 120 : 
+                                   timeRange === '6M' ? 150 : 180;
                 markersWithData.forEach((_, index) => {
                   setTimeout(() => {
                     setVisibleMarkerCount(prev => prev + 1);
-                  }, index * 150); // 조금 더 여유있게
+                  }, index * markerDelay);
                 });
               }
-            }, 1500); // 라인 애니메이션 완전 완료 후
+            }, lineAnimationDuration + 100); // 라인 애니메이션 완전 완료 후
           }, 200); // 데이터 설정 후 약간의 지연
         }
       } catch (error) {
@@ -276,97 +320,49 @@ export default function StockPriceChart({
           </div>
         </div>
         
-        {/* 포스트별 감정 분석 정보 (포스트 제목 + 핵심 근거 쌍) */}
+        {/* 📝 제목 + 💡 핵심 근거 (모든 포스트 표시) */}
         {data.postSentimentPairs && Array.isArray(data.postSentimentPairs) && data.postSentimentPairs.length > 0 && (
-          <div className="space-y-3">
-            <div className="text-xs font-semibold text-gray-700 mb-2">🎯 포스트별 메르 분석</div>
-            {data.postSentimentPairs.slice(0, 2).map((pair: any, index: number) => {
-              const sentiment = pair.sentiment;
-              const post = pair.post;
-              
-              const sentimentColor = sentiment.sentiment === 'positive' 
-                ? tossColors.sentiment.positive
-                : sentiment.sentiment === 'negative' 
-                ? tossColors.sentiment.negative 
-                : tossColors.sentiment.neutral;
-              
-              const sentimentIcon = sentiment.sentiment === 'positive' ? '😊' 
-                : sentiment.sentiment === 'negative' ? '😰' : '😐';
-              
-              return (
-                <div key={index} className="text-xs space-y-2 p-2 bg-gray-50 rounded-lg">
-                  {/* 포스트 제목 */}
-                  <div className="font-medium text-gray-800 line-clamp-1">
-                    📝 {post.title}
-                  </div>
-                  
-                  {/* 핵심 근거 */}
-                  {sentiment.key_reasoning && (
-                    <div className="text-gray-600 bg-white rounded-lg p-2 border">
-                      💡 <strong>핵심 근거:</strong><br />
-                      <span className="text-xs">{sentiment.key_reasoning}</span>
-                    </div>
-                  )}
-                  
-                  {/* 감정 분석 결과 */}
-                  <div className="flex items-center gap-2">
-                    <span style={{ color: sentimentColor }} className="font-medium">
-                      {sentimentIcon} {sentiment.sentiment.toUpperCase()}
-                    </span>
-                    <span className="text-gray-500">
-                      신뢰도 {(sentiment.confidence * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  
-                  {/* 투자 기간 및 확신도 */}
-                  {(sentiment.investment_timeframe || sentiment.conviction_level) && (
-                    <div className="flex gap-1 text-xs">
-                      {sentiment.investment_timeframe && (
-                        <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
-                          기간: {sentiment.investment_timeframe}
-                        </span>
-                      )}
-                      {sentiment.conviction_level && (
-                        <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">
-                          확신: {sentiment.conviction_level}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            
-            {/* 더 많은 포스트가 있을 때 */}
-            {data.postSentimentPairs.length > 2 && (
-              <div className="text-xs text-gray-500 text-center">
-                외 {data.postSentimentPairs.length - 2}개 포스트 더 있음
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* 관련 포스트 */}
-        {data.posts && data.posts.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <div className="text-xs font-medium text-gray-700 mb-1">
-              📝 관련 포스트 ({data.posts.length}개)
+          <div className="space-y-2">
+            <div className="text-xs font-bold text-primary mb-2">
+              📰 메르 분석 ({data.postSentimentPairs.length}개)
             </div>
-            <div className="text-xs text-gray-600 space-y-1">
-              {data.posts.length === 1 ? (
-                // 포스트가 1개일 때
-                <div>{data.posts[0].title.substring(0, 40)}...</div>
-              ) : (
-                // 포스트가 여러 개일 때
-                <>
-                  <div>{data.posts[0].title.substring(0, 35)}...</div>
-                  {data.posts.length > 1 && (
-                    <div className="text-gray-500">
-                      외 {data.posts.length - 1}개 포스트
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {data.postSentimentPairs.map((pair: any, index: number) => {
+                const sentiment = pair.sentiment;
+                const post = pair.post;
+                
+                const sentimentColor = sentiment.sentiment === 'positive' 
+                  ? tossColors.sentiment.positive
+                  : sentiment.sentiment === 'negative' 
+                  ? tossColors.sentiment.negative 
+                  : tossColors.sentiment.neutral;
+                
+                const sentimentIcon = sentiment.sentiment === 'positive' ? '😊' 
+                  : sentiment.sentiment === 'negative' ? '😰' : '😐';
+                
+                return (
+                  <div key={index} className="text-xs space-y-2 p-2 bg-gray-50 rounded-lg border-l-2" style={{borderLeftColor: sentimentColor}}>
+                    {/* 제목 */}
+                    <div className="font-medium text-gray-800 line-clamp-1">
+                      📝 {post.title.length > 35 ? post.title.substring(0, 35) + '...' : post.title}
                     </div>
-                  )}
-                </>
-              )}
+                    
+                    {/* 핵심 근거 */}
+                    {sentiment.key_reasoning && (
+                      <div className="text-gray-600 border-l-2 border-blue-400 pl-2">
+                        💡 {sentiment.key_reasoning.length > 60 ? sentiment.key_reasoning.substring(0, 60) + '...' : sentiment.key_reasoning}
+                      </div>
+                    )}
+                    
+                    {/* 감정 */}
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: sentimentColor }} className="font-medium text-xs">
+                        {sentimentIcon} {sentiment.sentiment.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -487,7 +483,9 @@ export default function StockPriceChart({
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">{stockName || ticker}</h2>
+              <h2 className={`text-base sm:text-lg font-semibold ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>{stockName || ticker}</h2>
               <div className="flex items-center gap-2 sm:gap-3 mt-1">
                 <span className="text-xl sm:text-2xl font-bold" style={{ color: chartColor }}>
                   ${currentPrice.toLocaleString()}
@@ -592,62 +590,56 @@ export default function StockPriceChart({
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
             >
-              {/* 최소한의 그리드 (토스 스타일) */}
+              {/* 최소한의 그리드 (토스 스타일 - 다크모드 대응) */}
               <CartesianGrid 
-                strokeDasharray="none" 
-                stroke={tossColors.gridLine}
+                strokeDasharray={isDarkMode ? "2 4" : "none"}
+                stroke={isDarkMode ? tossColors.dark.gridLine : tossColors.gridLine}
+                strokeOpacity={isDarkMode ? 0.4 : 0.8}
                 vertical={false}
                 strokeWidth={1}
               />
               
-              {/* X축 (토스 스타일 - 중복 제거) */}
+              {/* X축 (토스 스타일 - 기간별 맞춤 표시) */}
               <XAxis 
                 dataKey="date"
                 axisLine={false}
                 tickLine={false}
-                tick={{ 
-                  fontSize: isMobile ? 9 : 11, 
-                  fill: tossColors.muted,
-                  fontWeight: 500
+                tick={({ x, y, payload }) => {
+                  const date = new Date(payload.value);
+                  let text = '';
+                  let isJanuary = false;
+                  
+                  if (timeRange === '1Y' || timeRange === '6M') {
+                    // 6M, 1Y: 월만 표시, 1월은 연도 포함해서 볼드
+                    const month = date.getMonth() + 1; // 0-based to 1-based
+                    isJanuary = month === 1;
+                    
+                    if (isJanuary) {
+                      text = `${date.getFullYear()}년 1월`;
+                    } else {
+                      text = `${month}월`;
+                    }
+                  } else {
+                    // 1M, 3M: 월일 표시
+                    text = date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+                  }
+                  
+                  return (
+                    <text 
+                      x={x} 
+                      y={y} 
+                      dy={16} 
+                      textAnchor="middle" 
+                      fill={isDarkMode ? tossColors.dark.muted : tossColors.muted}
+                      fontSize={isMobile ? 9 : 11}
+                      fontWeight={isJanuary ? 'bold' : 500}
+                    >
+                      {text}
+                    </text>
+                  );
                 }}
                 interval="preserveStartEnd"
-                tickCount={isMobile ? 4 : 6}
-                tickFormatter={(value) => {
-                  const date = new Date(value);
-                  
-                  if (isMobile) {
-                    // 모바일: 더 간단한 형식
-                    if (timeRange === '1Y') {
-                      // 1월만 "25년" 표기, 나머지는 월만
-                      if (date.getMonth() === 0) { // 1월 (0-based)
-                        return date.toLocaleDateString('ko-KR', { year: '2-digit' });
-                      } else {
-                        return date.toLocaleDateString('ko-KR', { month: 'short' });
-                      }
-                    } else if (timeRange === '6M') {
-                      // 6M: 월만 표시
-                      return date.toLocaleDateString('ko-KR', { month: 'short' });
-                    }
-                    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-                  } else {
-                    // 데스크탑: 상세한 형식
-                    if (timeRange === '1M') {
-                      return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-                    } else if (timeRange === '1Y') {
-                      // 1월만 "25년" 표기, 나머지는 월만
-                      if (date.getMonth() === 0) { // 1월 (0-based)
-                        return date.toLocaleDateString('ko-KR', { year: '2-digit' });
-                      } else {
-                        return date.toLocaleDateString('ko-KR', { month: 'short' });
-                      }
-                    } else if (timeRange === '6M') {
-                      // 6M: 월만 표시  
-                      return date.toLocaleDateString('ko-KR', { month: 'short' });
-                    } else {
-                      return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-                    }
-                  }
-                }}
+                tickCount={timeRange === '1Y' ? 6 : timeRange === '6M' ? 4 : 3}
               />
               
               {/* Y축 (토스 스타일 - 가격 표시 개선) */}
@@ -657,7 +649,7 @@ export default function StockPriceChart({
                 tickLine={false}
                 tick={{ 
                   fontSize: isMobile ? 9 : 11, 
-                  fill: tossColors.muted,
+                  fill: isDarkMode ? tossColors.dark.muted : tossColors.muted,
                   fontWeight: 500
                 }}
                 tickCount={isMobile ? 4 : 6}
@@ -672,7 +664,7 @@ export default function StockPriceChart({
                 width={isMobile ? 50 : 65}
               />
               
-              {/* 메인 라인 (토스 스타일) */}
+              {/* 메인 라인 (토스 스타일 - 기간별 애니메이션) */}
               <Line
                 type="monotone"
                 dataKey="price"
@@ -686,7 +678,12 @@ export default function StockPriceChart({
                   stroke: '#ffffff'
                 }}
                 animationBegin={0}
-                animationDuration={1500}
+                animationDuration={
+                  timeRange === '1M' ? 1000 : // 1개월: 빠른 애니메이션
+                  timeRange === '3M' ? 1200 : // 3개월: 중간 애니메이션
+                  timeRange === '6M' ? 1500 : // 6개월: 기본 애니메이션  
+                  1800 // 1년: 여유있는 애니메이션
+                }
                 animationEasing="ease-out"
               />
               
