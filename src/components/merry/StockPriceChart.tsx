@@ -96,6 +96,7 @@ export default function StockPriceChart({
   const [currentPrice, setCurrentPrice] = useState<number>(0);
   const [changePercent, setChangePercent] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [sentimentStats, setSentimentStats] = useState<{totalMentions: number, analyzedMentions: number} | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   // 다크 모드 감지
@@ -161,17 +162,44 @@ export default function StockPriceChart({
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      
+      // 🔧 timeRange 변경 시 이전 데이터 완전 초기화 및 강제 리렌더링
+      setPriceData([]);
+      setCurrentPrice(0);
+      setChangePercent(0);
+      setSentimentStats(null);
+      
+      // 🔧 약간의 지연으로 상태 업데이트 보장
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       try {
         // 주가 데이터 가져오기
         const priceResponse = await fetch(`/api/stock-price?ticker=${ticker}&period=${timeRange}`);
         const priceResult = await priceResponse.json();
         
         // 감정 분석 데이터 가져오기 (포스트-감정 쌍 구조)
-        const sentimentResponse = await fetch(`/api/merry/stocks/${ticker}/sentiments?period=${timeRange?.toLowerCase() || '6mo'}`);
+        // 🔧 period 파라미터 표준화 (3M → 3mo, 1M → 1mo, 6M → 6mo, 1Y → 1y)
+        const convertPeriod = (range: string) => {
+          switch(range) {
+            case '1M': return '1mo';
+            case '3M': return '3mo';
+            case '6M': return '6mo';
+            case '1Y': return '1y';
+            default: return '6mo';
+          }
+        };
+        
+        const sentimentResponse = await fetch(`/api/merry/stocks/${ticker}/sentiments?period=${convertPeriod(timeRange)}`);
         const sentimentResult = await sentimentResponse.json();
         
-        // 포스트 데이터 가져오기 (모든 포스트)
-        const postsResponse = await fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0`);
+        // 🔧 감정 분석 통계 저장
+        setSentimentStats({
+          totalMentions: sentimentResult.totalMentions || 0,
+          analyzedMentions: sentimentResult.analyzedMentions || 0
+        });
+        
+        // 포스트 데이터 가져오기 (선택된 기간만)
+        const postsResponse = await fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0&period=${convertPeriod(timeRange)}`);
         const postsResult = await postsResponse.json();
         
         if (priceResult.success && priceResult.prices) {
@@ -196,10 +224,82 @@ export default function StockPriceChart({
             return;
           }
           
-          const enrichedData = priceResult.prices.map((point: any) => {
+          // 🔧 디버그: 감정 분석 결과 전체 구조 확인
+          console.log(`🚀 Sentiment result structure:`, {
+            hasSentimentByDate: !!sentimentResult.sentimentByDate,
+            dateKeys: Object.keys(sentimentResult.sentimentByDate || {}),
+            totalDates: Object.keys(sentimentResult.sentimentByDate || {}).length,
+            summary: sentimentResult.summary
+          });
+
+          // 🔧 디버그: Price 데이터 범위 확인
+          console.log(`📈 Price data range:`, {
+            total: priceResult.prices.length,
+            firstDate: priceResult.prices[0]?.date,
+            lastDate: priceResult.prices[priceResult.prices.length - 1]?.date,
+            period: priceResult.period,
+            timeRange: timeRange
+          });
+
+          // 🔧 timeRange 기반 명시적 날짜 필터링
+          const getCurrentDateFilter = (range: string) => {
+            const today = new Date();
+            let startDate: Date;
+            
+            switch (range) {
+              case '1M':
+                startDate = new Date();
+                startDate.setMonth(today.getMonth() - 1);
+                break;
+              case '3M':
+                startDate = new Date();
+                startDate.setMonth(today.getMonth() - 3);
+                break;
+              case '6M':
+                startDate = new Date();
+                startDate.setMonth(today.getMonth() - 6);
+                break;
+              case '1Y':
+                startDate = new Date();
+                startDate.setFullYear(today.getFullYear() - 1);
+                break;
+              default:
+                startDate = new Date();
+                startDate.setMonth(today.getMonth() - 6);
+            }
+            
+            return {
+              start: startDate.toISOString().split('T')[0],
+              end: today.toISOString().split('T')[0]
+            };
+          };
+          
+          const dateFilter = getCurrentDateFilter(timeRange);
+          console.log(`🔧 Date filter for ${timeRange}:`, dateFilter);
+          
+          // 가격 데이터를 날짜 범위로 필터링
+          const filteredPrices = priceResult.prices.filter((point: any) => {
+            return point.date >= dateFilter.start && point.date <= dateFilter.end;
+          });
+          
+          console.log(`🔧 Filtered prices: ${filteredPrices.length}/${priceResult.prices.length} points`);
+          if (filteredPrices.length > 0) {
+            console.log(`🔧 Date range: ${filteredPrices[0]?.date} ~ ${filteredPrices[filteredPrices.length - 1]?.date}`);
+          }
+
+          const enrichedData = filteredPrices.map((point: any) => {
             const dateStr = point.date;
             const sentimentData = sentimentResult.sentimentByDate?.[dateStr];
             const postsData = postsByDate[dateStr] || [];
+            
+            // 🔧 디버그: 각 날짜별 데이터 확인
+            if (sentimentData) {
+              console.log(`📅 [${dateStr}] Sentiment data available:`, {
+                hasPostSentimentPairs: !!sentimentData.postSentimentPairs,
+                pairsCount: sentimentData.postSentimentPairs?.length || 0,
+                postsCount: postsData.length
+              });
+            }
             
             // 새로운 구조: postSentimentPairs 사용
             const postSentimentPairs = sentimentData?.postSentimentPairs || [];
@@ -210,8 +310,17 @@ export default function StockPriceChart({
               : postsData;
               
             const finalSentiments = postSentimentPairs.length > 0 
-              ? postSentimentPairs.map(pair => pair.sentiment)
+              ? postSentimentPairs.map(pair => pair.sentiment).filter(s => s && s.sentiment)
               : [];
+            
+            // 🔧 데이터 검증 완료 + 디버깅 로그
+            if (postSentimentPairs.length > 0) {
+              console.log(`📊 [${dateStr}] Sentiment data found:`, {
+                postSentimentPairs: postSentimentPairs.length,
+                finalSentiments: finalSentiments.length,
+                finalPosts: finalPosts.length
+              });
+            }
             
             return {
               ...point,
@@ -251,6 +360,15 @@ export default function StockPriceChart({
                 (point.sentiments && point.sentiments.length > 0) ||
                 (point.postSentimentPairs && point.postSentimentPairs.length > 0)
               );
+              
+              console.log(`🎯 Markers to display: ${markersWithData.length}/${enrichedData.length}`, {
+                markersWithData: markersWithData.map(p => ({
+                  date: p.date,
+                  posts: p.posts?.length || 0,
+                  sentiments: p.sentiments?.length || 0,
+                  postSentimentPairs: p.postSentimentPairs?.length || 0
+                }))
+              });
               
               if (markersWithData.length > 0) {
                 const markerDelay = timeRange === '1M' ? 100 : 
@@ -324,6 +442,7 @@ export default function StockPriceChart({
           <div className="space-y-2">
             {(() => {
               // 감정 분석이 완료된 포스트 수 계산
+              // 🔧 API에서 제공하는 정확한 카운트 사용
               const analyzedCount = data.postSentimentPairs.filter(pair => 
                 pair.sentiment && 
                 pair.sentiment.sentiment && 
@@ -542,14 +661,34 @@ export default function StockPriceChart({
               <div className="text-gray-400 text-xs space-y-1">
                 <div>💡 원 클릭시 상세 정보 표시</div>
                 {(() => {
-                  // 전체 데이터에서 분석 상태 계산
-                  const allPostPairs = filteredData.flatMap(point => point.postSentimentPairs || []);
-                  const analyzedCount = allPostPairs.filter(pair => 
-                    pair.sentiment && 
-                    pair.sentiment.sentiment && 
-                    pair.sentiment.sentiment !== 'unknown'
-                  ).length;
-                  const totalCount = allPostPairs.length;
+                  // 🔧 올바른 AI 분석 진행률 계산
+                  // 분모: 총 언급된 포스트 수 (postSentimentPairs 또는 posts가 있는 모든 포인트)
+                  const allMentionedPosts = filteredData.flatMap(point => {
+                    if (point.postSentimentPairs && point.postSentimentPairs.length > 0) {
+                      return point.postSentimentPairs.map(pair => pair.post);
+                    } else if (point.posts && point.posts.length > 0) {
+                      return point.posts;
+                    }
+                    return [];
+                  });
+                  
+                  // 중복 제거 (동일한 포스트가 여러 날짜에 나타날 수 있음)
+                  const uniquePosts = Array.from(new Set(allMentionedPosts.map(post => post.id)))
+                    .map(id => allMentionedPosts.find(post => post.id === id));
+                  
+                  // 분자: 감정 분석이 완료된 포스트 수  
+                  const analyzedPosts = filteredData.flatMap(point => point.postSentimentPairs || [])
+                    .filter(pair => 
+                      pair.sentiment && 
+                      pair.sentiment.sentiment && 
+                      pair.sentiment.sentiment !== 'unknown'
+                    )
+                    .map(pair => pair.post);
+                    
+                  const uniqueAnalyzedPosts = Array.from(new Set(analyzedPosts.map(post => post.id)));
+                  
+                  const analyzedCount = uniqueAnalyzedPosts.length;
+                  const totalCount = uniquePosts.length;
                   
                   if (totalCount > 0) {
                     return (
@@ -588,14 +727,31 @@ export default function StockPriceChart({
             <div className="text-gray-400 space-y-1">
               <div>💡 차트의 원을 클릭하면 메르의 분석과 관련 포스트 정보를 확인할 수 있습니다</div>
               {(() => {
-                // 전체 데이터에서 분석 상태 계산
-                const allPostPairs = filteredData.flatMap(point => point.postSentimentPairs || []);
-                const analyzedCount = allPostPairs.filter(pair => 
-                  pair.sentiment && 
-                  pair.sentiment.sentiment && 
-                  pair.sentiment.sentiment !== 'unknown'
-                ).length;
-                const totalCount = allPostPairs.length;
+                // 🔧 올바른 AI 분석 진행률 계산 (동일 로직)
+                const allMentionedPosts = filteredData.flatMap(point => {
+                  if (point.postSentimentPairs && point.postSentimentPairs.length > 0) {
+                    return point.postSentimentPairs.map(pair => pair.post);
+                  } else if (point.posts && point.posts.length > 0) {
+                    return point.posts;
+                  }
+                  return [];
+                });
+                
+                const uniquePosts = Array.from(new Set(allMentionedPosts.map(post => post.id)))
+                  .map(id => allMentionedPosts.find(post => post.id === id));
+                
+                const analyzedPosts = filteredData.flatMap(point => point.postSentimentPairs || [])
+                  .filter(pair => 
+                    pair.sentiment && 
+                    pair.sentiment.sentiment && 
+                    pair.sentiment.sentiment !== 'unknown'
+                  )
+                  .map(pair => pair.post);
+                  
+                const uniqueAnalyzedPosts = Array.from(new Set(analyzedPosts.map(post => post.id)));
+                
+                const analyzedCount = uniqueAnalyzedPosts.length;
+                const totalCount = uniquePosts.length;
                 
                 if (totalCount > 0) {
                   return (
@@ -737,32 +893,97 @@ export default function StockPriceChart({
               
               {/* 언급된 정보 마커들 (빈 원으로 표시) */}
               {showMarkers && Array.isArray(filteredData) && filteredData.map((point, index) => {
-                // 포스트가 있거나 감정 분석이 있거나 포스트-감정 쌍이 있는 경우 빈 원 표시
-                if ((!point.posts || point.posts.length === 0) && 
-                    (!point.sentiments || point.sentiments.length === 0) &&
-                    (!point.postSentimentPairs || point.postSentimentPairs.length === 0)) return null;
+                // 🔧 엄격한 데이터 검증 - 감정 분석이 있는 데이터만 표시
+                const hasValidPosts = point.posts && Array.isArray(point.posts) && point.posts.length > 0;
+                const hasValidSentiments = point.sentiments && Array.isArray(point.sentiments) && point.sentiments.length > 0;
+                const hasValidPairs = point.postSentimentPairs && Array.isArray(point.postSentimentPairs) && point.postSentimentPairs.length > 0;
+                
+                // 감정 분석이 없는 데이터는 마커 표시하지 않음 (파란색 마커 방지)
+                if (!hasValidSentiments && !hasValidPairs) {
+                  return null;
+                }
+                
+                // 추가 검증: 실제 감정 분석 결과가 있는지 확인
+                let hasSentimentAnalysis = false;
+                
+                if (hasValidPairs) {
+                  hasSentimentAnalysis = point.postSentimentPairs.some(pair => 
+                    pair && pair.sentiment && 
+                    pair.sentiment.sentiment && 
+                    pair.sentiment.sentiment !== 'unknown' &&
+                    ['positive', 'negative', 'neutral'].includes(pair.sentiment.sentiment)
+                  );
+                }
+                
+                if (!hasSentimentAnalysis && hasValidSentiments) {
+                  hasSentimentAnalysis = point.sentiments.some(s => 
+                    s && s.sentiment && 
+                    ['positive', 'negative', 'neutral'].includes(s.sentiment)
+                  );
+                }
+                
+                // 실제 감정 분석 결과가 없으면 마커 표시하지 않음
+                if (!hasSentimentAnalysis) {
+                  return null;
+                }
                 
                 // 마커 인덱스 계산 (데이터가 있는 포인트만 카운트)
-                const markersBeforeThis = Array.isArray(filteredData) ? filteredData.slice(0, index).filter(p => 
-                  (p.posts && p.posts.length > 0) || (p.sentiments && p.sentiments.length > 0) || (p.postSentimentPairs && p.postSentimentPairs.length > 0)
-                ).length : 0;
+                const markersBeforeThis = Array.isArray(filteredData) ? filteredData.slice(0, index).filter(p => {
+                  const validPosts = p.posts && Array.isArray(p.posts) && p.posts.length > 0;
+                  const validSentiments = p.sentiments && Array.isArray(p.sentiments) && p.sentiments.length > 0;
+                  const validPairs = p.postSentimentPairs && Array.isArray(p.postSentimentPairs) && p.postSentimentPairs.length > 0;
+                  return validPosts || validSentiments || validPairs;
+                }).length : 0;
                 
                 // 아직 표시할 시점이 아니면 렌더링하지 않음
                 if (markersBeforeThis >= visibleMarkerCount) return null;
                 
-                // 감정이 있는 경우 색상 적용, 없으면 차트 색상과 동일
-                let markerColor = chartColor; // 감정 정보 없음 - 차트 가격선과 같은 색
-                if (point.sentiments && point.sentiments.length > 0) {
-                  const dominantSentiment = Array.isArray(point.sentiments) && point.sentiments.length > 0 ? point.sentiments.reduce((prev, current) => 
-                    (current && prev && current.confidence > prev.confidence) ? current : prev
+                // 🔧 포스트-감정 쌍에서 색상 결정 (우선순위: postSentimentPairs > sentiments > 기본)
+                let markerColor = chartColor; // 기본값: 차트 색상 (파란색)
+                let sentimentInfo = null;
+                
+                // 1순위: postSentimentPairs에서 감정 분석 결과 확인
+                if (hasValidPairs) {
+                  const validSentimentPairs = point.postSentimentPairs.filter(pair => 
+                    pair && pair.sentiment && 
+                    pair.sentiment.sentiment && 
+                    pair.sentiment.sentiment !== 'unknown' &&
+                    ['positive', 'negative', 'neutral'].includes(pair.sentiment.sentiment)
+                  );
+                  
+                  if (validSentimentPairs.length > 0) {
+                    // 가장 높은 신뢰도를 가진 감정 선택
+                    const dominantPair = validSentimentPairs.reduce((prev, current) => 
+                      (Math.abs(current.sentiment.confidence || 0) > Math.abs(prev.sentiment.confidence || 0)) ? current : prev
+                    );
+                    
+                    sentimentInfo = dominantPair.sentiment.sentiment;
+                    markerColor = dominantPair.sentiment.sentiment === 'positive' 
+                      ? tossColors.sentiment.positive    // 🟢 긍정: #16a34a
+                      : dominantPair.sentiment.sentiment === 'negative' 
+                      ? tossColors.sentiment.negative    // 🔴 부정: #dc2626
+                      : tossColors.sentiment.neutral;    // 🔵 중립: #6b7280
+                  }
+                }
+                // 2순위: sentiments 배열에서 확인 (백업용)
+                else if (hasValidSentiments) {
+                  const validSentiments = point.sentiments.filter(s => 
+                    s && s.sentiment && typeof s.confidence === 'number' &&
+                    ['positive', 'negative', 'neutral'].includes(s.sentiment)
+                  );
+                  
+                  const dominantSentiment = validSentiments.length > 0 ? validSentiments.reduce((prev, current) => 
+                    (Math.abs(current.confidence) > Math.abs(prev.confidence)) ? current : prev
                   ) : null;
                   
-                  markerColor = dominantSentiment && dominantSentiment.sentiment === 'positive' 
-                    ? tossColors.sentiment.positive    // 🟢 긍정: #16a34a
-                    : dominantSentiment && dominantSentiment.sentiment === 'negative' 
-                    ? tossColors.sentiment.negative    // 🔴 부정: #dc2626
-                    : tossColors.sentiment.neutral;    // ⚫ 중립: #000000 (검은색)
-                  
+                  if (dominantSentiment) {
+                    sentimentInfo = dominantSentiment.sentiment;
+                    markerColor = dominantSentiment.sentiment === 'positive' 
+                      ? tossColors.sentiment.positive    // 🟢 긍정: #16a34a
+                      : dominantSentiment.sentiment === 'negative' 
+                      ? tossColors.sentiment.negative    // 🔴 부정: #dc2626
+                      : tossColors.sentiment.neutral;    // 🔵 중립: #6b7280
+                  }
                 }
                 
                 return (

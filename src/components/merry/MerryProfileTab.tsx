@@ -268,140 +268,15 @@ export default function MerryProfileTab() {
             </div>
           </TabsContent>
 
-          {/* 딸 포트폴리오 탭 */}
+          {/* 딸 포트폴리오 탭 - 준비 중 */}
           <TabsContent value="portfolio" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Heart className="w-5 h-5 text-red-500" />
-                    <span className="text-sm font-medium">총 자산</span>
-                  </div>
-                  <div className="text-2xl font-bold text-primary">
-                    {formatCurrency(achievements.daughterPortfolio?.totalValue || 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    투입: {formatCurrency(achievements.daughterPortfolio?.totalInvested || 0)}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-medium">총 수익률</span>
-                  </div>
-                  <div className="text-2xl font-bold text-green-500">
-                    +{(achievements.daughterPortfolio?.returnRate || 0).toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    수익: {formatCurrency(achievements.daughterPortfolio?.totalReturn || 0)}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-5 h-5 text-blue-500" />
-                    <span className="text-sm font-medium">투자 기간</span>
-                  </div>
-                  <div className="text-lg font-bold">
-                    {achievements.daughterPortfolio?.period || '정보 없음'}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    월 {formatCurrency(achievements.daughterPortfolio?.monthlyContribution || 0)} 적립
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* 벤치마크 비교 */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  벤치마크 비교
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span>메르 딸 포트폴리오</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={Math.min(achievements.daughterPortfolio.returnRate, 100)} className="w-32" />
-                      <span className="font-bold text-green-500">+{achievements.daughterPortfolio.returnRate.toFixed(1)}%</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>NASDAQ</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={Math.min(achievements.daughterPortfolio?.benchmark?.nasdaq || 0, 100)} className="w-32" />
-                      <span className="font-bold">+{(achievements.daughterPortfolio?.benchmark?.nasdaq || 0).toFixed(1)}%</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>S&P 500</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={Math.min(achievements.daughterPortfolio?.benchmark?.sp500 || 0, 100)} className="w-32" />
-                      <span className="font-bold">+{(achievements.daughterPortfolio?.benchmark?.sp500 || 0).toFixed(1)}%</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>KOSPI</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={Math.min(achievements.daughterPortfolio?.benchmark?.kospi || 0, 100)} className="w-32" />
-                      <span className="font-bold">+{(achievements.daughterPortfolio?.benchmark?.kospi || 0).toFixed(1)}%</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 주요 보유 종목 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <PieChart className="w-5 h-5" />
-                  주요 보유 종목
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {Array.isArray(achievements?.daughterPortfolio?.topHoldings) && achievements.daughterPortfolio.topHoldings.length > 0 ? (
-                    achievements.daughterPortfolio.topHoldings.map((holding, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline">{holding?.ticker || 'N/A'}</Badge>
-                          <div>
-                            <div className="font-medium">{holding?.name || '종목명 없음'}</div>
-                            <div className="text-sm text-muted-foreground">
-                              투입: {holding?.invested ? formatCurrency(holding.invested) : '정보 없음'}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold">
-                            {holding?.weight !== undefined ? `${holding.weight.toFixed(1)}%` : 'N/A'}
-                          </div>
-                          <div className={`text-sm ${(holding?.returnRate || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {holding?.returnRate !== undefined ? 
-                              `${holding.returnRate >= 0 ? '+' : ''}${holding.returnRate.toFixed(1)}%` : 
-                              'N/A'
-                            }
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {holding?.currentValue ? formatCurrency(holding.currentValue) : '정보 없음'}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <p>보유 종목 정보가 없습니다.</p>
-                    </div>
-                  )}
+              <CardContent className="pt-12 pb-12">
+                <div className="text-center text-muted-foreground">
+                  <Heart className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <h3 className="text-xl font-semibold mb-2">포트폴리오 정보 준비 중</h3>
+                  <p className="text-sm">딸의 포트폴리오 데이터를 준비하고 있습니다.</p>
+                  <p className="text-sm">실제 투자 성과가 집계되는 대로 업데이트될 예정입니다.</p>
                 </div>
               </CardContent>
             </Card>

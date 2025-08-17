@@ -369,7 +369,7 @@ class ClaudeSentimentAnalyzer {
         FROM blog_posts bp
         WHERE bp.created_date >= ?
           AND bp.id NOT IN (
-            SELECT DISTINCT post_id FROM post_stock_sentiments_claude
+            SELECT DISTINCT post_id FROM sentiments
           )
         ORDER BY bp.created_date DESC
         LIMIT ?
@@ -405,28 +405,23 @@ class ClaudeSentimentAnalyzer {
   async saveEnhancedSentimentResult(postId, ticker, analysis) {
     return new Promise((resolve, reject) => {
       this.stockDB.db.run(`
-        INSERT OR REPLACE INTO post_stock_sentiments_claude 
-        (post_id, ticker, sentiment, sentiment_score, confidence, 
-         key_reasoning, supporting_evidence, key_keywords, context_quotes,
-         investment_perspective, investment_timeframe, conviction_level,
-         mention_context, analysis_focus, uncertainty_factors, analyzed_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT OR REPLACE INTO sentiments 
+        (post_id, ticker, sentiment, sentiment_score, key_reasoning, 
+         supporting_evidence, investment_perspective, investment_timeframe, 
+         conviction_level, uncertainty_factors, mention_context, analysis_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE('now'))
       `, [
         postId,
         ticker,
         analysis.sentiment,
         analysis.sentiment_score,
-        analysis.confidence,
         analysis.analysis.key_reasoning,
         JSON.stringify(analysis.analysis.supporting_evidence),
-        JSON.stringify(analysis.analysis.key_keywords),
-        JSON.stringify(analysis.analysis.context_quotes),
         JSON.stringify(analysis.analysis.investment_perspective),
         analysis.analysis.investment_timeframe,
         analysis.analysis.conviction_level,
-        analysis.metadata.mention_context,
-        analysis.metadata.analysis_focus,
-        JSON.stringify(analysis.metadata.uncertainty_factors)
+        JSON.stringify(analysis.metadata.uncertainty_factors),
+        analysis.metadata.mention_context
       ], function(err) {
         if (err) reject(err);
         else resolve(this.lastID);

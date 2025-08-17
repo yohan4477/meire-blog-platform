@@ -30,30 +30,30 @@ export async function GET(
     
     const query = `
       SELECT 
-        psc.ticker,
-        psc.sentiment,
-        psc.sentiment_score,
-        psc.confidence,
-        psc.key_reasoning,
-        psc.supporting_evidence,
-        psc.key_keywords,
-        psc.context_quotes,
-        psc.investment_perspective,
-        psc.investment_timeframe,
-        psc.conviction_level,
-        psc.mention_context,
-        psc.analysis_focus,
-        psc.uncertainty_factors,
-        psc.analyzed_at,
+        s.ticker,
+        s.sentiment,
+        s.sentiment_score,
+        s.sentiment_score as confidence,
+        s.key_reasoning,
+        s.supporting_evidence,
+        '' as key_keywords,
+        '' as context_quotes,
+        s.investment_perspective,
+        s.investment_timeframe,
+        s.conviction_level,
+        s.mention_context,
+        '' as analysis_focus,
+        s.uncertainty_factors,
+        s.created_at as analyzed_at,
         bp.id as post_id,
         bp.title as post_title,
         bp.created_date,
         bp.views,
         bp.excerpt,
         'claude' as data_source
-      FROM post_stock_sentiments_claude psc
-      JOIN blog_posts bp ON psc.post_id = bp.id
-      WHERE psc.ticker = ? AND bp.created_date >= ?
+      FROM sentiments s
+      JOIN blog_posts bp ON s.post_id = bp.id
+      WHERE s.ticker = ? AND bp.created_date >= ?
       ORDER BY bp.created_date DESC
       LIMIT 50
     `;

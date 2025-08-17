@@ -343,7 +343,7 @@ class SentimentAnalyzer {
         SELECT DISTINCT bp.id, bp.title, bp.content, bp.created_date
         FROM blog_posts bp
         WHERE bp.id NOT IN (
-          SELECT DISTINCT post_id FROM post_stock_sentiments
+          SELECT DISTINCT post_id FROM sentiments
         )
         ORDER BY bp.created_date DESC
         LIMIT ?
@@ -379,15 +379,14 @@ class SentimentAnalyzer {
   async saveSentimentResult(postId, ticker, sentiment) {
     return new Promise((resolve, reject) => {
       this.stockDB.db.run(`
-        INSERT OR REPLACE INTO post_stock_sentiments 
-        (post_id, ticker, sentiment, sentiment_score, confidence, context_snippet, analyzed_at)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT OR REPLACE INTO sentiments 
+        (post_id, ticker, sentiment, sentiment_score, key_reasoning, analysis_date)
+        VALUES (?, ?, ?, ?, ?, DATE('now'))
       `, [
         postId,
         ticker,
         sentiment.sentiment,
         sentiment.score,
-        sentiment.confidence,
         sentiment.context
       ], function(err) {
         if (err) reject(err);

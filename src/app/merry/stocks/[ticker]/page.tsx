@@ -32,13 +32,16 @@ const StockPriceChart = dynamic(
 interface Stock {
   ticker: string;
   name: string;
+  company_name: string;
   market: string;
   mentions: number;
+  mention_count: number;
+  analyzed_count: number;
   postCount: number;
   firstMention: string;
   lastMention: string;
   sentiment: 'positive' | 'neutral' | 'negative';
-  tags: string[];
+  tags?: string[] | string;
   description: string;
   currentPrice: number;
   currency: string;
@@ -66,12 +69,46 @@ interface PostsState {
   limit: number;
 }
 
+// 초안전 태그 처리 헬퍼 함수 (모든 에러 상황 대응)
+const safeGetTags = (stock: any): string[] => {
+  // 기본 안전 체크
+  if (!stock || stock === null || stock === undefined) return [];
+  if (!stock.tags || stock.tags === null || stock.tags === undefined) return [];
+  
+  try {
+    if (typeof stock.tags === 'string') {
+      const parsed = JSON.parse(stock.tags);
+      const result = Array.isArray(parsed) ? parsed.filter(tag => typeof tag === 'string' && tag.trim().length > 0) : [];
+      return Array.isArray(result) ? result : [];
+    } else if (Array.isArray(stock.tags)) {
+      const result = stock.tags.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
+      return Array.isArray(result) ? result : [];
+    }
+  } catch (error) {
+    console.error('Tag processing error:', error, 'Stock:', stock?.ticker);
+  }
+  
+  // 모든 경우에 빈 배열 반환 보장
+  return [];
+};
+
+const safeGetTagsLength = (stock: any): number => {
+  const tags = safeGetTags(stock);
+  return tags.length;
+};
+
 export default function StockDetailPage() {
   const params = useParams();
   const ticker = params?.ticker as string;
   
   const [stock, setStock] = useState<Stock | null>(null);
-  const [timeRange, setTimeRange] = useState<'1M' | '3M' | '6M' | '1Y'>('1Y'); // 1Y 기본값 설정
+  // 모바일에서는 3M, 데스크탑에서는 1Y 기본값 설정
+  const [timeRange, setTimeRange] = useState<'1M' | '3M' | '6M' | '1Y'>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 640 ? '3M' : '1Y';
+    }
+    return '1Y'; // SSR 시 기본값
+  });
   const [postsState, setPostsState] = useState<PostsState>({
     posts: [],
     total: 0,
@@ -83,11 +120,40 @@ export default function StockDetailPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [allPosts, setAllPosts] = useState<Post[]>([]); // 통계용 전체 포스트
+
+  // 모바일 가로모드 감지 및 1Y 차트 전환
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      if (typeof window !== 'undefined' && window.innerWidth < 640) {
+        // 모바일 기기에서만 동작
+        if (window.screen && window.screen.orientation) {
+          // 가로모드일 때 1Y로 변경
+          if (window.screen.orientation.angle === 90 || window.screen.orientation.angle === -90) {
+            setTimeRange('1Y');
+          }
+        }
+      }
+    };
+
+    // orientation change 이벤트 리스너 추가
+    if (typeof window !== 'undefined' && window.screen && window.screen.orientation) {
+      window.screen.orientation.addEventListener('change', handleOrientationChange);
+    }
+
+    return () => {
+      // cleanup
+      if (typeof window !== 'undefined' && window.screen && window.screen.orientation) {
+        window.screen.orientation.removeEventListener('change', handleOrientationChange);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (ticker) {
       fetchStockData();
       fetchRelatedPosts(0, true); // 첫 번째 로드
+      fetchAllRelatedPosts(); // 통계용 전체 포스트 로드
     }
   }, [ticker]);
 
@@ -101,11 +167,62 @@ export default function StockDetailPage() {
         if (foundStock) {
           setStock(foundStock);
         } else {
-          setError('종목을 찾을 수 없습니다.');
+          // Fallback: 종목을 찾지 못한 경우 기본 정보로 생성
+          console.warn(`Stock ${ticker} not found in main list, creating fallback`);
+          setStock({
+            ticker,
+            name: ticker,
+            company_name: ticker,
+            mentions: 0,
+            lastMention: '',
+            currentPrice: 0,
+            priceChange: '+0.00%',
+            currency: ticker.length === 6 ? 'KRX' : 'USD',
+            market: ticker.length === 6 ? 'KRX' : 'NASDAQ',
+            description: `${ticker} 종목 정보`,
+            tags: ['투자', '종목'],
+            mention_count: 0,
+            analyzed_count: 0
+          });
         }
+      } else {
+        setError('종목 데이터를 불러올 수 없습니다.');
       }
     } catch (err) {
-      setError('종목 데이터를 불러올 수 없습니다.');
+      console.error('Stock data fetch error:', err);
+      // Network error 시에도 fallback 제공
+      setStock({
+        ticker,
+        name: ticker,
+        company_name: ticker,
+        mentions: 0,
+        lastMention: '',
+        currentPrice: 0,
+        priceChange: '+0.00%',
+        currency: ticker.length === 6 ? 'KRX' : 'USD',
+        market: ticker.length === 6 ? 'KRX' : 'NASDAQ',
+        description: `${ticker} 종목 정보`,
+        tags: ['투자', '종목'],
+        mention_count: 0,
+        analyzed_count: 0
+      });
+    }
+  };
+
+  const fetchAllRelatedPosts = async () => {
+    try {
+      const response = await fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const allPostsData = Array.isArray(data.data.posts) ? data.data.posts.map((post: any) => ({
+          ...post,
+          created_date: post.published_date || post.created_date
+        })) : [];
+        setAllPosts(allPostsData);
+      }
+    } catch (err) {
+      console.error('전체 관련 포스트 로딩 실패:', err);
     }
   };
 
@@ -121,10 +238,10 @@ export default function StockDetailPage() {
       const data = await response.json();
       
       if (data.success) {
-        const newPosts = data.data.posts.map((post: any) => ({
+        const newPosts = Array.isArray(data.data.posts) ? data.data.posts.map((post: any) => ({
           ...post,
           created_date: post.published_date || post.created_date
-        }));
+        })) : [];
 
         setPostsState(prev => ({
           ...prev,
@@ -228,6 +345,25 @@ export default function StockDetailPage() {
     );
   }
 
+  // stock이 null이거나 undefined인 경우 추가 보호
+  if (!stock) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <Link href="/merry/stocks">
+          <Button variant="ghost" size="sm" className="mb-4">
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            종목 목록으로 돌아가기
+          </Button>
+        </Link>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-red-500">종목 정보를 불러올 수 없습니다.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Link href="/merry/stocks">
@@ -243,7 +379,7 @@ export default function StockDetailPage() {
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div className="space-y-2 flex-1 min-w-0">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl lg:text-3xl font-bold truncate">{stock.name}</h1>
+                <h1 className="text-2xl lg:text-3xl font-bold truncate">{stock.company_name || stock.name}</h1>
                 {getSentimentIcon(stock.sentiment)}
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -282,23 +418,37 @@ export default function StockDetailPage() {
           
           {/* 통계 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{stock.postCount || stock.mentions}</div>
+            <div className="text-center p-4 bg-muted/50 rounded-lg border">
+              <div className="text-2xl font-bold text-primary">{postsState.total}</div>
               <div className="text-sm text-muted-foreground">언급된 포스트</div>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{stock.tags?.length || 0}</div>
+            <div className="text-center p-4 bg-muted/50 rounded-lg border">
+              <div className="text-2xl font-bold text-primary">
+{safeGetTagsLength(stock)}
+              </div>
               <div className="text-sm text-muted-foreground">관련 태그</div>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-center p-4 bg-muted/50 rounded-lg border">
               <div className="text-sm font-bold text-primary">
-                {new Date(stock.firstMention).toLocaleDateString('ko-KR')}
+                {(() => {
+                  if (!Array.isArray(allPosts) || allPosts.length === 0) return '정보 없음';
+                  const dates = Array.isArray(allPosts) ? allPosts.map(post => new Date(post.created_date)).filter(date => !isNaN(date.getTime())) : [];
+                  if (!Array.isArray(dates) || dates.length === 0) return '정보 없음';
+                  const firstDate = new Date(Math.min(...(Array.isArray(dates) ? dates.map(d => d.getTime()) : [])));
+                  return firstDate.toLocaleDateString('ko-KR');
+                })()}
               </div>
               <div className="text-sm text-muted-foreground">첫 언급</div>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-center p-4 bg-muted/50 rounded-lg border">
               <div className="text-sm font-bold text-primary">
-                {new Date(stock.lastMention).toLocaleDateString('ko-KR')}
+                {(() => {
+                  if (!Array.isArray(allPosts) || allPosts.length === 0) return '정보 없음';
+                  const dates = Array.isArray(allPosts) ? allPosts.map(post => new Date(post.created_date)).filter(date => !isNaN(date.getTime())) : [];
+                  if (!Array.isArray(dates) || dates.length === 0) return '정보 없음';
+                  const lastDate = new Date(Math.max(...(Array.isArray(dates) ? dates.map(d => d.getTime()) : [])));
+                  return lastDate.toLocaleDateString('ko-KR');
+                })()}
               </div>
               <div className="text-sm text-muted-foreground">최근 언급</div>
             </div>
@@ -308,15 +458,22 @@ export default function StockDetailPage() {
           <div className="space-y-2">
             <h3 className="font-semibold">관련 태그</h3>
             <div className="flex flex-wrap gap-2">
-              {stock.tags && stock.tags.length > 0 ? (
-                stock.tags.map(tag => (
-                  <Badge key={tag} variant="secondary">
-                    {tag}
-                  </Badge>
-                ))
-              ) : (
-                <span className="text-sm text-muted-foreground">관련 태그 없음</span>
-              )}
+{(() => {
+                const tagsArray = safeGetTags(stock);
+                
+                // 이중 안전장치: 배열이 아니면 빈 배열로 강제 변환
+                const safeTags = Array.isArray(tagsArray) ? tagsArray : [];
+                
+                return safeTags.length > 0 ? (
+                  safeTags.map((tag, index) => (
+                    <Badge key={`${stock?.ticker}-tag-${index}`} variant="secondary">
+                      {tag}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground">관련 태그 없음</span>
+                );
+              })()}
             </div>
           </div>
         </CardContent>
@@ -330,6 +487,11 @@ export default function StockDetailPage() {
           onTimeRangeChange={handleTimeRangeChange}
           stockName={stock.name}
         />
+        
+        {/* 모바일 가로모드 안내 */}
+        <div className="mt-2 sm:hidden text-xs text-gray-500 dark:text-gray-400 text-center">
+          📱 <strong>모바일 팁:</strong> 핸드폰을 가로로 눕히면 1Y(1년) 차트로 자동 전환됩니다
+        </div>
       </div>
 
       {/* 관련 포스트 */}
@@ -362,7 +524,7 @@ export default function StockDetailPage() {
                 </p>
               </div>
               <div className="space-y-4">
-                {postsState.posts.map(post => (
+                {Array.isArray(postsState.posts) && postsState.posts.map(post => (
                 <Link key={post.id} href={`/merry/${post.id}`}>
                   <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer border">
                     <div className="space-y-2">

@@ -27,12 +27,13 @@ interface Stock {
   market?: string;
   mentions?: number;
   mention_count: number;
+  analyzed_count: number;
   postCount?: number;
   firstMention?: string;
   lastMention?: string;
   last_mentioned_at: string;
   sentiment?: 'positive' | 'neutral' | 'negative';
-  tags?: string[];
+  tags?: string[] | string;
   description: string;
   currentPrice: number;
   currency: string;
@@ -172,33 +173,33 @@ export default function MerryStocksPage() {
         </CardContent>
       </Card>
 
-      {/* 통계 카드 */}
+      {/* 통계 카드 - 다크 모드 호환 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
+        <Card className="bg-card dark:bg-card">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">{stocks.length}</div>
+            <div className="text-2xl font-bold text-foreground">{stocks.length}</div>
             <div className="text-sm text-muted-foreground">총 종목 수</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-card dark:bg-card">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-foreground">
               {stocks.filter(s => (s.market || 'NASDAQ') === 'KOSPI').length}
             </div>
             <div className="text-sm text-muted-foreground">국내 종목</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-card dark:bg-card">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-foreground">
               {stocks.filter(s => ['NASDAQ', 'NYSE'].includes(s.market || 'NASDAQ')).length}
             </div>
             <div className="text-sm text-muted-foreground">미국 종목</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-card dark:bg-card">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-foreground">
               {stocks.reduce((sum, s) => sum + (s.postCount || s.mentions || s.mention_count || 0), 0)}
             </div>
             <div className="text-sm text-muted-foreground">총 포스트 수</div>
@@ -234,7 +235,7 @@ export default function MerryStocksPage() {
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Hash className="w-3 h-3" />
-                      {stock.postCount || stock.mentions || stock.mention_count}개 포스트
+                      {stock.mention_count}개 포스트 중 {stock.analyzed_count}개 분석 완료
                     </div>
                   </div>
                 </div>
@@ -244,17 +245,35 @@ export default function MerryStocksPage() {
                 </p>
                 
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {stock.tags && stock.tags.length > 0 ? (
-                    stock.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
+                  {(() => {
+                    let tagsArray: string[] = [];
+                    
+                    if (stock.tags) {
+                      if (typeof stock.tags === 'string') {
+                        try {
+                          const parsed = JSON.parse(stock.tags);
+                          tagsArray = Array.isArray(parsed) ? parsed : [];
+                        } catch (e) {
+                          console.warn('Failed to parse tags:', e);
+                          tagsArray = [];
+                        }
+                      } else if (Array.isArray(stock.tags)) {
+                        tagsArray = stock.tags;
+                      }
+                    }
+                    
+                    return tagsArray.length > 0 ? (
+                      tagsArray.slice(0, 4).map((tag, tagIndex) => (
+                        <Badge key={`${stock.ticker}-tag-${tagIndex}`} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">
+                        태그 없음
                       </Badge>
-                    ))
-                  ) : (
-                    <Badge variant="outline" className="text-xs text-muted-foreground">
-                      태그 없음
-                    </Badge>
-                  )}
+                    );
+                  })()}
                 </div>
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">

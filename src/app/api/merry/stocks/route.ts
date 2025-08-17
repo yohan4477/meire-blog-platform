@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-// NOTE: StockDB require 제거로 성능 개선 (getStockMentions 최적화 함수 사용)
-import { performantDb, getStockMentions } from '../../../../lib/db-performance';
+// NOTE: stocks 테이블 사용으로 성능 개선
 import { edgeCache, setCacheHeaders, CACHE_KEYS, CACHE_TAGS } from '../../../../lib/edge-cache';
 
 // 다중 레벨 캐시 저장소
@@ -147,11 +146,48 @@ async function loadStocksData(): Promise<any[]> {
   let stockData = [];
   
   try {
-    // PERFORMANCE OPTIMIZED: Use high-performance singleton with caching
-    console.log('🚀 Using optimized high-performance database connection');
-    stockData = await getStockMentions(10);
+    // PERFORMANCE OPTIMIZED: Use stocks table directly
+    console.log('🚀 Using stocks table for optimized stock data');
     
-    console.log(`✅ DB에서 ${stockData.length}개 종목 로드 완료 (최적화된 방식)`);
+    // stocks 테이블에서 직접 데이터 조회
+    const stocksQuery = `
+      SELECT 
+        ticker, company_name, company_name_kr, market, 
+        mention_count, last_mentioned_date as last_mentioned_at,
+        sector, industry
+      FROM stocks 
+      WHERE is_merry_mentioned = 1 AND mention_count > 0
+      ORDER BY last_mentioned_date DESC, mention_count DESC
+      LIMIT 10
+    `;
+    
+    const stockResults = await new Promise((resolve, reject) => {
+      const StockDB = require('../../../../lib/stock-db-sqlite3');
+      const stockDB = new StockDB();
+      stockDB.connect().then(() => {
+        stockDB.db.all(stocksQuery, [], (err, rows) => {
+          stockDB.close();
+          if (err) reject(err);
+          else resolve(rows || []);
+        });
+      });
+    });
+    
+    // stocks 데이터를 기존 형식으로 변환
+    stockData = stockResults.map(stock => ({
+      ticker: stock.ticker,
+      company_name: stock.company_name_kr || stock.company_name,
+      name: stock.company_name_kr || stock.company_name,
+      market: stock.market || (stock.ticker.length === 6 ? 'KRX' : 'NASDAQ'),
+      mention_count: stock.mention_count,
+      analyzed_count: 0, // 별도 조회 필요시 추가
+      last_mentioned_at: stock.last_mentioned_at,
+      sentiment: 'neutral', // 별도 감정 분석 조회 필요시 추가
+      tags: [],
+      description: `${stock.company_name_kr || stock.company_name} (${stock.sector || ''})`
+    }));
+    
+    console.log(`✅ stocks 테이블에서 ${stockData.length}개 종목 로드 완료 (직접 방식)`);
   } catch (error) {
     console.error('종목 데이터 파일 읽기 실패, fallback 데이터 사용');
     // fallback 데이터
