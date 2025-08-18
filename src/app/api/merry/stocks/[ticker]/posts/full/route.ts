@@ -53,78 +53,56 @@ export async function GET(
 
 async function findAllPostsByTicker(ticker: string, period: string): Promise<any[]> {
   try {
-    // SQLite 데이터베이스에서 시간 범위별 포스트 조회 (우선순위)
-    const StockDB = require('@/lib/stock-db-sqlite3');
+    // 🚨 CLAUDE.md 준수: merry_mentioned_stocks 테이블만 사용, blog_posts 절대 금지
+    const { performantDb } = require('@/lib/db-performance');
     let allPosts: any[] = [];
     
     try {
-      const stockDB = new StockDB();
-      
       // 시간 범위 계산
-      const periodDays = period === '1mo' ? 30 : period === '3mo' ? 90 : period === '6mo' ? 180 : 365; // 1M=30일, 3M=90일, 6M=180일, 1Y=365일
+      const periodDays = period === '1mo' ? 30 : period === '3mo' ? 90 : period === '6mo' ? 180 : 365;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - periodDays);
-      const startTimestamp = Math.floor(startDate.getTime() / 1000); // Unix timestamp
+      const startDateStr = startDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      const endDateStr = new Date().toISOString().split('T')[0];
       
-      console.log(`📅 Looking for posts from ${startDate.toISOString()} to now (${periodDays} days)`);
+      console.log(`📅 Looking for mentions from ${startDateStr} to ${endDateStr} (${periodDays} days)`);
       
-      // 주식명 매핑
-      const tickerToNameMap = {
-        '005930': '삼성전자',
-        'TSLA': '테슬라',
-        'AAPL': '애플',
-        'NVDA': '엔비디아',
-        'INTC': '인텔',
-        'TSMC': 'TSMC',
-        '042660': '한화오션',
-        '267250': 'HD현대'
-      };
+      // merry_mentioned_stocks 테이블에서 언급 정보 조회
+      const mentionsQuery = `
+        SELECT 
+          id,
+          ticker,
+          post_id,
+          mentioned_date,
+          context,
+          sentiment_score,
+          mention_type,
+          created_at
+        FROM merry_mentioned_stocks 
+        WHERE ticker = ?
+          AND mentioned_date >= ?
+          AND mentioned_date <= ?
+        ORDER BY mentioned_date DESC
+      `;
       
-      const stockName = tickerToNameMap[ticker] || ticker;
-      const searchTerms = [ticker, stockName];
+      const mentions = await performantDb.query(mentionsQuery, [ticker, startDateStr, endDateStr]);
       
-      // 시간 범위별 DB 쿼리 실행
-      const whereClause = searchTerms.map(() => '(title LIKE ? OR content LIKE ? OR excerpt LIKE ?)').join(' OR ');
-      const searchParams = [];
-      searchTerms.forEach(term => {
-        const pattern = `%${term}%`;
-        searchParams.push(pattern, pattern, pattern);
-      });
-      
-      // DB 연결 및 쿼리
-      await stockDB.connect();
-      
-      const dbPosts = await new Promise((resolve, reject) => {
-        stockDB.db.all(`
-          SELECT id, title, excerpt, created_date, views, category, blog_type
-          FROM blog_posts
-          WHERE (${whereClause}) AND created_date >= ?
-          ORDER BY created_date DESC
-        `, [...searchParams, startTimestamp], (err, rows) => {
-          if (err) {
-            console.error('DB query failed:', err);
-            reject(err);
-          } else {
-            resolve(rows || []);
-          }
-        });
-      });
-      
-      allPosts = dbPosts.map((post: any) => ({
-        id: post.id,
-        title: post.title,
-        excerpt: post.excerpt || extractExcerpt(post.title, ticker),
-        created_date: post.created_date,
-        views: post.views || 0,
-        category: post.category || '투자분석'
+      allPosts = mentions.map((mention: any) => ({
+        id: mention.post_id || mention.id,
+        title: `메르 포스트 #${mention.post_id} - ${ticker} 언급`,
+        excerpt: mention.context || `${ticker} 관련 메르 포스트 언급`,
+        created_date: mention.mentioned_date,
+        views: 0, // merry_mentioned_stocks에는 없음
+        category: mention.mention_type || '투자분석',
+        sentiment_score: mention.sentiment_score,
+        mention_context: mention.context,
+        source: 'merry_mentioned_stocks'
       }));
       
-      stockDB.close();
-      
-      console.log(`📊 Found ${allPosts.length} posts for ${ticker}/${stockName} in last ${periodDays} days from DB`);
+      console.log(`📊 Found ${allPosts.length} mentions for ${ticker} in last ${periodDays} days from merry_mentioned_stocks`);
       
     } catch (dbError) {
-      console.error('Database query failed, falling back to JSON:', dbError);
+      console.error('merry_mentioned_stocks query failed, falling back to JSON:', dbError);
       
       // DB 실패시 JSON 파일 fallback (기존 로직)
       const dataPath = path.join(process.cwd(), 'data', 'stock-mentions-count.json');
@@ -152,7 +130,8 @@ async function findAllPostsByTicker(ticker: string, period: string): Promise<any
               excerpt: post.excerpt || extractExcerpt(post.title, ticker),
               created_date: post.created_date,
               views: post.views || 0,
-              category: post.category || '투자분석'
+              category: post.category || '투자분석',
+              source: 'json_fallback'
             }));
         }
       }

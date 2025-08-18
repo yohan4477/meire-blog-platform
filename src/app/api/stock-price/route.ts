@@ -29,11 +29,9 @@ export async function GET(request: NextRequest) {
       fetchedAt: new Date().toISOString()
     });
 
-    // 캐시 비활성화 헤더 추가
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    response.headers.set('Pragma', 'no-cache');
-    response.headers.set('Expires', '0');
-    response.headers.set('Surrogate-Control', 'no-store');
+    // 캐시 활성화 헤더 추가 (성능 향상)
+    response.headers.set('Cache-Control', 'public, max-age=1800, s-maxage=1800'); // 30분 캐시
+    response.headers.set('CDN-Cache-Control', 'public, max-age=1800');
 
     return response;
 
@@ -49,48 +47,68 @@ export async function GET(request: NextRequest) {
 // SQLite3 DB에서 주식 가격 데이터 조회 (메르 언급 종목만) - 글로벌 인스턴스 사용
 async function fetchStockPriceData(ticker: string, period: string) {
   const stockDB = getStockDB();
+  let retryCount = 0;
+  const maxRetries = 2;
   
-  try {
-    await stockDB.connect();
-    
-    // 메르 언급 종목인지 확인
-    const stockInfo = await stockDB.getStockInfo(ticker);
-    
-    if (!stockInfo) {
-      console.warn(`⚠️ ${ticker} not found in database`);
+  while (retryCount <= maxRetries) {
+    try {
+      await stockDB.connect();
+      
+      // 🔥 4개 DB 최적화: stock_prices 테이블에서 직접 조회
+      const periodDays = period === '1M' ? 30 : period === '3M' ? 90 : period === '6M' ? 180 : 365;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - periodDays);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      
+      // 🔥 4개 DB 최적화: stock_prices 테이블에서 직접 조회
+      const priceRecords = await new Promise((resolve, reject) => {
+        stockDB.db.all(`
+          SELECT date, close_price, volume
+          FROM stock_prices 
+          WHERE ticker = ? AND date >= ?
+          ORDER BY date ASC
+        `, [ticker, startDateStr], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        });
+      });
+      
+      if (priceRecords.length === 0) {
+        console.warn(`⚠️ No price data found in DB for ${ticker}, falling back to Yahoo Finance`);
+        return await fetchFromYahooFinance(ticker, period);
+      }
+      
+      console.log(`📊 Found ${priceRecords.length} DB records for ${ticker}`);
+      
+      // DB 데이터를 차트 형식으로 변환 (한국 종목은 원화로 처리)
+      const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
+      
+      return (priceRecords as any[]).map(record => ({
+        date: record.date,
+        price: isKoreanStock ? Math.round(record.close_price) : parseFloat(record.close_price.toFixed(2))
+      }));
+      
+    } catch (error) {
+      console.error(`DB에서 주식 데이터 조회 실패 (시도 ${retryCount + 1}/${maxRetries + 1}):`, error);
+      
+      if (retryCount < maxRetries) {
+        retryCount++;
+        console.log(`⏳ 500ms 후 재시도... (${retryCount}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        continue;
+      }
+      
+      // 모든 재시도 실패 시 Yahoo Finance fallback
+      console.warn(`🔄 DB 연결 ${maxRetries + 1}회 실패, Yahoo Finance로 fallback`);
       return await fetchFromYahooFinance(ticker, period);
+    } finally {
+      // 글로벌 인스턴스는 종료하지 않고 재사용
+      try {
+        stockDB.close();
+      } catch (closeError) {
+        console.warn('DB 연결 종료 중 오류 (무시):', closeError);
+      }
     }
-    
-    if (!stockInfo.is_merry_mentioned) {
-      console.warn(`⚠️ ${ticker} is not a Merry-mentioned stock`);
-      return null; // CLAUDE.md 원칙: 메르 언급 종목만 데이터 제공
-    }
-    
-    // DB에서 종가 데이터 조회
-    const priceRecords = await stockDB.getStockPrices(ticker, period);
-    
-    if (priceRecords.length === 0) {
-      console.warn(`⚠️ No price data found in DB for ${ticker}, falling back to Yahoo Finance`);
-      return await fetchFromYahooFinance(ticker, period);
-    }
-    
-    console.log(`📊 Found ${priceRecords.length} DB records for ${ticker} (${stockInfo.company_name_kr})`);
-    
-    // DB 데이터를 차트 형식으로 변환
-    const isKoreanStock = stockInfo.market === 'KRX';
-    
-    return priceRecords.map(record => ({
-      date: record.date,
-      price: isKoreanStock ? Math.round(record.close_price) : parseFloat(record.close_price.toFixed(2))
-    }));
-    
-  } catch (error) {
-    console.error('DB에서 주식 데이터 조회 실패:', error);
-    // DB 실패 시 Yahoo Finance fallback
-    return await fetchFromYahooFinance(ticker, period);
-  } finally {
-    // 글로벌 인스턴스는 종료하지 않고 재사용
-    stockDB.close();
   }
 }
 

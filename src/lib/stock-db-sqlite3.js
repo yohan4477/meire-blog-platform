@@ -10,8 +10,8 @@ class StockDB {
     this.connecting = false;
   }
 
-  // 연결 풀링 및 재사용을 위한 개선된 DB 연결
-  async connect() {
+  // 연결 풀링 및 재사용을 위한 개선된 DB 연결 (retry 로직 추가)
+  async connect(retryCount = 0, maxRetries = 3) {
     // 이미 연결된 경우 재사용
     if (this.isConnected && this.db) {
       return Promise.resolve();
@@ -34,29 +34,72 @@ class StockDB {
     this.connecting = true;
 
     return new Promise((resolve, reject) => {
-      this.db = new sqlite3.Database(path.join(process.cwd(), 'database.db'), 
-        sqlite3.OPEN_READWRITE, (err) => {
-        if (err) {
-          console.error('SQLite3 연결 실패:', err);
+      try {
+        const dbPath = path.join(process.cwd(), 'database.db');
+        
+        // 데이터베이스 파일 존재 확인
+        if (!require('fs').existsSync(dbPath)) {
+          console.error(`❌ Database file not found: ${dbPath}`);
           this.connecting = false;
-          reject(err);
-        } else {
-          this.isConnected = true;
-          this.connecting = false;
-          
-          // WAL 모드 활성화 (성능 향상)
-          this.db.run("PRAGMA journal_mode = WAL;");
-          this.db.run("PRAGMA synchronous = NORMAL;");
-          this.db.run("PRAGMA cache_size = 5000;"); // 캐시 크기 증가
-          this.db.run("PRAGMA temp_store = MEMORY;");
-          this.db.run("PRAGMA wal_autocheckpoint = 1000;"); // 체크포인트 최적화
-          this.db.run("PRAGMA busy_timeout = 30000;"); // 30초 대기
-          
-          console.log('🚀 SQLite3 고성능 모드 활성화 완료');
-          
-          resolve();
+          reject(new Error(`Database file not found: ${dbPath}`));
+          return;
         }
-      });
+
+        this.db = new sqlite3.Database(dbPath, 
+          sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+          if (err) {
+            console.error(`SQLite3 연결 실패 (attempt ${retryCount + 1}/${maxRetries + 1}):`, err);
+            this.connecting = false;
+            
+            // Retry 로직
+            if (retryCount < maxRetries) {
+              console.log(`⏳ ${500 * (retryCount + 1)}ms 후 재시도...`);
+              setTimeout(() => {
+                this.connect(retryCount + 1, maxRetries)
+                  .then(resolve)
+                  .catch(reject);
+              }, 500 * (retryCount + 1)); // 지수 백오프
+            } else {
+              reject(new Error(`Database connection failed after ${maxRetries + 1} attempts: ${err.message}`));
+            }
+          } else {
+            this.isConnected = true;
+            this.connecting = false;
+            
+            // 오류 핸들링 개선
+            this.db.on('error', (error) => {
+              console.error('🚨 SQLite3 Runtime Error:', error);
+              this.isConnected = false;
+              this.db = null;
+            });
+
+            this.db.on('close', () => {
+              console.log('📪 SQLite3 연결 종료됨');
+              this.isConnected = false;
+              this.db = null;
+            });
+            
+            // WAL 모드 활성화 (성능 향상 + 안정성)
+            this.db.serialize(() => {
+              this.db.run("PRAGMA journal_mode = WAL;");
+              this.db.run("PRAGMA synchronous = NORMAL;");
+              this.db.run("PRAGMA cache_size = 5000;"); // 캐시 크기 증가
+              this.db.run("PRAGMA temp_store = MEMORY;");
+              this.db.run("PRAGMA wal_autocheckpoint = 1000;"); // 체크포인트 최적화
+              this.db.run("PRAGMA busy_timeout = 30000;"); // 30초 대기
+              this.db.run("PRAGMA foreign_keys = ON;"); // 외래키 제약 활성화
+              
+              console.log('🚀 SQLite3 고성능 모드 활성화 완료');
+            });
+            
+            resolve();
+          }
+        });
+      } catch (syncError) {
+        console.error('🚨 SQLite3 동기 오류:', syncError);
+        this.connecting = false;
+        reject(syncError);
+      }
     });
   }
 

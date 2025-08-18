@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea, ReferenceDot } from 'recharts';
@@ -85,13 +85,14 @@ interface StockPriceChartProps {
   stockName?: string; // 종목 이름 추가
 }
 
-export default function StockPriceChart({ 
+// 🚀 ULTRA: 메모이제이션된 차트 컴포넌트
+export default memo(function StockPriceChart({ 
   ticker, 
   timeRange, 
   onTimeRangeChange,
   stockName
 }: StockPriceChartProps) {
-  // 상태 관리
+  // 🚀 ULTRA: useState 최소화 및 성능 최적화
   const [priceData, setPriceData] = useState<PricePoint[]>([]);
   const [currentPrice, setCurrentPrice] = useState<number>(0);
   const [changePercent, setChangePercent] = useState<number>(0);
@@ -99,6 +100,129 @@ export default function StockPriceChart({
   const [sentimentStats, setSentimentStats] = useState<{totalMentions: number, analyzedMentions: number} | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   
+  // 🚀 ULTRA: 병렬 데이터 로딩 최적화 (3개 API 동시 호출)
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    
+    // 🔥 즉시 이전 상태 초기화로 빠른 UI 반응
+    setPriceData([]);
+    setCurrentPrice(0);
+    setChangePercent(0);
+    setSentimentStats(null);
+    
+    try {
+      // 🔥 수정: 모든 API에서 동일한 period 형식 사용 (1M, 3M, 6M, 1Y)
+      const standardPeriod = timeRange; // 변환 없이 그대로 사용
+      
+      // 🔥 4개 DB 최적화: 3개 API 병렬 호출 (stocks+prices, sentiments, merry_mentioned_stocks)
+      const [priceResult, sentimentResult, postsResult] = await Promise.all([
+        fetch(`/api/stock-price?ticker=${ticker}&period=${standardPeriod}`).then(r => r.json()),
+        fetch(`/api/merry/stocks/${ticker}/sentiments?period=${standardPeriod}`).then(r => r.json()),
+        fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0&period=${standardPeriod}`).then(r => r.json())
+      ]);
+      
+      console.log(`⚡ ULTRA: 3개 API 병렬 완료 - Price: ${priceResult.success}, Sentiment: ${!!sentimentResult.sentimentByDate}, Posts: ${postsResult.success}`);
+      
+      // 감정 분석 통계 즉시 설정
+      setSentimentStats({
+        totalMentions: sentimentResult.totalMentions || 0,
+        analyzedMentions: sentimentResult.analyzedMentions || 0
+      });
+      
+      if (priceResult.success && priceResult.prices) {
+        // 🔥 4개 DB 최적화: merry_mentioned_stocks 데이터 날짜별 그룹화
+        const postsByDate = Object.create(null);
+        if (postsResult.success && postsResult.data?.posts) {
+          postsResult.data.posts.forEach((post: any) => {
+            // merry_mentioned_stocks.mentioned_date 사용
+            const postDate = post.created_date || post.mentioned_date;
+            // 🔧 날짜 형식 정규화 (YYYY-MM-DD)
+            let dateKey;
+            if (postDate.includes('T')) {
+              dateKey = postDate.split('T')[0];
+            } else if (postDate.includes(' ')) {
+              dateKey = postDate.split(' ')[0];
+            } else {
+              dateKey = postDate;
+            }
+            (postsByDate[dateKey] = postsByDate[dateKey] || []).push(post);
+          });
+        }
+
+        // 🚀 ULTRA: 데이터 검증 최소화 (90% 신뢰할 수 있는 API)
+        if (!Array.isArray(priceResult.prices)) {
+          console.error('Price data invalid:', priceResult.prices);
+          setPriceData([]);
+          setLoading(false);
+          return;
+        }
+
+        
+
+        // 🚀 ULTRA: 클라이언트 필터링 제거 (API에서 이미 필터링됨)
+        const filteredPrices = priceResult.prices;
+
+        // 🔥 단순화: merry_mentioned_stocks + sentiments 별도 병합
+        const enrichedData = filteredPrices.map((point: any) => {
+          const dateStr = point.date;
+          // 🔧 날짜 형식 정규화 (YYYY-MM-DD)
+          const normalizedDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
+          
+          // 1. merry_mentioned_stocks 데이터 (파란색 마커용)
+          const postsData = postsByDate[normalizedDate] || [];
+          
+          // 2. sentiments 데이터 (색상 변경용) - 날짜 키 직접 사용
+          const sentimentData = sentimentResult.sentimentByDate?.[normalizedDate];
+          const sentiments = sentimentData?.postSentimentPairs?.map((pair: any) => pair.sentiment) || [];
+          
+          console.log(`🔍 날짜 매칭: ${normalizedDate} → posts: ${postsData.length}, sentiments: ${sentiments.length}`, {
+            sentimentData,
+            sentiments: sentiments.map(s => ({ sentiment: s.sentiment, reasoning: s.key_reasoning?.substring(0, 50) }))
+          });
+          
+          return {
+            ...point,
+            posts: postsData,        // merry_mentioned_stocks 데이터
+            sentiments: sentiments   // sentiments 데이터
+          };
+        });
+        
+        
+        // 🔍 날짜 매칭 디버그
+        console.log('🔍 주가 데이터 날짜:', enrichedData.slice(-5).map(p => p.date));
+        console.log('🔍 감정 분석 날짜:', Object.keys(sentimentResult.sentimentByDate || {}));
+        console.log('🔍 전체 감정 분석 응답:', sentimentResult);
+        console.log('🚨 FORCE DEBUG: Period:', standardPeriod, 'Ticker:', ticker);
+        
+        setPriceData(enrichedData);
+        
+        // 🚀 ULTRA: 현재가 계산 최적화
+        if (enrichedData.length >= 2) {
+          const latest = enrichedData[enrichedData.length - 1];
+          const previous = enrichedData[enrichedData.length - 2];
+          setCurrentPrice(latest.price);
+          setChangePercent(((latest.price - previous.price) / previous.price) * 100);
+        }
+        
+        // 🔥 단순화: 마커 표시 (merry 언급이 있는 날짜)
+        setShowMarkers(true);
+        const markersWithData = enrichedData.filter((point: any) => 
+          point.posts?.length > 0
+        );
+        setVisibleMarkerCount(markersWithData.length);
+      }
+    } catch (error) {
+      console.error('Data fetch error:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [ticker, timeRange]);
+  
+  // 🚀 ULTRA: useEffect 최적화
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   // 다크 모드 감지
   useEffect(() => {
     const checkDarkMode = () => {
@@ -158,241 +282,6 @@ export default function StockPriceChart({
     }
   }, []);
 
-  // 데이터 로딩
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      
-      // 🔧 timeRange 변경 시 이전 데이터 완전 초기화 및 강제 리렌더링
-      setPriceData([]);
-      setCurrentPrice(0);
-      setChangePercent(0);
-      setSentimentStats(null);
-      
-      // 🔧 약간의 지연으로 상태 업데이트 보장
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      try {
-        // 주가 데이터 가져오기
-        const priceResponse = await fetch(`/api/stock-price?ticker=${ticker}&period=${timeRange}`);
-        const priceResult = await priceResponse.json();
-        
-        // 감정 분석 데이터 가져오기 (포스트-감정 쌍 구조)
-        // 🔧 period 파라미터 표준화 (3M → 3mo, 1M → 1mo, 6M → 6mo, 1Y → 1y)
-        const convertPeriod = (range: string) => {
-          switch(range) {
-            case '1M': return '1mo';
-            case '3M': return '3mo';
-            case '6M': return '6mo';
-            case '1Y': return '1y';
-            default: return '6mo';
-          }
-        };
-        
-        const sentimentResponse = await fetch(`/api/merry/stocks/${ticker}/sentiments?period=${convertPeriod(timeRange)}`);
-        const sentimentResult = await sentimentResponse.json();
-        
-        // 🔧 감정 분석 통계 저장
-        setSentimentStats({
-          totalMentions: sentimentResult.totalMentions || 0,
-          analyzedMentions: sentimentResult.analyzedMentions || 0
-        });
-        
-        // 포스트 데이터 가져오기 (선택된 기간만)
-        const postsResponse = await fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0&period=${convertPeriod(timeRange)}`);
-        const postsResult = await postsResponse.json();
-        
-        if (priceResult.success && priceResult.prices) {
-          // 포스트를 날짜별로 그룹화
-          const postsByDate: {[key: string]: any[]} = {};
-          if (postsResult.success && postsResult.data?.posts) {
-            postsResult.data.posts.forEach((post: any) => {
-              const postDate = new Date(post.created_date).toISOString().split('T')[0];
-              if (!postsByDate[postDate]) {
-                postsByDate[postDate] = [];
-              }
-              postsByDate[postDate].push(post);
-            });
-          }
-          
-          // 감정 데이터, 포스트 데이터와 주가 데이터 결합
-          // 데이터 안전성 검증 추가
-          if (!priceResult.prices || !Array.isArray(priceResult.prices)) {
-            console.error('클사이트 가격 데이터가 배열이 아님:', priceResult.prices);
-            setPriceData([]);
-            setLoading(false);
-            return;
-          }
-          
-          // 🔧 디버그: 감정 분석 결과 전체 구조 확인
-          console.log(`🚀 Sentiment result structure:`, {
-            hasSentimentByDate: !!sentimentResult.sentimentByDate,
-            dateKeys: Object.keys(sentimentResult.sentimentByDate || {}),
-            totalDates: Object.keys(sentimentResult.sentimentByDate || {}).length,
-            summary: sentimentResult.summary
-          });
-
-          // 🔧 디버그: Price 데이터 범위 확인
-          console.log(`📈 Price data range:`, {
-            total: priceResult.prices.length,
-            firstDate: priceResult.prices[0]?.date,
-            lastDate: priceResult.prices[priceResult.prices.length - 1]?.date,
-            period: priceResult.period,
-            timeRange: timeRange
-          });
-
-          // 🔧 timeRange 기반 명시적 날짜 필터링
-          const getCurrentDateFilter = (range: string) => {
-            const today = new Date();
-            let startDate: Date;
-            
-            switch (range) {
-              case '1M':
-                startDate = new Date();
-                startDate.setMonth(today.getMonth() - 1);
-                break;
-              case '3M':
-                startDate = new Date();
-                startDate.setMonth(today.getMonth() - 3);
-                break;
-              case '6M':
-                startDate = new Date();
-                startDate.setMonth(today.getMonth() - 6);
-                break;
-              case '1Y':
-                startDate = new Date();
-                startDate.setFullYear(today.getFullYear() - 1);
-                break;
-              default:
-                startDate = new Date();
-                startDate.setMonth(today.getMonth() - 6);
-            }
-            
-            return {
-              start: startDate.toISOString().split('T')[0],
-              end: today.toISOString().split('T')[0]
-            };
-          };
-          
-          const dateFilter = getCurrentDateFilter(timeRange);
-          console.log(`🔧 Date filter for ${timeRange}:`, dateFilter);
-          
-          // 가격 데이터를 날짜 범위로 필터링
-          const filteredPrices = priceResult.prices.filter((point: any) => {
-            return point.date >= dateFilter.start && point.date <= dateFilter.end;
-          });
-          
-          console.log(`🔧 Filtered prices: ${filteredPrices.length}/${priceResult.prices.length} points`);
-          if (filteredPrices.length > 0) {
-            console.log(`🔧 Date range: ${filteredPrices[0]?.date} ~ ${filteredPrices[filteredPrices.length - 1]?.date}`);
-          }
-
-          const enrichedData = filteredPrices.map((point: any) => {
-            const dateStr = point.date;
-            const sentimentData = sentimentResult.sentimentByDate?.[dateStr];
-            const postsData = postsByDate[dateStr] || [];
-            
-            // 🔧 디버그: 각 날짜별 데이터 확인
-            if (sentimentData) {
-              console.log(`📅 [${dateStr}] Sentiment data available:`, {
-                hasPostSentimentPairs: !!sentimentData.postSentimentPairs,
-                pairsCount: sentimentData.postSentimentPairs?.length || 0,
-                postsCount: postsData.length
-              });
-            }
-            
-            // 새로운 구조: postSentimentPairs 사용
-            const postSentimentPairs = sentimentData?.postSentimentPairs || [];
-            
-            // 포스트-감정 쌍이 있으면 사용, 없으면 일반 포스트만 사용
-            const finalPosts = postSentimentPairs.length > 0 
-              ? postSentimentPairs.map(pair => pair.post)
-              : postsData;
-              
-            const finalSentiments = postSentimentPairs.length > 0 
-              ? postSentimentPairs.map(pair => pair.sentiment).filter(s => s && s.sentiment)
-              : [];
-            
-            // 🔧 데이터 검증 완료 + 디버깅 로그
-            if (postSentimentPairs.length > 0) {
-              console.log(`📊 [${dateStr}] Sentiment data found:`, {
-                postSentimentPairs: postSentimentPairs.length,
-                finalSentiments: finalSentiments.length,
-                finalPosts: finalPosts.length
-              });
-            }
-            
-            return {
-              ...point,
-              sentiments: finalSentiments,
-              posts: finalPosts,
-              postSentimentPairs: postSentimentPairs // 새로운 필드 추가
-            };
-          });
-          
-          setPriceData(enrichedData);
-          
-          
-          // 현재가 및 변동률 계산
-          if (enrichedData.length >= 2) {
-            const latest = enrichedData[enrichedData.length - 1];
-            const previous = enrichedData[enrichedData.length - 2];
-            setCurrentPrice(latest.price);
-            setChangePercent(((latest.price - previous.price) / previous.price) * 100);
-          }
-          
-          // 애니메이션 초기화
-          setShowMarkers(false);
-          setVisibleMarkerCount(0);
-          
-          // 차트 데이터 준비 완료 후 잠시 대기
-          setTimeout(() => {
-            // 라인 애니메이션 완료 후 마커 애니메이션 시작 (기간별 타이밍)
-            const lineAnimationDuration = timeRange === '1M' ? 1000 : 
-                                         timeRange === '3M' ? 1200 : 
-                                         timeRange === '6M' ? 1500 : 1800;
-            setTimeout(() => {
-              setShowMarkers(true);
-              
-              // 마커들을 순차적으로 표시 (포스트-감정 쌍이 있는 데이터 포인트)
-              const markersWithData = enrichedData.filter(point => 
-                (point.posts && point.posts.length > 0) || 
-                (point.sentiments && point.sentiments.length > 0) ||
-                (point.postSentimentPairs && point.postSentimentPairs.length > 0)
-              );
-              
-              console.log(`🎯 Markers to display: ${markersWithData.length}/${enrichedData.length}`, {
-                markersWithData: markersWithData.map(p => ({
-                  date: p.date,
-                  posts: p.posts?.length || 0,
-                  sentiments: p.sentiments?.length || 0,
-                  postSentimentPairs: p.postSentimentPairs?.length || 0
-                }))
-              });
-              
-              if (markersWithData.length > 0) {
-                const markerDelay = timeRange === '1M' ? 100 : 
-                                   timeRange === '3M' ? 120 : 
-                                   timeRange === '6M' ? 150 : 180;
-                markersWithData.forEach((_, index) => {
-                  setTimeout(() => {
-                    setVisibleMarkerCount(prev => prev + 1);
-                  }, index * markerDelay);
-                });
-              }
-            }, lineAnimationDuration + 100); // 라인 애니메이션 완전 완료 후
-          }, 200); // 데이터 설정 후 약간의 지연
-        }
-      } catch (error) {
-        // 에러 발생 시 처리
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [ticker, timeRange]);
-
   // 차트 색상 결정 - 토스 블루로 통일
   const chartColor = useMemo(() => {
     return tossColors.negative; // 토스 블루로 통일
@@ -411,12 +300,11 @@ export default function StockPriceChart({
     });
   }, [priceData, zoomDomain]);
 
-  // 토스 스타일 커스텀 툴팁
-  const TossTooltip = ({ active, payload, label }: any) => {
+  // 🚀 ULTRA: 메모이제이션된 툴팁 컴포넌트
+  const TossTooltip = memo(({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
     
     const data = payload[0].payload;
-    const hassentiments = data.sentiments && data.sentiments.length > 0;
     
     return (
       <div className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 shadow-2xl max-w-xs sm:max-w-sm text-sm sm:text-base">
@@ -437,77 +325,58 @@ export default function StockPriceChart({
           </div>
         </div>
         
-        {/* 📝 제목 + 💡 핵심 근거 (모든 포스트 표시) + 분석 완료 상태 */}
-        {data.postSentimentPairs && Array.isArray(data.postSentimentPairs) && data.postSentimentPairs.length > 0 && (
+        {/* 📝 관련 포스트 표시 (실제 제목) */}
+        {data.posts?.length > 0 && (
+          <div className="mb-3">
+            <p className="text-xs font-medium text-gray-700 mb-1">📝 관련 포스트</p>
+            {data.posts.slice(0, 2).map((post: any, index: number) => (
+              <div key={index} className="text-xs p-2 bg-blue-50 rounded-lg border-l-2 border-blue-400 mb-1">
+                <div className="font-medium text-blue-800 mb-1 line-clamp-2">
+                  {post.title || `메르 포스트 #${post.id}`}
+                </div>
+                <div className="text-gray-600 text-[10px]">
+                  조회수: {post.views || 0} · {post.category || '투자분석'}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 🎯 근거 기반 감정 분석 표시 */}
+        {data.sentiments?.length > 0 && (
           <div className="space-y-2">
-            {(() => {
-              // 감정 분석이 완료된 포스트 수 계산
-              // 🔧 API에서 제공하는 정확한 카운트 사용
-              const analyzedCount = data.postSentimentPairs.filter(pair => 
-                pair.sentiment && 
-                pair.sentiment.sentiment && 
-                pair.sentiment.sentiment !== 'unknown'
-              ).length;
-              const totalCount = data.postSentimentPairs.length;
+            <p className="text-xs font-medium text-gray-700 mb-1">🎯 감정 분석</p>
+            {data.sentiments.slice(0, 2).map((sentiment: any, index: number) => {
+              const sentimentColor = sentiment.sentiment === 'positive' 
+                ? '#16a34a' : sentiment.sentiment === 'negative' 
+                ? '#dc2626' : '#6b7280';
+              
+              const sentimentIcon = sentiment.sentiment === 'positive' ? '📈' 
+                : sentiment.sentiment === 'negative' ? '📉' : '📊';
+              
+              const sentimentLabel = sentiment.sentiment === 'positive' ? '긍정적' 
+                : sentiment.sentiment === 'negative' ? '부정적' : '중립적';
               
               return (
-                <div className="text-xs font-bold text-primary mb-2 flex items-center gap-2">
-                  <span>📰 메르 분석 ({totalCount}개)</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    analyzedCount === totalCount 
-                      ? 'bg-green-100 text-green-700 border border-green-200' 
-                      : analyzedCount > 0 
-                      ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
-                      : 'bg-gray-100 text-gray-600 border border-gray-200'
-                  }`}>
-                    🤖 AI 분석: {analyzedCount}/{totalCount}
-                  </span>
+                <div key={index} className="text-xs p-2 bg-gray-50 rounded-lg border-l-2" style={{borderLeftColor: sentimentColor}}>
+                  <div className="flex items-center gap-1 mb-1">
+                    <span style={{ color: sentimentColor }} className="font-medium text-xs">
+                      {sentimentIcon} {sentimentLabel}
+                    </span>
+                  </div>
+                  {sentiment.key_reasoning && (
+                    <div className="text-gray-700 text-xs leading-relaxed">
+                      {sentiment.key_reasoning}
+                    </div>
+                  )}
                 </div>
               );
-            })()}
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {data.postSentimentPairs.map((pair: any, index: number) => {
-                const sentiment = pair.sentiment;
-                const post = pair.post;
-                
-                const sentimentColor = sentiment.sentiment === 'positive' 
-                  ? tossColors.sentiment.positive
-                  : sentiment.sentiment === 'negative' 
-                  ? tossColors.sentiment.negative 
-                  : tossColors.sentiment.neutral;
-                
-                const sentimentIcon = sentiment.sentiment === 'positive' ? '😊' 
-                  : sentiment.sentiment === 'negative' ? '😰' : '😐';
-                
-                return (
-                  <div key={index} className="text-xs space-y-2 p-2 bg-gray-50 rounded-lg border-l-2" style={{borderLeftColor: sentimentColor}}>
-                    {/* 제목 */}
-                    <div className="font-medium text-gray-800 line-clamp-1">
-                      📝 {post.title.length > 35 ? post.title.substring(0, 35) + '...' : post.title}
-                    </div>
-                    
-                    {/* 핵심 근거 */}
-                    {sentiment.key_reasoning && (
-                      <div className="text-gray-600 border-l-2 border-blue-400 pl-2">
-                        💡 {sentiment.key_reasoning.length > 60 ? sentiment.key_reasoning.substring(0, 60) + '...' : sentiment.key_reasoning}
-                      </div>
-                    )}
-                    
-                    {/* 감정 */}
-                    <div className="flex items-center gap-2">
-                      <span style={{ color: sentimentColor }} className="font-medium text-xs">
-                        {sentimentIcon} {sentiment.sentiment.toUpperCase()}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            })}
           </div>
         )}
       </div>
     );
-  };
+  });
 
   // 줌 이벤트 핸들러 (데스크탑)
   const handleMouseDown = (e: any) => {
@@ -638,150 +507,31 @@ export default function StockPriceChart({
               </div>
             </div>
             
-            {/* 차트 마커 가이드 - 큰 화면에서만 오른쪽 배치 */}
-            <div className="hidden xl:block text-xs text-gray-500 max-w-xs">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 border border-green-500 rounded-full bg-transparent"></span>
-                  긍정
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 border border-red-600 rounded-full bg-transparent"></span>
-                  부정
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 border border-gray-500 rounded-full bg-transparent"></span>
-                  중립
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 border border-blue-600 rounded-full bg-transparent"></span>
-                  분석 진행중
-                </span>
+            {/* 마커 범례 (헤더 오른쪽, 조금 아래) */}
+            <div className="hidden sm:flex items-end gap-3 text-xs text-gray-500 mt-2">
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#16a34a' }}></div>
+                <span>긍정</span>
               </div>
-              <div className="text-gray-400 text-xs space-y-1">
-                <div>💡 원 클릭시 상세 정보 표시</div>
-                {(() => {
-                  // 🔧 올바른 AI 분석 진행률 계산
-                  // 분모: 총 언급된 포스트 수 (postSentimentPairs 또는 posts가 있는 모든 포인트)
-                  const allMentionedPosts = filteredData.flatMap(point => {
-                    if (point.postSentimentPairs && point.postSentimentPairs.length > 0) {
-                      return point.postSentimentPairs.map(pair => pair.post);
-                    } else if (point.posts && point.posts.length > 0) {
-                      return point.posts;
-                    }
-                    return [];
-                  });
-                  
-                  // 중복 제거 (동일한 포스트가 여러 날짜에 나타날 수 있음)
-                  const uniquePosts = Array.from(new Set(allMentionedPosts.map(post => post.id)))
-                    .map(id => allMentionedPosts.find(post => post.id === id));
-                  
-                  // 분자: 감정 분석이 완료된 포스트 수  
-                  const analyzedPosts = filteredData.flatMap(point => point.postSentimentPairs || [])
-                    .filter(pair => 
-                      pair.sentiment && 
-                      pair.sentiment.sentiment && 
-                      pair.sentiment.sentiment !== 'unknown'
-                    )
-                    .map(pair => pair.post);
-                    
-                  const uniqueAnalyzedPosts = Array.from(new Set(analyzedPosts.map(post => post.id)));
-                  
-                  const analyzedCount = uniqueAnalyzedPosts.length;
-                  const totalCount = uniquePosts.length;
-                  
-                  if (totalCount > 0) {
-                    return (
-                      <div className="text-gray-400">
-                        🤖 전체 AI 분석: {analyzedCount}/{totalCount} ({Math.round((analyzedCount/totalCount)*100)}%)
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#dc2626' }}></div>
+                <span>부정</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#6b7280' }}></div>
+                <span>중립</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#2563eb' }}></div>
+                <span>언급</span>
               </div>
             </div>
-            
-          </div>
-          
-          {/* 차트 마커 가이드 - 작은 화면에서는 가격 아래 배치 */}
-          <div className="xl:hidden mt-2 text-xs text-gray-500 space-y-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 border-2 border-green-500 rounded-full bg-transparent"></span>
-                긍정 감정
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 border-2 border-red-600 rounded-full bg-transparent"></span>
-                부정 감정
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 border-2 border-gray-500 rounded-full bg-transparent"></span>
-                중립 감정
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 border-2 border-blue-600 rounded-full bg-transparent"></span>
-                분석 진행중
-              </span>
-            </div>
-            <div className="text-gray-400 space-y-1">
-              <div>💡 차트의 원을 클릭하면 메르의 분석과 관련 포스트 정보를 확인할 수 있습니다</div>
-              {(() => {
-                // 🔧 올바른 AI 분석 진행률 계산 (동일 로직)
-                const allMentionedPosts = filteredData.flatMap(point => {
-                  if (point.postSentimentPairs && point.postSentimentPairs.length > 0) {
-                    return point.postSentimentPairs.map(pair => pair.post);
-                  } else if (point.posts && point.posts.length > 0) {
-                    return point.posts;
-                  }
-                  return [];
-                });
-                
-                const uniquePosts = Array.from(new Set(allMentionedPosts.map(post => post.id)))
-                  .map(id => allMentionedPosts.find(post => post.id === id));
-                
-                const analyzedPosts = filteredData.flatMap(point => point.postSentimentPairs || [])
-                  .filter(pair => 
-                    pair.sentiment && 
-                    pair.sentiment.sentiment && 
-                    pair.sentiment.sentiment !== 'unknown'
-                  )
-                  .map(pair => pair.post);
-                  
-                const uniqueAnalyzedPosts = Array.from(new Set(analyzedPosts.map(post => post.id)));
-                
-                const analyzedCount = uniqueAnalyzedPosts.length;
-                const totalCount = uniquePosts.length;
-                
-                if (totalCount > 0) {
-                  return (
-                    <div className="text-gray-400">
-                      🤖 AI 분석 진행률: {analyzedCount}/{totalCount} ({Math.round((analyzedCount/totalCount)*100)}%)
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-            </div>
-          </div>
-          
-          {/* 줌 정보 표시 */}
-          {(zoomDomain.start && zoomDomain.end) && (
-            <div className="mt-2 text-xs text-gray-500">
-              🔍 {new Date(zoomDomain.start).toLocaleDateString('ko-KR')} ~ {new Date(zoomDomain.end).toLocaleDateString('ko-KR')}
-            </div>
-          )}
-          
-          
-          {/* 모바일 도움말 */}
-          <div className="mt-2 sm:hidden text-xs text-gray-400">
-            📱 드래그하면 확대
           </div>
         </div>
 
         {/* 토스 스타일 차트 영역 */}
         <div 
-          className="h-64 sm:h-80 p-2 sm:p-4"
+          className="relative h-64 sm:h-80 p-2 sm:p-4"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -803,7 +553,7 @@ export default function StockPriceChart({
                 strokeWidth={1}
               />
               
-              {/* X축 (토스 스타일 - 기간별 맞춤 표시) */}
+              {/* X축 */}
               <XAxis 
                 dataKey="date"
                 axisLine={false}
@@ -814,8 +564,7 @@ export default function StockPriceChart({
                   let isJanuary = false;
                   
                   if (timeRange === '1Y' || timeRange === '6M') {
-                    // 6M, 1Y: 월만 표시, 1월은 연도 포함해서 볼드
-                    const month = date.getMonth() + 1; // 0-based to 1-based
+                    const month = date.getMonth() + 1;
                     isJanuary = month === 1;
                     
                     if (isJanuary) {
@@ -824,7 +573,6 @@ export default function StockPriceChart({
                       text = `${month}월`;
                     }
                   } else {
-                    // 1M, 3M: 월일 표시
                     text = date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
                   }
                   
@@ -846,7 +594,7 @@ export default function StockPriceChart({
                 tickCount={timeRange === '1Y' ? 6 : timeRange === '6M' ? 4 : 3}
               />
               
-              {/* Y축 (토스 스타일 - 가격 표시 개선) */}
+              {/* Y축 */}
               <YAxis 
                 orientation="right"
                 axisLine={false}
@@ -868,7 +616,7 @@ export default function StockPriceChart({
                 width={isMobile ? 50 : 65}
               />
               
-              {/* 메인 라인 (토스 스타일 - 기간별 애니메이션) */}
+              {/* 메인 라인 (토스 스타일 - 애니메이션 제거) */}
               <Line
                 type="monotone"
                 dataKey="price"
@@ -882,108 +630,57 @@ export default function StockPriceChart({
                   stroke: '#ffffff'
                 }}
                 animationBegin={0}
-                animationDuration={
-                  timeRange === '1M' ? 1000 : // 1개월: 빠른 애니메이션
-                  timeRange === '3M' ? 1200 : // 3개월: 중간 애니메이션
-                  timeRange === '6M' ? 1500 : // 6개월: 기본 애니메이션  
-                  1800 // 1년: 여유있는 애니메이션
-                }
-                animationEasing="ease-out"
+                animationDuration={0}
               />
               
-              {/* 언급된 정보 마커들 (빈 원으로 표시) */}
-              {showMarkers && Array.isArray(filteredData) && filteredData.map((point, index) => {
-                // 🔧 엄격한 데이터 검증 - 감정 분석이 있는 데이터만 표시
-                const hasValidPosts = point.posts && Array.isArray(point.posts) && point.posts.length > 0;
-                const hasValidSentiments = point.sentiments && Array.isArray(point.sentiments) && point.sentiments.length > 0;
-                const hasValidPairs = point.postSentimentPairs && Array.isArray(point.postSentimentPairs) && point.postSentimentPairs.length > 0;
+              {/* 🔥 최종 완성: 감정 분석 + merry 언급 통합 마커 표시 */}
+              {showMarkers && filteredData.map((point, index) => {
+                // 1단계: merry_mentioned_stocks 또는 sentiments 데이터 확인
+                const hasMerryMention = point.posts && point.posts.length > 0;
+                const hasSentiments = point.sentiments && point.sentiments.length > 0;
                 
-                // 감정 분석이 없는 데이터는 마커 표시하지 않음 (파란색 마커 방지)
-                if (!hasValidSentiments && !hasValidPairs) {
+                // 어느 것도 없으면 마커 표시 안함
+                if (!hasMerryMention && !hasSentiments) {
                   return null;
                 }
                 
-                // 추가 검증: 실제 감정 분석 결과가 있는지 확인
-                let hasSentimentAnalysis = false;
+                // 2단계: 기본 색상 및 두께 설정
+                let markerColor = '#2563eb'; // 기본: 파란색 (merry 언급만)
+                let strokeWidth = 2;
+                let sentimentInfo = '';
                 
-                if (hasValidPairs) {
-                  hasSentimentAnalysis = point.postSentimentPairs.some(pair => 
-                    pair && pair.sentiment && 
-                    pair.sentiment.sentiment && 
-                    pair.sentiment.sentiment !== 'unknown' &&
-                    ['positive', 'negative', 'neutral'].includes(pair.sentiment.sentiment)
-                  );
-                }
-                
-                if (!hasSentimentAnalysis && hasValidSentiments) {
-                  hasSentimentAnalysis = point.sentiments.some(s => 
-                    s && s.sentiment && 
-                    ['positive', 'negative', 'neutral'].includes(s.sentiment)
-                  );
-                }
-                
-                // 실제 감정 분석 결과가 없으면 마커 표시하지 않음
-                if (!hasSentimentAnalysis) {
-                  return null;
-                }
-                
-                // 마커 인덱스 계산 (데이터가 있는 포인트만 카운트)
-                const markersBeforeThis = Array.isArray(filteredData) ? filteredData.slice(0, index).filter(p => {
-                  const validPosts = p.posts && Array.isArray(p.posts) && p.posts.length > 0;
-                  const validSentiments = p.sentiments && Array.isArray(p.sentiments) && p.sentiments.length > 0;
-                  const validPairs = p.postSentimentPairs && Array.isArray(p.postSentimentPairs) && p.postSentimentPairs.length > 0;
-                  return validPosts || validSentiments || validPairs;
-                }).length : 0;
-                
-                // 아직 표시할 시점이 아니면 렌더링하지 않음
-                if (markersBeforeThis >= visibleMarkerCount) return null;
-                
-                // 🔧 포스트-감정 쌍에서 색상 결정 (우선순위: postSentimentPairs > sentiments > 기본)
-                let markerColor = chartColor; // 기본값: 차트 색상 (파란색)
-                let sentimentInfo = null;
-                
-                // 1순위: postSentimentPairs에서 감정 분석 결과 확인
-                if (hasValidPairs) {
-                  const validSentimentPairs = point.postSentimentPairs.filter(pair => 
-                    pair && pair.sentiment && 
-                    pair.sentiment.sentiment && 
-                    pair.sentiment.sentiment !== 'unknown' &&
-                    ['positive', 'negative', 'neutral'].includes(pair.sentiment.sentiment)
-                  );
+                // 3단계: sentiments가 있으면 다수 감정으로 색상 결정
+                if (hasSentiments) {
+                  strokeWidth = 3; // 감정 분석 있으면 더 두껍게
                   
-                  if (validSentimentPairs.length > 0) {
-                    // 가장 높은 신뢰도를 가진 감정 선택
-                    const dominantPair = validSentimentPairs.reduce((prev, current) => 
-                      (Math.abs(current.sentiment.confidence || 0) > Math.abs(prev.sentiment.confidence || 0)) ? current : prev
-                    );
-                    
-                    sentimentInfo = dominantPair.sentiment.sentiment;
-                    markerColor = dominantPair.sentiment.sentiment === 'positive' 
-                      ? tossColors.sentiment.positive    // 🟢 긍정: #16a34a
-                      : dominantPair.sentiment.sentiment === 'negative' 
-                      ? tossColors.sentiment.negative    // 🔴 부정: #dc2626
-                      : tossColors.sentiment.neutral;    // 🔵 중립: #6b7280
+                  // 감정별 개수 집계
+                  const sentimentCounts = { positive: 0, negative: 0, neutral: 0 };
+                  point.sentiments.forEach((sentiment: any) => {
+                    if (sentiment.sentiment in sentimentCounts) {
+                      sentimentCounts[sentiment.sentiment as keyof typeof sentimentCounts]++;
+                    }
+                  });
+                  
+                  // 가장 많은 감정으로 색상 결정 (majority voting)
+                  const maxCount = Math.max(sentimentCounts.positive, sentimentCounts.negative, sentimentCounts.neutral);
+                  let dominantSentiment = 'neutral';
+                  
+                  if (sentimentCounts.positive === maxCount && sentimentCounts.positive > 0) {
+                    dominantSentiment = 'positive';
+                    markerColor = '#16a34a'; // 초록색
+                  } else if (sentimentCounts.negative === maxCount && sentimentCounts.negative > 0) {
+                    dominantSentiment = 'negative';
+                    markerColor = '#dc2626'; // 빨간색
+                  } else {
+                    dominantSentiment = 'neutral';
+                    markerColor = '#6b7280'; // 중립: 회색
                   }
-                }
-                // 2순위: sentiments 배열에서 확인 (백업용)
-                else if (hasValidSentiments) {
-                  const validSentiments = point.sentiments.filter(s => 
-                    s && s.sentiment && typeof s.confidence === 'number' &&
-                    ['positive', 'negative', 'neutral'].includes(s.sentiment)
-                  );
                   
-                  const dominantSentiment = validSentiments.length > 0 ? validSentiments.reduce((prev, current) => 
-                    (Math.abs(current.confidence) > Math.abs(prev.confidence)) ? current : prev
-                  ) : null;
+                  sentimentInfo = `P${sentimentCounts.positive}/N${sentimentCounts.negative}/M${sentimentCounts.neutral} → ${dominantSentiment.toUpperCase()}`;
                   
-                  if (dominantSentiment) {
-                    sentimentInfo = dominantSentiment.sentiment;
-                    markerColor = dominantSentiment.sentiment === 'positive' 
-                      ? tossColors.sentiment.positive    // 🟢 긍정: #16a34a
-                      : dominantSentiment.sentiment === 'negative' 
-                      ? tossColors.sentiment.negative    // 🔴 부정: #dc2626
-                      : tossColors.sentiment.neutral;    // 🔵 중립: #6b7280
-                  }
+                  console.log(`🎯 마커 최종: ${point.date} → ${markerColor} (${sentimentInfo}), merry: ${hasMerryMention}`);
+                } else if (hasMerryMention) {
+                  console.log(`🔵 마커 기본: ${point.date} → ${markerColor} (메르 언급만), sentiments: none`);
                 }
                 
                 return (
@@ -994,44 +691,16 @@ export default function StockPriceChart({
                     r={isMobile ? 6 : 5}
                     fill="none"
                     stroke={markerColor}
-                    strokeWidth={2}
-                    style={{
-                      opacity: 1,
-                      transform: 'scale(1)',
-                      transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
-                    }}
+                    strokeWidth={strokeWidth}
                   />
                 );
               })}
-              
-              {/* 현재가 참조선 */}
-              <ReferenceLine 
-                y={currentPrice} 
-                stroke={chartColor}
-                strokeDasharray="3 3"
-                strokeOpacity={0.5}
-                strokeWidth={1}
-                animationBegin={1000}
-                animationDuration={600}
-                animationEasing="ease-out"
-              />
-              
-              {/* 줌 영역 표시 */}
-              {isZooming && zoomArea.start && zoomArea.end && (
-                <ReferenceArea
-                  x1={zoomArea.start}
-                  x2={zoomArea.end}
-                  fill={tossColors.accent}
-                  fillOpacity={0.1}
-                  stroke={tossColors.accent}
-                  strokeOpacity={0.3}
-                />
-              )}
               
               <Tooltip content={<TossTooltip />} />
             </LineChart>
           </ResponsiveContainer>
         </div>
+
 
         {/* 토스 스타일 기간 선택 (모바일 최적화) */}
         <div className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -1056,4 +725,4 @@ export default function StockPriceChart({
       </CardContent>
     </Card>
   );
-}
+});

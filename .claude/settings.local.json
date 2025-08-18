@@ -78,7 +78,15 @@
       "Bash(start http://localhost:3010/merry/stocks/TSLA)",
       "Bash(start http://localhost:3011/merry/stocks/005930)",
       "Bash(lsof:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(start http://localhost:3014/merry/stocks/TSLA)",
+      "Bash(start http://localhost:3020/merry/stocks/TSLA)",
+      "Bash(start http://localhost:3020/merry/stocks/005930)",
+      "Bash(start http://localhost:3030/merry/stocks/005930)",
+      "Bash(start http://localhost:3030/merry/stocks/TSLA)",
+      "Bash(start http://localhost:3031/merry/stocks/TSLA)",
+      "Bash(start http://localhost:3031/merry/stocks/005930)",
+      "Bash(start:*)"
     ],
     "deny": [],
     "ask": [],

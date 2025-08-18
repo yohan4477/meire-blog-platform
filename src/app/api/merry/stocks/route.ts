@@ -17,7 +17,7 @@ let priceCache = new Map<string, {
   timestamp: number;
 }>();
 
-const CACHE_TTL = 12 * 60 * 60 * 1000; // 12시간 (밀리초)
+const CACHE_TTL = 30 * 60 * 1000; // 30분으로 단축 (성능 향상)
 const PRICE_CACHE_TTL = 5 * 60 * 1000; // 5분 (실시간 가격)
 
 // 캐시 성능 메트릭
@@ -44,17 +44,22 @@ async function getCachedStockPrice(ticker: string, market: string) {
   }
   
   // 캐시 미스 - 새로운 데이터 가져오기 (타임아웃 추가)
-  const priceData = await getStockPrice(ticker, market);
-  
-  // 성공한 경우에만 캐시 저장
-  if (priceData) {
-    priceCache.set(cacheKey, {
-      data: priceData,
-      timestamp: now
-    });
+  try {
+    const priceData = await getStockPrice(ticker, market);
+    
+    // 성공한 경우에만 캐시 저장
+    if (priceData) {
+      priceCache.set(cacheKey, {
+        data: priceData,
+        timestamp: now
+      });
+    }
+    
+    return priceData;
+  } catch (error) {
+    console.warn(`⏱️ Price fetch timeout for ${ticker}`);
+    return null; // 타임아웃시 null 반환하여 빠른 로딩
   }
-  
-  return priceData;
 }
 
 // 실제 주가 데이터를 가져오는 함수 (타임아웃 최적화)
@@ -152,9 +157,9 @@ async function loadStocksData(): Promise<any[]> {
     // stocks 테이블에서 직접 데이터 조회
     const stocksQuery = `
       SELECT 
-        ticker, company_name, company_name_kr, market, 
+        ticker, company_name, market, 
         mention_count, last_mentioned_date as last_mentioned_at,
-        sector, industry
+        sector, industry, description
       FROM stocks 
       WHERE is_merry_mentioned = 1 AND mention_count > 0
       ORDER BY last_mentioned_date DESC, mention_count DESC
@@ -176,15 +181,15 @@ async function loadStocksData(): Promise<any[]> {
     // stocks 데이터를 기존 형식으로 변환
     stockData = stockResults.map(stock => ({
       ticker: stock.ticker,
-      company_name: stock.company_name_kr || stock.company_name,
-      name: stock.company_name_kr || stock.company_name,
+      company_name: stock.company_name,
+      name: stock.company_name,
       market: stock.market || (stock.ticker.length === 6 ? 'KRX' : 'NASDAQ'),
       mention_count: stock.mention_count,
       analyzed_count: 0, // 별도 조회 필요시 추가
       last_mentioned_at: stock.last_mentioned_at,
       sentiment: 'neutral', // 별도 감정 분석 조회 필요시 추가
       tags: [],
-      description: `${stock.company_name_kr || stock.company_name} (${stock.sector || ''})`
+      description: stock.description || `${stock.company_name} (${stock.sector || stock.industry || '투자 종목'})`
     }));
     
     console.log(`✅ stocks 테이블에서 ${stockData.length}개 종목 로드 완료 (직접 방식)`);
