@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { StockTags } from '@/components/ui/StockTags';
 
 // 동적 import로 차트 컴포넌트 최적화
 const StockPriceChart = dynamic(
@@ -40,6 +41,8 @@ interface Stock {
   postCount: number;
   firstMention: string;
   lastMention: string;
+  first_mentioned_date?: string;
+  last_mentioned_date?: string;
   sentiment: 'positive' | 'neutral' | 'negative';
   tags?: string[] | string;
   description: string;
@@ -69,32 +72,22 @@ interface PostsState {
   limit: number;
 }
 
-// 초안전 태그 처리 헬퍼 함수 (모든 에러 상황 대응)
-const safeGetTags = (stock: any): string[] => {
-  // 기본 안전 체크
-  if (!stock || stock === null || stock === undefined) return [];
-  if (!stock.tags || stock.tags === null || stock.tags === undefined) return [];
+// 태그 개수 계산 헬퍼 함수
+const getTagsLength = (stock: any): number => {
+  if (!stock?.tags) return 0;
   
   try {
     if (typeof stock.tags === 'string') {
       const parsed = JSON.parse(stock.tags);
-      const result = Array.isArray(parsed) ? parsed.filter(tag => typeof tag === 'string' && tag.trim().length > 0) : [];
-      return Array.isArray(result) ? result : [];
+      return Array.isArray(parsed) ? parsed.length : 0;
     } else if (Array.isArray(stock.tags)) {
-      const result = stock.tags.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
-      return Array.isArray(result) ? result : [];
+      return stock.tags.length;
     }
   } catch (error) {
-    console.error('Tag processing error:', error, 'Stock:', stock?.ticker);
+    console.error('Tag length calculation error:', error);
   }
   
-  // 모든 경우에 빈 배열 반환 보장
-  return [];
-};
-
-const safeGetTagsLength = (stock: any): number => {
-  const tags = safeGetTags(stock);
-  return tags.length;
+  return 0;
 };
 
 export default function StockDetailPage() {
@@ -419,36 +412,30 @@ export default function StockDetailPage() {
           {/* 통계 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-muted/50 rounded-lg border">
-              <div className="text-2xl font-bold text-primary">{postsState.total}</div>
+              <div className="text-2xl font-bold text-primary">{stock.mention_count || 0}</div>
               <div className="text-sm text-muted-foreground">언급된 포스트</div>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg border">
               <div className="text-2xl font-bold text-primary">
-{safeGetTagsLength(stock)}
+                {getTagsLength(stock)}
               </div>
               <div className="text-sm text-muted-foreground">관련 태그</div>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg border">
               <div className="text-sm font-bold text-primary">
-                {(() => {
-                  if (!Array.isArray(allPosts) || allPosts.length === 0) return '정보 없음';
-                  const dates = Array.isArray(allPosts) ? allPosts.map(post => new Date(post.created_date)).filter(date => !isNaN(date.getTime())) : [];
-                  if (!Array.isArray(dates) || dates.length === 0) return '정보 없음';
-                  const firstDate = new Date(Math.min(...(Array.isArray(dates) ? dates.map(d => d.getTime()) : [])));
-                  return firstDate.toLocaleDateString('ko-KR');
-                })()}
+                {stock.first_mentioned_date 
+                  ? new Date(stock.first_mentioned_date).toLocaleDateString('ko-KR')
+                  : '정보 없음'
+                }
               </div>
               <div className="text-sm text-muted-foreground">첫 언급</div>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg border">
               <div className="text-sm font-bold text-primary">
-                {(() => {
-                  if (!Array.isArray(allPosts) || allPosts.length === 0) return '정보 없음';
-                  const dates = Array.isArray(allPosts) ? allPosts.map(post => new Date(post.created_date)).filter(date => !isNaN(date.getTime())) : [];
-                  if (!Array.isArray(dates) || dates.length === 0) return '정보 없음';
-                  const lastDate = new Date(Math.max(...(Array.isArray(dates) ? dates.map(d => d.getTime()) : [])));
-                  return lastDate.toLocaleDateString('ko-KR');
-                })()}
+                {stock.last_mentioned_date 
+                  ? new Date(stock.last_mentioned_date).toLocaleDateString('ko-KR')
+                  : '정보 없음'
+                }
               </div>
               <div className="text-sm text-muted-foreground">최근 언급</div>
             </div>
@@ -457,23 +444,16 @@ export default function StockDetailPage() {
           {/* 태그 */}
           <div className="space-y-2">
             <h3 className="font-semibold">관련 태그</h3>
-            <div className="flex flex-wrap gap-2">
-{(() => {
-                const tagsArray = safeGetTags(stock);
-                
-                // 이중 안전장치: 배열이 아니면 빈 배열로 강제 변환
-                const safeTags = Array.isArray(tagsArray) ? tagsArray : [];
-                
-                return safeTags.length > 0 ? (
-                  safeTags.map((tag, index) => (
-                    <Badge key={`${stock?.ticker}-tag-${index}`} variant="secondary">
-                      {tag}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-sm text-muted-foreground">관련 태그 없음</span>
-                );
-              })()}
+            <div>
+              {stock.tags ? (
+                <StockTags 
+                  tags={stock.tags} 
+                  maxTags={8}
+                  size="md"
+                />
+              ) : (
+                <span className="text-sm text-muted-foreground">관련 태그 없음</span>
+              )}
             </div>
           </div>
         </CardContent>
@@ -485,7 +465,9 @@ export default function StockDetailPage() {
           ticker={stock.ticker}
           timeRange={timeRange}
           onTimeRangeChange={handleTimeRangeChange}
-          stockName={stock.name}
+          stockName={stock.company_name || stock.name}
+          description={stock.description}
+          stock={stock}
         />
         
         {/* 모바일 가로모드 안내 */}

@@ -1,0 +1,43 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - link "M 요르의 투자 플랫폼 니가 뭘 알아. 니가 뭘 아냐고":
+    - /url: /
+  - navigation:
+    - link "홈":
+      - /url: /
+    - link "에이전트 Live":
+      - /url: /agent-workflows
+    - link "메르 블로그":
+      - /url: /merry
+    - button "관리자"
+  - textbox "종목 검색"
+  - button "2"
+  - button "Toggle theme"
+- main:
+  - heading "요르의 투자 플랫폼" [level=1]
+  - paragraph: 니가 뭘 알어. 니가 뭘 아냐고. 요르가 말아주는 주식 분석 플랫폼
+  - link "📝 메르 블로그":
+    - /url: /merry
+  - link "📊 종목 분석":
+    - /url: /merry/stocks
+  - text: 메르's Pick주목할 종목
+  - heading "국민연금 분석" [level=3]
+  - link "자세히 보기":
+    - /url: /investment
+  - paragraph: 국민연금공단의 최신 포트폴리오 변화와 투자 전략을 분석합니다
+  - heading "에이전트 관리" [level=3]
+  - link "자세히 보기":
+    - /url: /agent-workflows
+  - paragraph: AI 에이전트들의 분석 워크플로우를 관리하고 모니터링합니다
+  - tablist:
+    - tab "👤 메르 소개" [selected]
+    - tab "🤖 AI 인사이트"
+  - tabpanel "👤 메르 소개"
+- contentinfo:
+  - paragraph: © 2025 요르의 투자 블로그. All rights reserved.
+  - paragraph: 니가 뭘 알아. 니가 뭘 아냐고.
+- link "본문으로 바로가기":
+  - /url: "#main-content"
+```

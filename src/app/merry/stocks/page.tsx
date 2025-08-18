@@ -43,6 +43,7 @@ interface Stock {
 export default function MerryStocksPage() {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pricesLoading, setPricesLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [marketFilter, setMarketFilter] = useState('all');
   const [sentimentFilter, setSentimentFilter] = useState('all');
@@ -51,9 +52,71 @@ export default function MerryStocksPage() {
   const limit = 10;
 
   useEffect(() => {
-    fetchStocks();
+    if (page === 1) {
+      fetchStocksSequential();
+    } else {
+      fetchStocks(); // 페이지네이션은 기존 방식 유지
+    }
   }, [page]);
 
+  // 🚀 순차적 API 호출: 기본 정보 먼저 → 가격 정보 나중에
+  const fetchStocksSequential = async () => {
+    try {
+      setLoading(true);
+      
+      // 1단계: 기본 종목 정보 빠르게 로드 (가격 정보 제외)
+      console.log('🔥 Step 1: Loading basic stock information...');
+      const basicResponse = await fetch(`/api/merry/stocks?limit=${limit}&page=${page}&pricesOnly=false`);
+      const basicData = await basicResponse.json();
+      
+      if (basicData.success) {
+        // 기본 정보를 먼저 표시 (가격 정보 없이)
+        const basicStocks = basicData.data.stocks.map((stock: Stock) => ({
+          ...stock,
+          currentPrice: 0,
+          priceChange: '+0.00%',
+          currency: stock.currency || (stock.market === 'KOSPI' || stock.market === 'KOSDAQ' ? 'KRW' : 'USD')
+        }));
+        
+        setStocks(basicStocks);
+        setHasMore(basicData.data.hasMore);
+        setLoading(false);
+        
+        console.log('✅ Step 1 완료: 기본 정보 로드 완료');
+        
+        // 2단계: 실시간 가격 정보 순차적으로 업데이트
+        console.log('🔥 Step 2: Loading price information sequentially...');
+        setPricesLoading(true);
+        
+        // 가격 정보는 별도 요청으로 처리 (백그라운드)
+        setTimeout(() => updatePricesSequentially(basicStocks), 100);
+      }
+    } catch (err) {
+      console.error('기본 종목 데이터 로딩 오류:', err);
+      setLoading(false);
+    }
+  };
+
+  // 🔄 가격 정보 순차적 업데이트 
+  const updatePricesSequentially = async (basicStocks: Stock[]) => {
+    try {
+      const priceResponse = await fetch(`/api/merry/stocks?limit=${limit}&page=${page}&pricesOnly=true`);
+      const priceData = await priceResponse.json();
+      
+      if (priceData.success) {
+        // 가격 정보가 포함된 데이터로 업데이트
+        setStocks(priceData.data.stocks);
+        console.log('✅ Step 2 완료: 가격 정보 업데이트 완료');
+      }
+    } catch (err) {
+      console.error('가격 정보 업데이트 오류:', err);
+      // 가격 정보 로딩 실패해도 기본 정보는 계속 표시
+    } finally {
+      setPricesLoading(false);
+    }
+  };
+
+  // 기존 페이지네이션용 함수 (2페이지 이상)
   const fetchStocks = async () => {
     try {
       setLoading(true);
@@ -61,11 +124,7 @@ export default function MerryStocksPage() {
       const data = await response.json();
       
       if (data.success) {
-        if (page === 1) {
-          setStocks(data.data.stocks);
-        } else {
-          setStocks(prev => [...prev, ...data.data.stocks]);
-        }
+        setStocks(prev => [...prev, ...data.data.stocks]);
         setHasMore(data.data.hasMore);
       }
     } catch (err) {
@@ -169,19 +228,69 @@ export default function MerryStocksPage() {
                 <SelectItem value="negative">부정적</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* 현재 필터 상태 표시 */}
+            {(marketFilter !== 'all' || sentimentFilter !== 'all' || searchTerm) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setMarketFilter('all');
+                  setSentimentFilter('all');
+                  setSearchTerm('');
+                }}
+                className="whitespace-nowrap"
+              >
+                <Filter className="w-4 h-4 mr-1" />
+                필터 초기화
+              </Button>
+            )}
           </div>
+          
+          {/* 활성 필터 표시 */}
+          {(marketFilter !== 'all' || sentimentFilter !== 'all' || searchTerm) && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {searchTerm && (
+                <Badge variant="secondary" className="text-xs">
+                  검색: "{searchTerm}"
+                </Badge>
+              )}
+              {marketFilter !== 'all' && (
+                <Badge variant="secondary" className="text-xs">
+                  시장: {marketFilter}
+                </Badge>
+              )}
+              {sentimentFilter !== 'all' && (
+                <Badge variant="secondary" className="text-xs">
+                  관점: {sentimentFilter === 'positive' ? '긍정적' : sentimentFilter === 'negative' ? '부정적' : '중립적'}
+                </Badge>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* 통계 카드 - 다크 모드 호환 */}
+      {/* 통계 카드 - 다크 모드 호환 + 클릭 필터 기능 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-card dark:bg-card">
+        <Card 
+          className={`bg-card dark:bg-card cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${marketFilter === 'all' ? 'ring-2 ring-primary' : ''}`}
+          onClick={() => {
+            setMarketFilter('all');
+            setSentimentFilter('all');
+          }}
+        >
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">{stocks.length}</div>
             <div className="text-sm text-muted-foreground">총 종목 수</div>
           </CardContent>
         </Card>
-        <Card className="bg-card dark:bg-card">
+        <Card 
+          className={`bg-card dark:bg-card cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${marketFilter === 'KOSPI' ? 'ring-2 ring-primary' : ''}`}
+          onClick={() => {
+            setMarketFilter('KOSPI');
+            setSentimentFilter('all');
+          }}
+        >
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">
               {stocks.filter(s => (s.market || 'NASDAQ') === 'KOSPI').length}
@@ -189,7 +298,21 @@ export default function MerryStocksPage() {
             <div className="text-sm text-muted-foreground">국내 종목</div>
           </CardContent>
         </Card>
-        <Card className="bg-card dark:bg-card">
+        <Card 
+          className={`bg-card dark:bg-card cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${['NASDAQ', 'NYSE'].includes(marketFilter) ? 'ring-2 ring-primary' : ''}`}
+          onClick={() => {
+            // 미국 종목이 더 많은 시장을 자동 선택
+            const nasdaqCount = stocks.filter(s => (s.market || 'NASDAQ') === 'NASDAQ').length;
+            const nyseCount = stocks.filter(s => (s.market || 'NASDAQ') === 'NYSE').length;
+            
+            if (nasdaqCount >= nyseCount) {
+              setMarketFilter('NASDAQ');
+            } else {
+              setMarketFilter('NYSE');
+            }
+            setSentimentFilter('all');
+          }}
+        >
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">
               {stocks.filter(s => ['NASDAQ', 'NYSE'].includes(s.market || 'NASDAQ')).length}
@@ -228,10 +351,21 @@ export default function MerryStocksPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-bold mb-1">
-                      {stock.currency === 'USD' ? '$' : '₩'}{stock.currentPrice?.toLocaleString()}
-                      <span className={`ml-1 text-xs ${stock.priceChange?.startsWith('+') ? 'text-green-500' : stock.priceChange?.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
-                        {stock.priceChange}
-                      </span>
+                      {pricesLoading && stock.currentPrice === 0 ? (
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 border border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+                          <span className="text-xs text-gray-500">가격 로딩중...</span>
+                        </div>
+                      ) : stock.currentPrice > 0 ? (
+                        <>
+                          {stock.currency === 'USD' ? '$' : '₩'}{stock.currentPrice?.toLocaleString()}
+                          <span className={`ml-1 text-xs ${stock.priceChange?.startsWith('+') ? 'text-green-500' : stock.priceChange?.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
+                            {stock.priceChange}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-500">가격 정보 없음</span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Hash className="w-3 h-3" />
@@ -279,7 +413,7 @@ export default function MerryStocksPage() {
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    첫 언급: {stock.firstMention ? new Date(stock.firstMention).toLocaleDateString('ko-KR') : '정보 없음'}
+                    첫 언급: {stock.first_mentioned_date ? new Date(stock.first_mentioned_date).toLocaleDateString('ko-KR') : '정보 없음'}
                   </span>
                   <span>
                     최근: {(stock.lastMention || stock.last_mentioned_at) ? new Date(stock.lastMention || stock.last_mentioned_at).toLocaleDateString('ko-KR') : '정보 없음'}

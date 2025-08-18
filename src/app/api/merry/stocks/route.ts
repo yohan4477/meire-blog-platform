@@ -69,6 +69,8 @@ async function getStockPrice(ticker: string, market: string) {
     const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
     const symbol = isKoreanStock ? `${ticker}.KS` : ticker;
     
+    console.log(`📈 Fetching price for ${ticker} (${symbol})...`);
+    
     // 타임아웃 추가로 성능 개선
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
@@ -123,12 +125,15 @@ async function getStockPrice(ticker: string, market: string) {
 }
 
 // 종목 데이터 로드 함수 (지능형 캐시 적용)
-async function loadStocksData(): Promise<any[]> {
+async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> {
   const now = Date.now();
   
-  // 캐시가 유효한 경우 캐시 데이터 반환
-  if (stocksCache && (now - stocksCache.timestamp) < CACHE_TTL) {
-    console.log('🎯 Cache HIT for merry:picks:latest (0ms)');
+  // 가격 정보 포함 여부에 따라 캐시 사용을 결정 (가격 정보는 실시간이므로 캐시 사용 안함)
+  const useCache = pricesOnly === 'false'; // 기본 정보만 요청할 때만 캐시 사용
+  
+  // 캐시가 유효한 경우 캐시 데이터 반환 (가격 정보 없는 경우만)
+  if (useCache && stocksCache && (now - stocksCache.timestamp) < CACHE_TTL) {
+    console.log('🎯 Cache HIT for merry:picks:basic (0ms)');
     stocksCache.hitCount = (stocksCache.hitCount || 0) + 1;
     
     // 캐시 성능 모니터링
@@ -140,7 +145,7 @@ async function loadStocksData(): Promise<any[]> {
     return stocksCache.data;
   }
   
-  console.log('💾 Cache MISS for merry:picks:latest, fetching...');
+  console.log(`💾 Cache MISS for merry:picks:${pricesOnly === 'false' ? 'basic' : 'withprices'}, fetching...`);
   console.log('🔄 Loading fresh stocks data from SQLite DB');
   
   // 캐시 미스 카운트 증가
@@ -154,7 +159,7 @@ async function loadStocksData(): Promise<any[]> {
     // PERFORMANCE OPTIMIZED: Use stocks table directly
     console.log('🚀 Using stocks table for optimized stock data');
     
-    // stocks 테이블에서 직접 데이터 조회
+    // stocks 테이블에서 직접 데이터 조회 - 필터링 조건 제거
     const stocksQuery = `
       SELECT 
         ticker, company_name, market, 
@@ -162,7 +167,6 @@ async function loadStocksData(): Promise<any[]> {
         first_mentioned_date, last_mentioned_date,
         sector, industry, description, tags
       FROM stocks 
-      WHERE is_merry_mentioned = 1 AND mention_count > 0
       ORDER BY last_mentioned_date DESC, mention_count DESC
       LIMIT 20
     `;
@@ -215,26 +219,69 @@ async function loadStocksData(): Promise<any[]> {
     ];
   }
 
-  // 병렬 가격 가져오기 최적화 (타임아웃 제한)
-  const pricePromises = stockData.map(async (stock) => {
-    try {
-      const priceData = await getCachedStockPrice(stock.ticker, stock.market);
-      
-      if (priceData) {
-        stock.currentPrice = priceData.current;
-        stock.currency = priceData.currency;
-        stock.priceChange = priceData.change;
-      } else {
-        // 실제 가격을 가져올 수 없는 경우
-        stock.currentPrice = null;
-        stock.currency = stock.market === 'KOSPI' || stock.market === 'KOSDAQ' || stock.market === 'KRX' ? 'KRW' : 'USD';
-        stock.priceChange = null;
+  // 🚀 순차적 로딩: pricesOnly 파라미터에 따른 조건부 가격 로딩
+  const shouldLoadPrices = pricesOnly !== 'false'; // 기본적으로 가격 로딩, 'false'일 때만 스킵
+  
+  if (shouldLoadPrices) {
+    console.log('🔥 Loading prices in parallel...');
+    // 병렬 가격 가져오기 최적화 (타임아웃 제한)
+    const pricePromises = stockData.map(async (stock) => {
+      try {
+        const priceData = await getCachedStockPrice(stock.ticker, stock.market);
+        
+        if (priceData) {
+          stock.currentPrice = priceData.current;
+          stock.currency = priceData.currency;
+          stock.priceChange = priceData.change;
+        } else {
+          // 실제 가격을 가져올 수 없는 경우
+          stock.currentPrice = null;
+          stock.currency = stock.market === 'KOSPI' || stock.market === 'KOSDAQ' || stock.market === 'KRX' ? 'KRW' : 'USD';
+          stock.priceChange = null;
+        }
+        
+        // 데이터 일관성 확보
+        stock.name = stock.company_name || stock.name;
+        stock.mentions = stock.mention_count;
+        stock.lastMention = stock.last_mentioned_at;
+        
+        // 🔧 tags JSON 문자열을 배열로 변환
+        if (stock.tags && typeof stock.tags === 'string') {
+          try {
+            stock.tags = JSON.parse(stock.tags);
+          } catch (error) {
+            console.warn(`Failed to parse tags for ${stock.ticker}:`, error);
+            stock.tags = [];
+          }
+        } else if (!Array.isArray(stock.tags)) {
+          stock.tags = [];
+        }
+        
+        return stock;
+      } catch (error) {
+        console.warn(`⚠️ Error processing stock ${stock.ticker}:`, error);
+        return stock;
       }
-      
+    });
+
+    // 모든 가격 정보를 병렬로 가져오기 (Promise.allSettled로 안정성 확보)
+    const results = await Promise.allSettled(pricePromises);
+    stockData = results
+      .filter(result => result.status === 'fulfilled')
+      .map(result => result.value);
+  } else {
+    console.log('🔥 Skipping price loading for faster initial response...');
+    // 기본 정보만 처리 (가격 정보 없이)
+    stockData = stockData.map(stock => {
       // 데이터 일관성 확보
       stock.name = stock.company_name || stock.name;
       stock.mentions = stock.mention_count;
       stock.lastMention = stock.last_mentioned_at;
+      
+      // 기본 가격 정보 설정
+      stock.currentPrice = 0;
+      stock.currency = stock.market === 'KOSPI' || stock.market === 'KOSDAQ' || stock.market === 'KRX' ? 'KRW' : 'USD';
+      stock.priceChange = '+0.00%';
       
       // 🔧 tags JSON 문자열을 배열로 변환
       if (stock.tags && typeof stock.tags === 'string') {
@@ -249,27 +296,21 @@ async function loadStocksData(): Promise<any[]> {
       }
       
       return stock;
-    } catch (error) {
-      console.warn(`⚠️ Error processing stock ${stock.ticker}:`, error);
-      return stock;
-    }
-  });
+    });
+  }
 
-  // 모든 가격 정보를 병렬로 가져오기 (Promise.allSettled로 안정성 확보)
-  const results = await Promise.allSettled(pricePromises);
-  stockData = results
-    .filter(result => result.status === 'fulfilled')
-    .map(result => result.value);
-
-  // 캐시 업데이트
-  stocksCache = {
-    data: stockData,
-    timestamp: now,
-    hitCount: stocksCache?.hitCount || 0,
-    missCount: (stocksCache?.missCount || 0) + 1
-  };
-  
-  console.log(`✅ Cached ${stockData.length} stocks data for 12 hours`);
+  // 캐시 업데이트 (가격 정보 없는 기본 데이터만 캐시)
+  if (useCache) {
+    stocksCache = {
+      data: stockData,
+      timestamp: now,
+      hitCount: stocksCache?.hitCount || 0,
+      missCount: (stocksCache?.missCount || 0) + 1
+    };
+    console.log(`✅ Cached ${stockData.length} basic stocks data for 30 minutes`);
+  } else {
+    console.log(`✅ Returning ${stockData.length} stocks with real-time prices (no cache)`);
+  }
   return stockData;
 }
 
@@ -292,15 +333,18 @@ export async function GET(request: NextRequest) {
     const tag = searchParams.get('tag');
     const market = searchParams.get('market');
     const sentiment = searchParams.get('sentiment');
+    const pricesOnly = searchParams.get('pricesOnly');
     const offset = (page - 1) * limit;
 
-    // ULTRA PERFORMANCE: Edge cache + optimized DB
-    const cacheKey = CACHE_KEYS.MERRY_PICKS();
+    // ULTRA PERFORMANCE: Edge cache + optimized DB (가격 여부에 따라 캐시 키 구분)
+    const cacheKey = pricesOnly === 'false' 
+      ? `${CACHE_KEYS.MERRY_PICKS()}_basic` 
+      : `${CACHE_KEYS.MERRY_PICKS()}_withprices`;
     const dbQueryStart = Date.now();
     
     const result = await edgeCache.getOrSet(
       cacheKey,
-      () => loadStocksData(),
+      () => loadStocksData(pricesOnly),
       {
         ttl: 300, // 5 minutes
         tags: [CACHE_TAGS.STOCKS, CACHE_TAGS.MERRY]
