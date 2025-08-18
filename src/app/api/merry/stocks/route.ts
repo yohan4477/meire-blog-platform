@@ -163,7 +163,7 @@ async function loadStocksData(): Promise<any[]> {
       FROM stocks 
       WHERE is_merry_mentioned = 1 AND mention_count > 0
       ORDER BY last_mentioned_date DESC, mention_count DESC
-      LIMIT 10
+      LIMIT 20
     `;
     
     const stockResults = await new Promise((resolve, reject) => {

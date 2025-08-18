@@ -86,7 +86,8 @@
       "Bash(start http://localhost:3030/merry/stocks/TSLA)",
       "Bash(start http://localhost:3031/merry/stocks/TSLA)",
       "Bash(start http://localhost:3031/merry/stocks/005930)",
-      "Bash(start:*)"
+      "Bash(start:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": [],
