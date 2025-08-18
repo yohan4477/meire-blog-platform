@@ -70,12 +70,6 @@ interface PricePoint {
     uncertainty_factors?: string[];
     data_source?: string;
   }[];
-  posts?: {
-    id: number;
-    title: string;
-    excerpt: string;
-    views: number;
-  }[];
 }
 
 interface StockPriceChartProps {
@@ -83,6 +77,8 @@ interface StockPriceChartProps {
   timeRange: '1M' | '3M' | '6M' | '1Y';
   onTimeRangeChange: (range: '1M' | '3M' | '6M' | '1Y') => void;
   stockName?: string; // 종목 이름 추가
+  description?: string; // 회사 설명 추가
+  stock?: any; // stock 정보 전체 추가
 }
 
 // 🚀 ULTRA: 메모이제이션된 차트 컴포넌트
@@ -90,7 +86,9 @@ export default memo(function StockPriceChart({
   ticker, 
   timeRange, 
   onTimeRangeChange,
-  stockName
+  stockName,
+  description,
+  stock
 }: StockPriceChartProps) {
   // 🚀 ULTRA: useState 최소화 및 성능 최적화
   const [priceData, setPriceData] = useState<PricePoint[]>([]);
@@ -114,14 +112,20 @@ export default memo(function StockPriceChart({
       // 🔥 수정: 모든 API에서 동일한 period 형식 사용 (1M, 3M, 6M, 1Y)
       const standardPeriod = timeRange; // 변환 없이 그대로 사용
       
-      // 🔥 4개 DB 최적화: 3개 API 병렬 호출 (stocks+prices, sentiments, merry_mentioned_stocks)
-      const [priceResult, sentimentResult, postsResult] = await Promise.all([
-        fetch(`/api/stock-price?ticker=${ticker}&period=${standardPeriod}`).then(r => r.json()),
-        fetch(`/api/merry/stocks/${ticker}/sentiments?period=${standardPeriod}`).then(r => r.json()),
-        fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0&period=${standardPeriod}`).then(r => r.json())
-      ]);
+      // 🔥 순차적 API 호출 - stock price 우선 호출
+      console.log('⚡ 1단계: Stock Price API 호출 시작');
+      const priceResult = await fetch(`/api/stock-price?ticker=${ticker}&period=${standardPeriod}`).then(r => r.json());
+      console.log(`⚡ 1단계 완료: Stock Price - ${priceResult.success}`);
       
-      console.log(`⚡ ULTRA: 3개 API 병렬 완료 - Price: ${priceResult.success}, Sentiment: ${!!sentimentResult.sentimentByDate}, Posts: ${postsResult.success}`);
+      console.log('⚡ 2단계: Sentiments API 호출 시작');
+      const sentimentResult = await fetch(`/api/merry/stocks/${ticker}/sentiments?period=${standardPeriod}`).then(r => r.json());
+      console.log(`⚡ 2단계 완료: Sentiments - ${!!sentimentResult.sentimentByDate}`);
+      
+      console.log('⚡ 3단계: Posts API 호출 시작');
+      const postsResult = await fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0&period=${standardPeriod}`).then(r => r.json());
+      console.log(`⚡ 3단계 완료: Posts - ${postsResult.success}`);
+      
+      console.log('⚡ 순차적 API 호출 완료');
       
       // 감정 분석 통계 즉시 설정
       setSentimentStats({
@@ -130,13 +134,11 @@ export default memo(function StockPriceChart({
       });
       
       if (priceResult.success && priceResult.prices) {
-        // 🔥 4개 DB 최적화: merry_mentioned_stocks 데이터 날짜별 그룹화
+        // merry_mentioned_stocks 데이터 날짜별 그룹화 (마커용)
         const postsByDate = Object.create(null);
         if (postsResult.success && postsResult.data?.posts) {
           postsResult.data.posts.forEach((post: any) => {
-            // merry_mentioned_stocks.mentioned_date 사용
             const postDate = post.created_date || post.mentioned_date;
-            // 🔧 날짜 형식 정규화 (YYYY-MM-DD)
             let dateKey;
             if (postDate.includes('T')) {
               dateKey = postDate.split('T')[0];
@@ -162,27 +164,25 @@ export default memo(function StockPriceChart({
         // 🚀 ULTRA: 클라이언트 필터링 제거 (API에서 이미 필터링됨)
         const filteredPrices = priceResult.prices;
 
-        // 🔥 단순화: merry_mentioned_stocks + sentiments 별도 병합
+        // 🔥 merry_mentioned_stocks + sentiments 데이터 병합
         const enrichedData = filteredPrices.map((point: any) => {
           const dateStr = point.date;
           // 🔧 날짜 형식 정규화 (YYYY-MM-DD)
           const normalizedDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
           
-          // 1. merry_mentioned_stocks 데이터 (파란색 마커용)
+          // 1. merry_mentioned_stocks 데이터 (마커 표시용)
           const postsData = postsByDate[normalizedDate] || [];
           
           // 2. sentiments 데이터 (색상 변경용) - 날짜 키 직접 사용
           const sentimentData = sentimentResult.sentimentByDate?.[normalizedDate];
           const sentiments = sentimentData?.postSentimentPairs?.map((pair: any) => pair.sentiment) || [];
           
-          console.log(`🔍 날짜 매칭: ${normalizedDate} → posts: ${postsData.length}, sentiments: ${sentiments.length}`, {
-            sentimentData,
-            sentiments: sentiments.map(s => ({ sentiment: s.sentiment, reasoning: s.key_reasoning?.substring(0, 50) }))
-          });
+          console.log(`🔍 날짜 매칭: ${normalizedDate} → mentions: ${postsData.length}, sentiments: ${sentiments.length}`);
           
           return {
             ...point,
-            posts: postsData,        // merry_mentioned_stocks 데이터
+            hasMention: postsData.length > 0,  // merry_mentioned_stocks 여부 (경량 데이터)
+            postTitles: postsData.map((post: any) => post.post_title || post.title).filter(Boolean), // 포스트 제목들
             sentiments: sentiments   // sentiments 데이터
           };
         });
@@ -204,10 +204,10 @@ export default memo(function StockPriceChart({
           setChangePercent(((latest.price - previous.price) / previous.price) * 100);
         }
         
-        // 🔥 단순화: 마커 표시 (merry 언급이 있는 날짜)
+        // 🔥 마커 표시 (merry 언급 또는 sentiments 있는 날짜)
         setShowMarkers(true);
         const markersWithData = enrichedData.filter((point: any) => 
-          point.posts?.length > 0
+          point.hasMention || point.sentiments?.length > 0
         );
         setVisibleMarkerCount(markersWithData.length);
       }
@@ -325,53 +325,64 @@ export default memo(function StockPriceChart({
           </div>
         </div>
         
-        {/* 📝 관련 포스트 표시 (실제 제목) */}
-        {data.posts?.length > 0 && (
-          <div className="mb-3">
-            <p className="text-xs font-medium text-gray-700 mb-1">📝 관련 포스트</p>
-            {data.posts.slice(0, 2).map((post: any, index: number) => (
-              <div key={index} className="text-xs p-2 bg-blue-50 rounded-lg border-l-2 border-blue-400 mb-1">
-                <div className="font-medium text-blue-800 mb-1 line-clamp-2">
-                  {post.title || `메르 포스트 #${post.id}`}
-                </div>
-                <div className="text-gray-600 text-[10px]">
-                  조회수: {post.views || 0} · {post.category || '투자분석'}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
 
-        {/* 🎯 근거 기반 감정 분석 표시 */}
-        {data.sentiments?.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-gray-700 mb-1">🎯 감정 분석</p>
-            {data.sentiments.slice(0, 2).map((sentiment: any, index: number) => {
-              const sentimentColor = sentiment.sentiment === 'positive' 
-                ? '#16a34a' : sentiment.sentiment === 'negative' 
-                ? '#dc2626' : '#6b7280';
-              
-              const sentimentIcon = sentiment.sentiment === 'positive' ? '📈' 
-                : sentiment.sentiment === 'negative' ? '📉' : '📊';
-              
-              const sentimentLabel = sentiment.sentiment === 'positive' ? '긍정적' 
-                : sentiment.sentiment === 'negative' ? '부정적' : '중립적';
-              
-              return (
-                <div key={index} className="text-xs p-2 bg-gray-50 rounded-lg border-l-2" style={{borderLeftColor: sentimentColor}}>
-                  <div className="flex items-center gap-1 mb-1">
-                    <span style={{ color: sentimentColor }} className="font-medium text-xs">
-                      {sentimentIcon} {sentimentLabel}
-                    </span>
-                  </div>
-                  {sentiment.key_reasoning && (
-                    <div className="text-gray-700 text-xs leading-relaxed">
-                      {sentiment.key_reasoning}
+        {/* 📝 포스트 & 감정 분석 번갈아가며 표시 */}
+        {(data.postTitles?.length > 0 || data.sentiments?.length > 0) && (
+          <div className="mb-3">
+            <p className="text-xs font-medium text-gray-700 mb-2">📝 메르 언급 포스트</p>
+            <div className="space-y-1">
+              {data.postTitles?.slice(0, 2).map((title: string, index: number) => {
+                const sentiment = data.sentiments?.[index];
+                const sentimentColor = sentiment?.sentiment === 'positive' 
+                  ? '#16a34a' : sentiment?.sentiment === 'negative' 
+                  ? '#dc2626' : '#6b7280';
+                
+                const sentimentIcon = sentiment?.sentiment === 'positive' ? '😊' 
+                  : sentiment?.sentiment === 'negative' ? '😞' : '😐';
+                
+                const sentimentLabel = sentiment?.sentiment === 'positive' ? '긍정' 
+                  : sentiment?.sentiment === 'negative' ? '부정' : '중립';
+                
+                return (
+                  <div key={index}>
+                    {/* 포스트 타이틀 */}
+                    <div className="text-xs p-2 bg-blue-50 rounded-lg border-l-2 border-blue-400 mb-1">
+                      <div className="font-medium text-blue-800 line-clamp-2">
+                        {title}
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                    
+                    {/* 해당 포스트의 감정 분석 */}
+                    {sentiment && (
+                      <div className="text-xs p-2 bg-gray-50 rounded-lg border-l-2 mb-2" style={{borderLeftColor: sentimentColor}}>
+                        <div className="flex items-center gap-1 mb-1">
+                          <span style={{ color: sentimentColor }} className="font-medium text-xs">
+                            {sentimentIcon} {sentimentLabel}
+                          </span>
+                          {sentiment.score && (
+                            <span className="text-xs text-gray-500">
+                              ({sentiment.score > 0 ? '+' : ''}{(sentiment.score * 100).toFixed(0)}%)
+                            </span>
+                          )}
+                        </div>
+                        {sentiment.key_reasoning && (
+                          <div className="text-gray-700 text-xs leading-relaxed">
+                            {sentiment.key_reasoning.length > 80 
+                              ? `${sentiment.key_reasoning.substring(0, 80)}...` 
+                              : sentiment.key_reasoning}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {data.postTitles?.length > 2 && (
+              <div className="text-xs text-gray-500 mt-2">
+                +{data.postTitles.length - 2}개 포스트 더 있음
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -484,6 +495,9 @@ export default memo(function StockPriceChart({
               <h2 className={`text-base sm:text-lg font-semibold ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
               }`}>{stockName || ticker}</h2>
+              
+              
+              
               <div className="flex items-center gap-2 sm:gap-3 mt-1">
                 <span className="text-xl sm:text-2xl font-bold" style={{ color: chartColor }}>
                   ${currentPrice.toLocaleString()}
@@ -505,29 +519,45 @@ export default memo(function StockPriceChart({
                   </span>
                 </div>
               </div>
+              
+              {/* 언급 통계 정보 */}
+              {stock && stock.mention_count > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500">
+                    총 {stock.mention_count}개 언급 · {stock.analyzed_count || 0}개 분석 완료
+                  </p>
+                </div>
+              )}
             </div>
             
-            {/* 마커 범례 (헤더 오른쪽, 조금 아래) */}
-            <div className="hidden sm:flex items-end gap-3 text-xs text-gray-500 mt-2">
-              <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#16a34a' }}></div>
-                <span>긍정</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#dc2626' }}></div>
-                <span>부정</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#6b7280' }}></div>
-                <span>중립</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#2563eb' }}></div>
-                <span>언급</span>
+          </div>
+        </div>
+
+        {/* 감정 분석 설명 - 차트 바로 위 중앙 배치 */}
+        {sentimentStats && sentimentStats.totalMentions > 0 && (
+          <div className="px-4 sm:px-6 py-2 border-b border-gray-100">
+            <div className="text-center">
+              <div className="inline-flex items-center gap-3 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#16a34a' }}></div>
+                  <span className="text-xs">긍정</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#dc2626' }}></div>
+                  <span className="text-xs">부정</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#6b7280' }}></div>
+                  <span className="text-xs">중립</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#2563eb' }}></div>
+                  <span className="text-xs">언급</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 토스 스타일 차트 영역 */}
         <div 
@@ -558,22 +588,137 @@ export default memo(function StockPriceChart({
                 dataKey="date"
                 axisLine={false}
                 tickLine={false}
-                tick={({ x, y, payload }) => {
+                tick={({ x, y, payload, index }) => {
                   const date = new Date(payload.value);
                   let text = '';
-                  let isJanuary = false;
+                  let isSpecial = false;
+                  let shouldShow = true;
                   
                   if (timeRange === '1Y' || timeRange === '6M') {
                     const month = date.getMonth() + 1;
-                    isJanuary = month === 1;
+                    const year = date.getFullYear();
+                    const day = date.getDate();
+                    const currentIndex = filteredData.findIndex(item => item.date === payload.value);
                     
-                    if (isJanuary) {
-                      text = `${date.getFullYear()}년 1월`;
+                    // 1월인 경우 년도로 표시
+                    if (month === 1) {
+                      text = `${year}년`;
+                      isSpecial = true;
                     } else {
                       text = `${month}월`;
                     }
+                    
+                    // 1Y의 경우: 매월 1일에만 표시하고, 1일이 없는 달은 해당 월의 첫 번째 날짜에 표시
+                    if (timeRange === '1Y') {
+                      // 현재 월의 1일이 데이터에 있는지 확인
+                      const hasFirstDayInMonth = filteredData.some(item => {
+                        const itemDate = new Date(item.date);
+                        return itemDate.getMonth() === date.getMonth() && 
+                               itemDate.getFullYear() === year && 
+                               itemDate.getDate() === 1;
+                      });
+                      
+                      // 1일이 있는 경우: 1일에만 표시
+                      if (hasFirstDayInMonth) {
+                        if (day !== 1) {
+                          shouldShow = false;
+                        }
+                      } else {
+                        // 1일이 없는 경우: 해당 월의 첫 번째 날짜에 표시
+                        const isFirstInMonth = filteredData
+                          .filter(item => {
+                            const itemDate = new Date(item.date);
+                            return itemDate.getMonth() === date.getMonth() && 
+                                   itemDate.getFullYear() === year;
+                          })
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]?.date === payload.value;
+                        
+                        if (!isFirstInMonth) {
+                          shouldShow = false;
+                        }
+                      }
+                    } else {
+                      // 6M의 경우: 기존 중복 제거 로직 유지
+                      for (let i = 0; i < currentIndex; i++) {
+                        const prevDate = new Date(filteredData[i].date);
+                        const prevMonth = prevDate.getMonth() + 1;
+                        const prevYear = prevDate.getFullYear();
+                        let prevText = '';
+                        
+                        if (prevMonth === 1) {
+                          prevText = `${prevYear}년`;
+                        } else {
+                          prevText = `${prevMonth}월`;
+                        }
+                        
+                        if (prevText === text) {
+                          shouldShow = false;
+                          break;
+                        }
+                      }
+                    }
+                  } else if (timeRange === '1M') {
+                    const day = date.getDate();
+                    const month = date.getMonth() + 1;
+                    const currentIndex = filteredData.findIndex(item => item.date === payload.value);
+                    
+                    // 1M: 3일마다 표시 (1일은 월만, 나머지는 일만)
+                    if (day === 1) {
+                      text = `${month}월`;
+                      isSpecial = true;
+                    } else if (currentIndex % 3 === 0) {
+                      text = `${day}일`;
+                    } else {
+                      shouldShow = false; // 3일 간격이 아니면 표시하지 않음
+                    }
+                    
+                    // 1일(월 표시)의 경우 중복 제거 로직 적용
+                    if (day === 1) {
+                      for (let i = 0; i < currentIndex; i++) {
+                        const prevDate = new Date(filteredData[i].date);
+                        const prevDay = prevDate.getDate();
+                        const prevMonth = prevDate.getMonth() + 1;
+                        
+                        if (prevDay === 1 && prevMonth === month) {
+                          shouldShow = false;
+                          break;
+                        }
+                      }
+                    }
+                  } else if (timeRange === '3M') {
+                    const day = date.getDate();
+                    const month = date.getMonth() + 1;
+                    const currentIndex = filteredData.findIndex(item => item.date === payload.value);
+                    
+                    // 3M: 15일마다 표시 (1일은 월만, 나머지는 일만)
+                    if (day === 1) {
+                      text = `${month}월`;
+                      isSpecial = true;
+                    } else if (currentIndex % 15 === 0) {
+                      text = `${day}일`;
+                    } else {
+                      shouldShow = false; // 15일 간격이 아니면 표시하지 않음
+                    }
+                    
+                    // 1일(월 표시)의 경우 중복 제거 로직 적용
+                    if (day === 1) {
+                      for (let i = 0; i < currentIndex; i++) {
+                        const prevDate = new Date(filteredData[i].date);
+                        const prevDay = prevDate.getDate();
+                        const prevMonth = prevDate.getMonth() + 1;
+                        
+                        if (prevDay === 1 && prevMonth === month) {
+                          shouldShow = false;
+                          break;
+                        }
+                      }
+                    }
                   } else {
                     text = date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+                  }
+                  
+                  if (!shouldShow) {
+                    return null;
                   }
                   
                   return (
@@ -584,14 +729,14 @@ export default memo(function StockPriceChart({
                       textAnchor="middle" 
                       fill={isDarkMode ? tossColors.dark.muted : tossColors.muted}
                       fontSize={isMobile ? 9 : 11}
-                      fontWeight={isJanuary ? 'bold' : 500}
+                      fontWeight={isSpecial ? 'bold' : 500}
                     >
                       {text}
                     </text>
                   );
                 }}
-                interval="preserveStartEnd"
-                tickCount={timeRange === '1Y' ? 6 : timeRange === '6M' ? 4 : 3}
+                interval={0}
+                tickCount={timeRange === '1Y' ? 13 : timeRange === '6M' ? 7 : 3}
               />
               
               {/* Y축 */}
@@ -633,10 +778,10 @@ export default memo(function StockPriceChart({
                 animationDuration={0}
               />
               
-              {/* 🔥 최종 완성: 감정 분석 + merry 언급 통합 마커 표시 */}
+              {/* 🔥 merry 언급 + 감정 분석 통합 마커 표시 */}
               {showMarkers && filteredData.map((point, index) => {
                 // 1단계: merry_mentioned_stocks 또는 sentiments 데이터 확인
-                const hasMerryMention = point.posts && point.posts.length > 0;
+                const hasMerryMention = point.hasMention;
                 const hasSentiments = point.sentiments && point.sentiments.length > 0;
                 
                 // 어느 것도 없으면 마커 표시 안함
@@ -647,7 +792,6 @@ export default memo(function StockPriceChart({
                 // 2단계: 기본 색상 및 두께 설정
                 let markerColor = '#2563eb'; // 기본: 파란색 (merry 언급만)
                 let strokeWidth = 2;
-                let sentimentInfo = '';
                 
                 // 3단계: sentiments가 있으면 다수 감정으로 색상 결정
                 if (hasSentiments) {
@@ -663,24 +807,18 @@ export default memo(function StockPriceChart({
                   
                   // 가장 많은 감정으로 색상 결정 (majority voting)
                   const maxCount = Math.max(sentimentCounts.positive, sentimentCounts.negative, sentimentCounts.neutral);
-                  let dominantSentiment = 'neutral';
                   
                   if (sentimentCounts.positive === maxCount && sentimentCounts.positive > 0) {
-                    dominantSentiment = 'positive';
                     markerColor = '#16a34a'; // 초록색
                   } else if (sentimentCounts.negative === maxCount && sentimentCounts.negative > 0) {
-                    dominantSentiment = 'negative';
                     markerColor = '#dc2626'; // 빨간색
                   } else {
-                    dominantSentiment = 'neutral';
                     markerColor = '#6b7280'; // 중립: 회색
                   }
                   
-                  sentimentInfo = `P${sentimentCounts.positive}/N${sentimentCounts.negative}/M${sentimentCounts.neutral} → ${dominantSentiment.toUpperCase()}`;
-                  
-                  console.log(`🎯 마커 최종: ${point.date} → ${markerColor} (${sentimentInfo}), merry: ${hasMerryMention}`);
+                  console.log(`🎯 마커: ${point.date} → ${markerColor} (P:${sentimentCounts.positive}/N:${sentimentCounts.negative}/M:${sentimentCounts.neutral}), merry: ${hasMerryMention}`);
                 } else if (hasMerryMention) {
-                  console.log(`🔵 마커 기본: ${point.date} → ${markerColor} (메르 언급만), sentiments: none`);
+                  console.log(`🔵 마커: ${point.date} → ${markerColor} (메르 언급만)`);
                 }
                 
                 return (

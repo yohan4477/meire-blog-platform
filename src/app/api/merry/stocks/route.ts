@@ -10,7 +10,7 @@ let stocksCache: {
   timestamp: number;
   hitCount: number;
   missCount: number;
-} | null = null;
+} | null = null; // 캐시 무효화: analyzed_count 업데이트 반영
 
 let priceCache = new Map<string, {
   data: any;
@@ -158,8 +158,9 @@ async function loadStocksData(): Promise<any[]> {
     const stocksQuery = `
       SELECT 
         ticker, company_name, market, 
-        mention_count, last_mentioned_date as last_mentioned_at,
-        sector, industry, description
+        mention_count, analyzed_count, last_mentioned_date as last_mentioned_at,
+        first_mentioned_date, last_mentioned_date,
+        sector, industry, description, tags
       FROM stocks 
       WHERE is_merry_mentioned = 1 AND mention_count > 0
       ORDER BY last_mentioned_date DESC, mention_count DESC
@@ -185,10 +186,12 @@ async function loadStocksData(): Promise<any[]> {
       name: stock.company_name,
       market: stock.market || (stock.ticker.length === 6 ? 'KRX' : 'NASDAQ'),
       mention_count: stock.mention_count,
-      analyzed_count: 0, // 별도 조회 필요시 추가
+      analyzed_count: stock.analyzed_count || 0, // sentiments 테이블과 동기화된 실제 분석 완료 개수
       last_mentioned_at: stock.last_mentioned_at,
+      first_mentioned_date: stock.first_mentioned_date,
+      last_mentioned_date: stock.last_mentioned_date,
       sentiment: 'neutral', // 별도 감정 분석 조회 필요시 추가
-      tags: [],
+      tags: stock.tags || null, // stocks 테이블의 tags 컬럼 사용
       description: stock.description || `${stock.company_name} (${stock.sector || stock.industry || '투자 종목'})`
     }));
     
