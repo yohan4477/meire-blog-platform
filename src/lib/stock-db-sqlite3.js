@@ -208,20 +208,61 @@ class StockDB {
     });
   }
 
-  // 메르 언급 날짜 가져오기 (차트 마커용)
+  // 메르 언급 날짜 가져오기 (차트 마커용) - blog_posts 직접 검색
   async getMerryMentions(ticker) {
     if (!this.isConnected) await this.connect();
     
     return new Promise((resolve, reject) => {
+      // 티커와 회사명 매핑
+      const tickerToNameMap = {
+        '005930': '삼성전자',
+        'TSLA': '테슬라',
+        'TSM': 'TSMC',
+        'AAPL': '애플',
+        'NVDA': '엔비디아',
+        'INTC': '인텔',
+        'LLY': '일라이릴리',
+        'UNH': '유나이티드헬스케어',
+        '042660': '한화오션',
+        '267250': 'HD현대',
+        '010620': '현대미포조선',
+        'GOOGL': '구글',
+        'MSFT': '마이크로소프트',
+        'META': '메타',
+        'AMD': 'AMD'
+      };
+      
+      const stockName = tickerToNameMap[ticker] || ticker;
+      
+      // blog_posts에서 직접 검색
       this.db.all(`
-        SELECT mentioned_date, mention_type, sentiment_score, post_id, context
-        FROM stock_mentions_unified
-        WHERE ticker = ? AND mentioned_date IS NOT NULL
-        ORDER BY mentioned_date DESC
-      `, [ticker], (err, rows) => {
+        SELECT 
+          id as post_id,
+          created_date as mentioned_date,
+          'neutral' as mention_type,
+          0 as sentiment_score,
+          title as context
+        FROM blog_posts
+        WHERE (title LIKE ? OR content LIKE ? OR title LIKE ? OR content LIKE ?)
+        ORDER BY created_date DESC
+      `, [`%${ticker}%`, `%${ticker}%`, `%${stockName}%`, `%${stockName}%`], (err, rows) => {
         if (err) {
-          reject(err);
+          console.log(`📊 Blog posts direct search failed for ${ticker}, trying stock_mentions_unified`);
+          // Fallback to stock_mentions_unified
+          this.db.all(`
+            SELECT mentioned_date, mention_type, sentiment_score, post_id, context
+            FROM stock_mentions_unified
+            WHERE ticker = ? AND mentioned_date IS NOT NULL
+            ORDER BY mentioned_date DESC
+          `, [ticker], (err2, rows2) => {
+            if (err2) {
+              reject(err2);
+            } else {
+              resolve(rows2 || []);
+            }
+          });
         } else {
+          console.log(`✅ Found ${rows?.length || 0} mentions for ${ticker} in blog_posts`);
           resolve(rows || []);
         }
       });
@@ -390,42 +431,95 @@ class StockDB {
     });
   }
 
-  // 개별 종목 정보 가져오기
+  // 개별 종목 정보 가져오기 - stocks 테이블 우선 사용
   async getStockByTicker(ticker) {
     if (!this.isConnected) await this.connect();
     
     return new Promise((resolve, reject) => {
+      // stocks 테이블에서 먼저 조회 시도
       this.db.get(`
         SELECT 
           ticker,
           company_name,
-          company_name_kr,
+          company_name as company_name_kr,
           market,
-          currency,
+          CASE 
+            WHEN market IN ('KOSPI', 'KOSDAQ', 'KRX') THEN 'KRW'
+            ELSE 'USD'
+          END as currency,
+          mention_count,
+          first_mentioned_date,
+          last_mentioned_date,
+          is_merry_mentioned,
+          analyzed_count,
+          description,
+          tags,
           sector,
-          industry,
-          COUNT(CASE WHEN mentioned_date IS NOT NULL THEN 1 END) as mention_count,
-          MIN(mentioned_date) as first_mentioned_date,
-          MAX(mentioned_date) as last_mentioned_date,
-          CASE WHEN COUNT(CASE WHEN mentioned_date IS NOT NULL THEN 1 END) > 0 THEN 1 ELSE 0 END as is_merry_mentioned
-        FROM stock_mentions_unified
+          industry
+        FROM stocks
         WHERE ticker = ?
-        GROUP BY ticker, company_name, company_name_kr, market, currency, sector, industry
       `, [ticker], (err, row) => {
-        if (err) {
-          reject(err);
+        if (err || !row) {
+          // stocks에 없으면 merry_mentioned_stocks에서 조회
+          console.log(`📊 Ticker ${ticker} not in stocks table, trying merry_mentioned_stocks`);
+          this.db.get(`
+            SELECT 
+              ticker,
+              ticker as company_name,
+              ticker as company_name_kr,
+              'NASDAQ' as market,
+              'USD' as currency,
+              mention_count,
+              last_mentioned_at as first_mentioned_date,
+              last_mentioned_at as last_mentioned_date,
+              1 as is_merry_mentioned,
+              0 as analyzed_count,
+              '' as description,
+              '[]' as tags,
+              '' as sector,
+              '' as industry
+            FROM merry_mentioned_stocks
+            WHERE ticker = ?
+            GROUP BY ticker
+          `, [ticker], (err2, row2) => {
+            if (err2 || !row2) {
+              // 마지막으로 stock_mentions_unified에서 조회
+              console.log(`📊 Ticker ${ticker} not found, trying stock_mentions_unified`);
+              this.db.get(`
+                SELECT 
+                  ticker,
+                  company_name,
+                  company_name_kr,
+                  market,
+                  currency,
+                  sector,
+                  industry,
+                  COUNT(*) as mention_count,
+                  MIN(mentioned_date) as first_mentioned_date,
+                  MAX(mentioned_date) as last_mentioned_date,
+                  1 as is_merry_mentioned,
+                  0 as analyzed_count,
+                  '' as description,
+                  '[]' as tags
+                FROM stock_mentions_unified
+                WHERE ticker = ?
+                GROUP BY ticker, company_name, company_name_kr, market, currency, sector, industry
+              `, [ticker], (err3, row3) => {
+                if (err3) {
+                  reject(err3);
+                } else {
+                  resolve(row3 || null);
+                }
+              });
+            } else {
+              // merry_mentioned_stocks에서 찾은 경우
+              console.log(`✅ Found ${ticker} in merry_mentioned_stocks`);
+              resolve(row2);
+            }
+          });
         } else {
-          // 날짜 정규화 적용
-          if (row) {
-            const normalizeDate = (dateStr) => {
-              if (!dateStr) return dateStr;
-              // 타임스탬프가 포함된 경우 날짜 부분만 추출
-              return dateStr.split(' ')[0];
-            };
-            
-            row.first_mentioned_date = normalizeDate(row.first_mentioned_date);
-            row.last_mentioned_date = normalizeDate(row.last_mentioned_date);
-          }
+          // stocks 테이블에서 찾은 경우
+          console.log(`✅ Found ${ticker} in stocks table`);
           resolve(row);
         }
       });

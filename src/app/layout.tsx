@@ -103,7 +103,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning className="scroll-smooth">
       <head>
         {/* Performance and security headers */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -124,13 +124,14 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       
-      <body className={`${inter.variable} ${notoSansKr.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${notoSansKr.variable} font-sans antialiased`} suppressHydrationWarning>
         <ErrorBoundary level="page" showDetails={process.env.NODE_ENV === 'development'}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
+            suppressHydrationWarning
           >
             <QueryProvider>
               {/* AutoErrorCapture 비활성화 - 사이트 로딩 차단 문제 해결 */}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,10 +20,11 @@ import {
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { StockTags } from '@/components/ui/StockTags';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 // 동적 import로 차트 컴포넌트 최적화
 const StockPriceChart = dynamic(
-  () => import('@/components/merry/StockPriceChart'),
+  () => import('@/components/merry/StockPriceChart').then(mod => ({ default: mod.default })),
   { 
     loading: () => <div className="h-80 bg-gray-100 rounded-lg animate-pulse" />,
     ssr: false 
@@ -92,11 +93,18 @@ const getTagsLength = (stock: any): number => {
 
 export default function StockDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const ticker = params?.ticker as string;
   
   const [stock, setStock] = useState<Stock | null>(null);
-  // 모바일에서는 3M, 데스크탑에서는 1Y 기본값 설정
+  // URL 파라미터에서 period를 읽어서 timeRange 설정
   const [timeRange, setTimeRange] = useState<'1M' | '3M' | '6M' | '1Y'>(() => {
+    // URL에서 period 파라미터 확인
+    const urlPeriod = searchParams?.get('period')?.toUpperCase();
+    if (urlPeriod && ['1M', '3M', '6M', '1Y'].includes(urlPeriod)) {
+      return urlPeriod as '1M' | '3M' | '6M' | '1Y';
+    }
+    // URL 파라미터가 없으면 기본값 설정
     if (typeof window !== 'undefined') {
       return window.innerWidth < 640 ? '3M' : '1Y';
     }
@@ -114,6 +122,18 @@ export default function StockDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [allPosts, setAllPosts] = useState<Post[]>([]); // 통계용 전체 포스트
+
+  // URL 파라미터 변경 시 timeRange 동기화
+  useEffect(() => {
+    const urlPeriod = searchParams?.get('period')?.toUpperCase();
+    if (urlPeriod && ['1M', '3M', '6M', '1Y'].includes(urlPeriod)) {
+      const newTimeRange = urlPeriod as '1M' | '3M' | '6M' | '1Y';
+      if (newTimeRange !== timeRange) {
+        console.log(`🔄 URL period change: ${timeRange} → ${newTimeRange}`);
+        setTimeRange(newTimeRange);
+      }
+    }
+  }, [searchParams, timeRange]);
 
   // 모바일 가로모드 감지 및 1Y 차트 전환
   useEffect(() => {
@@ -152,37 +172,60 @@ export default function StockDetailPage() {
 
   const fetchStockData = async () => {
     try {
-      const response = await fetch(`/api/merry/stocks?limit=1000`);
+      console.log(`🔍 Loading stock data for ${ticker}...`);
+      
+      // 개별 종목 API 사용으로 빠른 로딩
+      const response = await fetch(`/api/merry/stocks/${ticker}`);
       const data = await response.json();
       
-      if (data.success) {
-        const foundStock = data.data.stocks.find((s: Stock) => s.ticker === ticker);
-        if (foundStock) {
-          setStock(foundStock);
-        } else {
-          // Fallback: 종목을 찾지 못한 경우 기본 정보로 생성
-          console.warn(`Stock ${ticker} not found in main list, creating fallback`);
-          setStock({
-            ticker,
-            name: ticker,
-            company_name: ticker,
-            mentions: 0,
-            lastMention: '',
-            currentPrice: 0,
-            priceChange: '+0.00%',
-            currency: ticker.length === 6 ? 'KRX' : 'USD',
-            market: ticker.length === 6 ? 'KRX' : 'NASDAQ',
-            description: `${ticker} 종목 정보`,
-            tags: ['투자', '종목'],
-            mention_count: 0,
-            analyzed_count: 0
-          });
-        }
+      if (data.success && data.data) {
+        // 개별 종목 API 응답 구조에 맞게 데이터 매핑
+        const stockData = {
+          ticker: data.data.ticker,
+          name: data.data.name,
+          company_name: data.data.name,
+          market: data.data.market,
+          currentPrice: data.data.currentPrice || 0,
+          priceChange: data.data.priceChange || '+0.00%',
+          currency: data.data.currency || 'USD',
+          description: data.data.description || `${ticker} 종목`,
+          mentions: data.data.stats?.totalMentions || 0,
+          mention_count: data.data.stats?.totalMentions || 0,
+          analyzed_count: data.data.mentions?.length || 0,
+          lastMention: data.data.stats?.lastMention || '',
+          firstMention: data.data.stats?.firstMention || '',
+          first_mentioned_date: data.data.stats?.firstMention || '',
+          last_mentioned_date: data.data.stats?.lastMention || '',
+          sentiment: 'neutral',
+          tags: [] // 태그는 별도 처리
+        };
+        
+        console.log(`✅ Stock data loaded:`, stockData);
+        setStock(stockData);
       } else {
-        setError('종목 데이터를 불러올 수 없습니다.');
+        console.warn(`❌ Stock ${ticker} not found, using fallback`);
+        // Fallback: 종목을 찾지 못한 경우 기본 정보로 생성
+        setStock({
+          ticker,
+          name: ticker,
+          company_name: ticker,
+          mentions: 0,
+          lastMention: '',
+          currentPrice: 0,
+          priceChange: '+0.00%',
+          currency: ticker.length === 6 ? 'KRW' : 'USD',
+          market: ticker.length === 6 ? 'KOSPI' : 'NASDAQ',
+          description: `${ticker} 종목 정보`,
+          tags: ['투자', '종목'],
+          mention_count: 0,
+          analyzed_count: 0,
+          sentiment: 'neutral'
+        });
       }
     } catch (err) {
-      console.error('Stock data fetch error:', err);
+      console.error('❌ Stock data fetch error:', err);
+      setError(`종목 ${ticker} 데이터를 불러올 수 없습니다.`);
+      
       // Network error 시에도 fallback 제공
       setStock({
         ticker,
@@ -192,13 +235,17 @@ export default function StockDetailPage() {
         lastMention: '',
         currentPrice: 0,
         priceChange: '+0.00%',
-        currency: ticker.length === 6 ? 'KRX' : 'USD',
-        market: ticker.length === 6 ? 'KRX' : 'NASDAQ',
+        currency: ticker.length === 6 ? 'KRW' : 'USD',
+        market: ticker.length === 6 ? 'KOSPI' : 'NASDAQ',
         description: `${ticker} 종목 정보`,
         tags: ['투자', '종목'],
         mention_count: 0,
-        analyzed_count: 0
+        analyzed_count: 0,
+        sentiment: 'neutral'
       });
+    } finally {
+      console.log(`🏁 Loading completed for ${ticker}`);
+      setLoading(false);
     }
   };
 
@@ -461,14 +508,16 @@ export default function StockDetailPage() {
 
       {/* 가격 차트 */}
       <div className="mb-6">
-        <StockPriceChart
-          ticker={stock.ticker}
-          timeRange={timeRange}
-          onTimeRangeChange={handleTimeRangeChange}
-          stockName={stock.company_name || stock.name}
-          description={stock.description}
-          stock={stock}
-        />
+        <ErrorBoundary level="section" showDetails={process.env.NODE_ENV === 'development'}>
+          <StockPriceChart
+            ticker={stock.ticker}
+            timeRange={timeRange}
+            onTimeRangeChange={handleTimeRangeChange}
+            stockName={stock.company_name || stock.name}
+            description={stock.description}
+            stock={stock}
+          />
+        </ErrorBoundary>
         
         {/* 모바일 가로모드 안내 */}
         <div className="mt-2 sm:hidden text-xs text-gray-500 dark:text-gray-400 text-center">

@@ -11,89 +11,123 @@ export async function GET(
     console.log(`📊 Fetching stock data for: ${ticker}`);
     
     const stockDB = new StockDB();
+    await stockDB.connect();
     
-    // 종목 기본 정보 가져오기
+    // 종목 기본 정보 가져오기 - 간단한 버전
     const stockInfo = await stockDB.getStockByTicker(ticker);
     
-    if (!stockInfo) {
-      return NextResponse.json(
-        { error: `Stock ${ticker} not found` },
-        { status: 404 }
-      );
-    }
+    // stockInfo가 없어도 기본 정보로 처리
+    const basicInfo = stockInfo || {
+      ticker: ticker,
+      company_name: ticker,
+      company_name_kr: ticker,
+      market: ticker.length === 6 ? 'KOSPI' : 'NASDAQ',
+      currency: ticker.length === 6 ? 'KRW' : 'USD',
+      mention_count: 0,
+      is_merry_mentioned: 0
+    };
     
-    // 최근 180일 (6개월) 가격 데이터 가져오기
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 180);
-    
-    const priceData = await stockDB.getStockPrices(
-      ticker,
-      startDate.toISOString().split('T')[0],
-      endDate.toISOString().split('T')[0]
-    );
+    // 가격 데이터 가져오기 (6개월)
+    const priceData = await stockDB.getStockPrices(ticker, '6mo');
     
     // 메르 언급 정보 가져오기
     const mentions = await stockDB.getMerryMentions(ticker);
     
-    // 관련 포스트 가져오기 (테이블 없으면 빈 배열)
-    let relatedPosts = [];
+    // 관련 포스트 가져오기
+    let relatedPosts = { posts: [], total: 0 };
     try {
-      relatedPosts = await stockDB.getRelatedPosts(ticker, 10);
+      relatedPosts = await stockDB.getRelatedPosts(ticker, 10, 0);
     } catch (error) {
-      console.log('관련 포스트 테이블 없음, 빈 배열 사용');
-      relatedPosts = [];
+      console.log('관련 포스트 조회 실패, 빈 배열 사용');
     }
     
-    // 응답 데이터 구성
+    // 실시간 가격 정보 가져오기
+    let priceInfo = { currentPrice: 0, priceChange: '+0.00%' };
+    try {
+      console.log(`💰 Fetching real-time price for ${ticker}...`);
+      const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
+      const symbol = isKoreanStock ? `${ticker}.KS` : ticker;
+      
+      const priceResponse = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${Math.floor(Date.now() / 1000) - 86400}&period2=${Math.floor(Date.now() / 1000)}&interval=1d`,
+        {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          next: { revalidate: 300 }
+        }
+      );
+      
+      if (priceResponse.ok) {
+        const responseText = await priceResponse.text();
+        
+        // Check if response is empty or invalid JSON
+        if (!responseText || responseText.trim() === '') {
+          console.warn(`⚠️ Empty response from Yahoo Finance for ${ticker}`);
+          throw new Error('Empty response from Yahoo Finance');
+        }
+        
+        let priceData;
+        try {
+          priceData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error(`❌ JSON parsing failed for ${ticker}:`, responseText.substring(0, 200));
+          throw new Error('Invalid JSON response from Yahoo Finance');
+        }
+        
+        const result = priceData.chart?.result?.[0];
+        
+        if (result?.meta) {
+          const currentPrice = result.meta.regularMarketPrice;
+          const previousClose = result.meta.chartPreviousClose || result.meta.regularMarketPreviousClose;
+          
+          if (currentPrice && previousClose) {
+            const changeAmount = currentPrice - previousClose;
+            const changePercent = ((changeAmount / previousClose) * 100).toFixed(2);
+            const changeSign = changeAmount >= 0 ? '+' : '';
+            
+            priceInfo = {
+              currentPrice: isKoreanStock ? Math.round(currentPrice) : parseFloat(currentPrice.toFixed(2)),
+              priceChange: `${changeSign}${changePercent}%`
+            };
+            console.log(`✅ Real-time price for ${ticker}: ${priceInfo.currentPrice} (${priceInfo.priceChange})`);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`⚠️ Failed to fetch real-time price for ${ticker}:`, error.message);
+    }
+
+    // 응답 데이터 구성 - 실시간 가격 포함
     const responseData = {
       success: true,
       data: {
-        ticker: stockInfo.ticker,
-        name: stockInfo.name,
-        market: stockInfo.market || 'NASDAQ',
-        currentPrice: stockInfo.current_price,
-        priceChange: stockInfo.price_change,
-        changePercent: stockInfo.change_percent,
-        lastUpdate: stockInfo.last_update,
-        description: stockInfo.description,
+        ticker: basicInfo.ticker,
+        name: basicInfo.company_name_kr || basicInfo.company_name || ticker,
+        market: basicInfo.market,
+        currentPrice: priceInfo.currentPrice,
+        priceChange: priceInfo.priceChange,
+        currency: basicInfo.currency,
+        description: basicInfo.description || `${basicInfo.company_name_kr || ticker} 종목`,
         
-        // 6개월 차트 데이터
-        chartData: priceData.map((item: any) => ({
-          date: item.date,
-          price: item.close_price,
-          volume: item.volume,
-          // 메르 언급이 있는 날짜 표시
-          hasMention: mentions.some((m: any) => 
-            m.mentioned_date === item.date
-          )
-        })),
+        // 차트 데이터
+        chartData: priceData,
         
         // 메르 언급 정보
         mentions: mentions.map((m: any) => ({
-          date: m.mentioned_date,
+          date: m.mentioned_date?.split(' ')[0] || m.mentioned_date,
           postId: m.post_id,
-          sentiment: m.sentiment || 'neutral',
-          excerpt: m.excerpt
+          sentiment: m.mention_type || 'neutral',
+          context: m.context
         })),
         
         // 관련 포스트
-        relatedPosts: relatedPosts,
+        relatedPosts: relatedPosts.posts,
         
         // 통계
         stats: {
-          totalMentions: stockInfo.post_count || mentions.length,
-          firstMention: stockInfo.first_mentioned_at,
-          lastMention: stockInfo.last_mentioned_at,
-          averagePrice: priceData.length > 0 
-            ? priceData.reduce((sum: number, p: any) => sum + p.close_price, 0) / priceData.length
-            : null,
-          priceRange: priceData.length > 0
-            ? {
-                min: Math.min(...priceData.map((p: any) => p.close_price)),
-                max: Math.max(...priceData.map((p: any) => p.close_price))
-              }
-            : null
+          totalMentions: basicInfo.mention_count || mentions.length,
+          firstMention: basicInfo.first_mentioned_date,
+          lastMention: basicInfo.last_mentioned_date || basicInfo.last_mentioned_at,
+          totalPosts: relatedPosts.total
         }
       }
     };

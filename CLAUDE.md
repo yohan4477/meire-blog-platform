@@ -222,16 +222,21 @@
 - **핵심 요약**: 최근 언급일 순 정렬, 5-10개 종목 표시, 실시간 가격 연동
 
 ### 📊 **종목 차트 개발 시**  
-- **참조 문서**: `@docs/chart-requirements.md`
+- **참조 문서**: `@docs/chart-requirements.md` (필수 참조)
 - **담당 컴포넌트**: `src/components/merry/StockPriceChart.tsx`
 - **관련 API**: `/api/stock-price`, `/api/merry/stocks/[ticker]/posts`, `/api/merry/stocks/[ticker]/sentiments`
-- **핵심 요약**: 6개월치 데이터, 메르 언급일 마커 표시, 감정 분석 통합, 3초 이내 로딩, 관련 포스트 5개 + 더보기 기능
+- **핵심 요약**: 6개월치 데이터, 메르 언급일 마커 표시, **감정 분석 통합**, 3초 이내 로딩, 관련 포스트 5개 + 더보기 기능
+- **감정 분석 색상**: 🟢 긍정 `#16a34a`, 🔴 부정 `#dc2626`, 🔵 중립 `#6b7280`
+- **분석 원칙**: Claude 직접 분석, 논리적 근거 필수, 키워드/패턴/글자수 분석 금지
+- **근거 예시**: "AI 칩 시장 급성장으로 TSMC 파운드리 사업 강화 전망" (긍정), "트럼프 인텔 CEO 사임 요구로 반도체 업계 정치적 리스크" (부정)
 
 ### 🎯 **감정 분석 시스템 개발 시**
-- **참조 문서**: 본 CLAUDE.md 감정 분석 요구사항 섹션
+- **참조 문서**: `@docs/chart-requirements.md` 감정 분석 섹션 (필수)
 - **담당 컴포넌트**: `src/lib/sentiment-analyzer.js`, `src/components/merry/StockPriceChart.tsx`
 - **관련 API**: `/api/merry/stocks/[ticker]/sentiments`
-- **핵심 요약**: AI 기반 종목별 감정 분석, 차트 색상 마커 통합, 실시간 감정 표시, 신뢰도 점수 제공
+- **핵심 철학**: **외부 API 없이 Claude가 직접 분석**, 근거만 봐도 감정 판단이 논리적으로 납득 가능
+- **금지 사항**: 키워드 분석, 패턴 매칭, 글자수 기준, 감정 분석 API 사용 절대 금지
+- **품질 기준**: 구체적 사실, 인과관계 명확, 투자 관점, 간결성
 
 ### 📈 **메르 주간보고 개발 시**
 - **참조 문서**: `@docs/메르_주간보고_요구사항.md`

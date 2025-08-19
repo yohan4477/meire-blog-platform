@@ -35,10 +35,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    // Generate error ID without instance method call to prevent issues
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000000);
+    const errorId = `err_${timestamp}_${random}`;
+    
     return {
       hasError: true,
       error,
-      errorId: ErrorBoundary.prototype.generateErrorId()
+      errorId
     };
   }
 
@@ -65,9 +70,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   generateErrorId(): string {
-    // 🚨 긴급 비활성화: 무한 루프 방지를 위해 에러 ID 생성 중단
-    // return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    return `ui_error_${Date.now()}`; // 안전한 형태로 변경
+    // Fixed error ID generation to prevent infinite loops
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000000);
+    return `err_${timestamp}_${random}`;
   }
 
   handleRetry = () => {

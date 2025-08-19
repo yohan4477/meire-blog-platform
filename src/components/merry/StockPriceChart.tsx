@@ -165,6 +165,12 @@ export default memo(function StockPriceChart({
         const filteredPrices = priceResult.prices;
 
         // 🔥 merry_mentioned_stocks + sentiments 데이터 병합
+        console.log('🚨 데이터 통합 시작:', {
+          pricePoints: filteredPrices.length,
+          postsByDateKeys: Object.keys(postsByDate),
+          sentimentKeys: Object.keys(sentimentResult.sentimentByDate || {})
+        });
+        
         const enrichedData = filteredPrices.map((point: any) => {
           const dateStr = point.date;
           // 🔧 날짜 형식 정규화 (YYYY-MM-DD)
@@ -178,6 +184,11 @@ export default memo(function StockPriceChart({
           const sentiments = sentimentData?.postSentimentPairs?.map((pair: any) => pair.sentiment) || [];
           
           console.log(`🔍 날짜 매칭: ${normalizedDate} → mentions: ${postsData.length}, sentiments: ${sentiments.length}`);
+          
+          const hasAnyData = postsData.length > 0 || sentiments.length > 0;
+          if (hasAnyData) {
+            console.log(`📍 마커 데이터 발견: ${normalizedDate} - mentions: ${postsData.length}, sentiments: ${sentiments.length}, posts:`, postsData.map(p => p.title || p.post_title));
+          }
           
           return {
             ...point,
@@ -783,6 +794,8 @@ export default memo(function StockPriceChart({
                 // 1단계: merry_mentioned_stocks 또는 sentiments 데이터 확인
                 const hasMerryMention = point.hasMention;
                 const hasSentiments = point.sentiments && point.sentiments.length > 0;
+                
+                console.log(`🔍 마커 체크: ${point.date} → mention: ${hasMerryMention}, sentiments: ${hasSentiments}, data: ${JSON.stringify({hasMention: point.hasMention, sentiments: point.sentiments})}`);
                 
                 // 어느 것도 없으면 마커 표시 안함
                 if (!hasMerryMention && !hasSentiments) {
