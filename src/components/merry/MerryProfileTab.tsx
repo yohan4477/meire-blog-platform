@@ -216,11 +216,11 @@ export default function MerryProfileTab() {
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="career" className="w-full">
+        <Tabs defaultValue="philosophy" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="philosophy">투자 철학</TabsTrigger>
             <TabsTrigger value="career">메르 업적</TabsTrigger>
             <TabsTrigger value="portfolio">딸 포트폴리오</TabsTrigger>
-            <TabsTrigger value="philosophy">투자 철학</TabsTrigger>
           </TabsList>
 
           {/* 메르 업적 탭 */}

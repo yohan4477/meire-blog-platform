@@ -87,7 +87,8 @@
       "Bash(start http://localhost:3031/merry/stocks/TSLA)",
       "Bash(start http://localhost:3031/merry/stocks/005930)",
       "Bash(start:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(del temp_reasoning_updates.sql)"
     ],
     "deny": [],
     "ask": [],

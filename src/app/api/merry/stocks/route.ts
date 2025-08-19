@@ -4,13 +4,13 @@ import path from 'path';
 // NOTE: stocks 테이블 사용으로 성능 개선
 import { edgeCache, setCacheHeaders, CACHE_KEYS, CACHE_TAGS } from '../../../../lib/edge-cache';
 
-// 다중 레벨 캐시 저장소
+// 다중 레벨 캐시 저장소 - 완전 무효화
 let stocksCache: {
   data: any[];
   timestamp: number;
   hitCount: number;
   missCount: number;
-} | null = null; // 캐시 무효화: analyzed_count 업데이트 반영
+} | null = null; // 캐시 완전 무효화: 정렬 순서 변경으로 인한 캐시 클리어
 
 let priceCache = new Map<string, {
   data: any;
@@ -159,7 +159,7 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
     // PERFORMANCE OPTIMIZED: Use stocks table directly
     console.log('🚀 Using stocks table for optimized stock data');
     
-    // stocks 테이블에서 직접 데이터 조회 - 필터링 조건 제거
+    // stocks 테이블에서 직접 데이터 조회 - 최신 언급일 순, 같은 날짜면 언급 적은 순
     const stocksQuery = `
       SELECT 
         ticker, company_name, market, 
@@ -167,7 +167,7 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
         first_mentioned_date, last_mentioned_date,
         sector, industry, description, tags
       FROM stocks 
-      ORDER BY last_mentioned_date DESC, mention_count DESC
+      ORDER BY last_mentioned_date DESC, mention_count ASC
       LIMIT 20
     `;
     
@@ -358,7 +358,7 @@ export async function GET(request: NextRequest) {
     // 캐시 메트릭 수집
     performanceMetrics.cacheMetrics = getCacheMetrics();
 
-    // 최신 언급일 기준 정렬 (last_mentioned_at DESC, mention_count DESC)
+    // 최신 언급일 기준 정렬 (last_mentioned_at DESC, mention_count ASC)
     stockData.sort((a, b) => {
       // 최신 언급일 기준 먼저
       const dateA = new Date(a.last_mentioned_at).getTime();
@@ -366,8 +366,8 @@ export async function GET(request: NextRequest) {
       if (dateA !== dateB) {
         return dateB - dateA; // 최신 언급일 내림차순
       }
-      // 같은 날짜면 언급 횟수 기준
-      return b.mention_count - a.mention_count;
+      // 같은 날짜면 언급 적은 순으로 정렬
+      return a.mention_count - b.mention_count;
     });
 
     // 필터링

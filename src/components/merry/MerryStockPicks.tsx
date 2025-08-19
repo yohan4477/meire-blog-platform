@@ -31,55 +31,87 @@ interface Stock {
 export default function MerryStockPicks() {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pricesLoading, setPricesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchStocks();
+    loadStocksData();
   }, []);
 
-  const fetchStocks = async () => {
+  // 📊 순차적 로딩: 1단계 기본 정보 → 2단계 가격 정보
+  const loadStocksData = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      console.log('📊 메르스 픽 종목 데이터 로딩 시작...');
+      console.log('📊 1단계: 메르스 픽 기본 정보 로딩 시작...');
       
-      // 초고속 API 호출 (타임아웃 및 최적화 적용)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
-      
-      const response = await fetch(`/api/merry/stocks?limit=5`, {
-        signal: controller.signal,
+      // 1단계: 기본 정보만 먼저 로드 (빠른 렌더링)
+      const basicResponse = await fetch(`/api/merry/stocks?limit=5&pricesOnly=false`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
       });
       
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (!basicResponse.ok) {
+        throw new Error(`HTTP ${basicResponse.status}: ${basicResponse.statusText}`);
       }
       
-      const data = await response.json();
-      console.log('📊 API 응답:', data);
+      const basicData = await basicResponse.json();
+      console.log('📊 1단계 완료:', basicData.data?.stocks?.length, '개 종목');
       
-      if (data.success && data.data && data.data.stocks) {
-        console.log(`📊 ${data.data.stocks.length}개 종목 로드 완료`);
-        setStocks(data.data.stocks);
-        setError(null);
+      if (basicData.success && basicData.data && basicData.data.stocks) {
+        // 1단계 데이터로 즉시 화면 렌더링 (가격 정보 없음)
+        setStocks(basicData.data.stocks.map(stock => ({
+          ...stock,
+          currentPrice: null,
+          priceChange: null
+        })));
+        setLoading(false); // 기본 정보 로딩 완료
+        
+        // 2단계: 가격 정보 추가 로딩 (백그라운드)
+        console.log('📊 2단계: 가격 정보 로딩 시작...');
+        setPricesLoading(true);
+        
+        try {
+          const pricesResponse = await fetch(`/api/merry/stocks?limit=5&pricesOnly=true`, {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (pricesResponse.ok) {
+            const pricesData = await pricesResponse.json();
+            console.log('📊 2단계 완료: 가격 정보 업데이트');
+            
+            if (pricesData.success && pricesData.data && pricesData.data.stocks) {
+              // 기존 데이터에 가격 정보만 업데이트
+              setStocks(prevStocks => 
+                prevStocks.map(stock => {
+                  const updatedStock = pricesData.data.stocks.find(s => s.ticker === stock.ticker);
+                  return updatedStock ? { ...stock, ...updatedStock } : stock;
+                })
+              );
+            }
+          } else {
+            console.warn('📊 가격 정보 로딩 실패, 기본 정보만 표시');
+          }
+        } catch (priceError) {
+          console.warn('📊 가격 정보 로딩 에러:', priceError);
+        } finally {
+          setPricesLoading(false);
+        }
+        
       } else {
-        console.error('📊 종목 데이터 구조 오류:', data);
+        console.error('📊 종목 데이터 구조 오류:', basicData);
         setError('종목 데이터를 불러올 수 없습니다.');
+        setLoading(false);
       }
     } catch (err) {
-      if (err.name === 'AbortError') {
-        console.error('📊 API 요청 타임아웃');
-        setError('요청 시간이 초과되었습니다. 새로고침해주세요.');
-      } else {
-        console.error('📊 종목 데이터 로딩 에러:', err);
-        setError('종목 데이터 로딩 중 오류가 발생했습니다.');
-      }
-    } finally {
+      console.error('📊 종목 데이터 로딩 에러:', err);
+      setError('종목 데이터 로딩 중 오류가 발생했습니다.');
       setLoading(false);
     }
   };
@@ -133,34 +165,9 @@ export default function MerryStockPicks() {
     return badges;
   };
 
-  // 상대적 순위 뱃지 (Comparative Ranking Badges)
+  // 순위 뱃지 제거 - 최신 언급일 순, 언급 적은 순 정렬과 맞지 않음
   const getRankingBadge = (stock: any, index: number, allStocks: any[]) => {
-    // 3개월내 최다 언급 (1위만)
-    if (index === 0) {
-      return {
-        icon: '🏆',
-        text: '3개월내 최다 언급',
-        className: 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
-      };
-    }
-    
-    // 2위, 3위 순위 뱃지
-    if (index === 1) {
-      return {
-        icon: '🥈',
-        text: '3개월내 최다 언급 2위',
-        className: 'bg-gradient-to-r from-gray-400 to-gray-600 text-white'
-      };
-    }
-    
-    if (index === 2) {
-      return {
-        icon: '🥉',
-        text: '3개월내 최다 언급 3위',
-        className: 'bg-gradient-to-r from-orange-400 to-orange-600 text-white'
-      };
-    }
-    
+    // 순위 뱃지 모두 제거
     return null;
   };
 
@@ -239,7 +246,7 @@ export default function MerryStockPicks() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          (최신 언급일 순서)
+          (최신 언급일 순, 같은 날짜는 언급 적은 순)
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -282,14 +289,21 @@ export default function MerryStockPicks() {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-1">
-                    {stock.description}
+                    {stock.description && stock.description.length > 35 
+                      ? `${stock.description.substring(0, 35)}...` 
+                      : stock.description || '회사 정보 없음'}
                   </p>
                 </div>
                 
                 {/* 가격 정보를 별도 행으로 분리 (모바일에서) */}
                 <div className="flex flex-col sm:text-right sm:min-w-0 sm:ml-4">
                   <div className="text-sm font-bold mb-1 flex flex-col sm:flex-row sm:items-center gap-1">
-                    {stock.currentPrice !== null ? (
+                    {pricesLoading ? (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <div className="animate-spin h-3 w-3 border border-gray-300 rounded-full border-t-blue-600"></div>
+                        가격 로딩중...
+                      </span>
+                    ) : stock.currentPrice !== null ? (
                       <>
                         <span className="truncate">
                           {stock.currency === 'USD' ? '$' : '₩'}{stock.currentPrice?.toLocaleString()}

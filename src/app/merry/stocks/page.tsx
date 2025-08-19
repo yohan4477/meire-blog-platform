@@ -184,7 +184,7 @@ export default function MerryStocksPage() {
           메르's Stock Universe
         </h1>
         <p className="text-muted-foreground">
-          메르가 블로그에서 언급한 모든 종목들을 한눈에 확인하세요
+          메르가 블로그에서 언급한 모든 종목들을 한눈에 확인하세요 (최신 언급일 순, 같은 날짜는 언급 적은 순)
         </p>
       </div>
 

@@ -94,54 +94,10 @@ export default function Home() {
       } catch (error) {
         console.error('데이터 로딩 실패:', error);
         
-        // fallback 데이터
-        setMerryPosts([
-          {
-            id: 1,
-            title: '우리형 메르의 첫 번째 이야기',
-            excerpt: '메르의 첫 번째 포스트입니다.',
-            category: '일상',
-            created_date: '2025-01-10T00:00:00.000Z',
-            views: 156,
-            featured: true
-          }
-        ]);
-        
-        setCuratedNews([
-          {
-            id: 'demo_1',
-            title: 'AI 칩 수요 급증으로 반도체 주식 상승세',
-            content: '인공지능 붐으로 인한 칩 수요 증가가 반도체 업계 전반에 긍정적 영향을 미치고 있습니다.',
-            type: 'NEWS',
-            relevance_score: 0.9,
-            tags: ['Technology', 'AI', 'Semiconductors'],
-            created_date: new Date().toISOString()
-          },
-          {
-            id: 'demo_2',
-            title: '연준 금리 결정 앞두고 시장 관망세',
-            content: '다음 주 연방준비제도 회의를 앞두고 투자자들이 신중한 접근을 보이고 있습니다.',
-            type: 'ANALYSIS',
-            relevance_score: 0.8,
-            tags: ['Federal Reserve', 'Interest Rates', 'Market'],
-            created_date: new Date().toISOString()
-          },
-          {
-            id: 'demo_3',
-            title: 'AI 포트폴리오 최적화 인사이트',
-            content: 'BlackRock 에이전트가 분석한 현재 시장 상황에서의 포트폴리오 최적화 전략입니다.',
-            type: 'INSIGHT',
-            relevance_score: 0.85,
-            tags: ['AI', 'Portfolio', 'Optimization'],
-            created_date: new Date().toISOString()
-          }
-        ]);
-        
-        setDailyDigest({
-          summary: '오늘의 주요 뉴스 3건 중 투자 영향도가 높은 뉴스가 2건 확인되었습니다. 시장 전망: 중립적 분위기를 보이고 있습니다.',
-          top_stories: [],
-          sectors_in_focus: ['Technology', 'Finance', 'Healthcare']
-        });
+        // 에러 발생시 빈 데이터 처리 (가짜 데이터 제거)
+        setMerryPosts([]);
+        setCuratedNews([]);
+        setDailyDigest(null);
       } finally {
         setLoading(false);
       }
@@ -150,42 +106,6 @@ export default function Home() {
     fetchAllData();
   }, []);
 
-  // 요르의 개인 투자 분석 포스트들 (실제 클릭 가능)
-  const recentPosts = [
-    {
-      id: 1,
-      slug: 'nps-2025-strategy',
-      title: "국민연금 포트폴리오 변화 살펴보기",
-      content: "최근 공개된 국민연금 13F 파일링을 보면서 흥미로운 변화들을 발견했습니다. AI 관련주 비중이 늘어나고 있고, 전반적으로 어떻게 바뀌고 있는지 정리해봤어요.",
-      category: "투자분석",
-      created_date: "2025-01-12T00:00:00.000Z",
-      author: "요르",
-      views: 1250,
-      rating: "투자 분석"
-    },
-    {
-      id: 2,
-      slug: 'global-institutional-comparison',
-      title: "버크셔, 타이거 글로벌... 대형 펀드들은 뭘 사고 있을까?",
-      content: "워렌 버핏의 버크셔 해서웨이부터 타이거 글로벌, 시타델까지... 유명한 기관투자자들이 최근에 뭘 사고 팔고 있는지 궁금해서 13F 파일링을 뒤져봤어요.",
-      category: "시장분석",
-      created_date: "2025-01-10T00:00:00.000Z",
-      author: "요르",
-      views: 980,
-      rating: "투자 동향"
-    },
-    {
-      id: 3,
-      slug: '13f-trend-analysis',
-      title: "13F 파일링 뒤져보니 나온 흥미로운 트렌드들",
-      content: "SEC 13F 파일링을 대량으로 분석해봤더니 재미있는 패턴들이 보이네요. AI 투자도 이제 선별적으로 하고, 중국 주식은 계속 빼고 있고, ESG도 대세가 된 것 같아요.",
-      category: "데이터분석",
-      created_date: "2025-01-08T00:00:00.000Z",
-      author: "요르",
-      views: 756,
-      rating: "데이터 분석"
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -225,49 +145,6 @@ export default function Home() {
         </div>
       </section>
       
-      {/* 국민연금 분석 & 에이전트 관리 (하단 배치) */}
-      <section className="bg-card border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold flex items-center">
-                  <BarChart3 className="mr-2 h-5 w-5" />
-                  국민연금 분석
-                </h3>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/investment">
-                    자세히 보기
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                국민연금공단의 최신 포트폴리오 변화와 투자 전략을 분석합니다
-              </p>
-            </Card>
-            
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold flex items-center">
-                  <Brain className="mr-2 h-5 w-5" />
-                  에이전트 관리
-                </h3>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/agent-workflows">
-                    자세히 보기
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                AI 에이전트들의 분석 워크플로우를 관리하고 모니터링합니다
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* Main Content with Tabs */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -396,6 +273,49 @@ export default function Home() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* 국민연금 분석 & 에이전트 관리 (맨 하단 배치) */}
+      <section className="bg-card border-t">
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center">
+                  <BarChart3 className="mr-2 h-5 w-5" />
+                  국민연금 분석
+                </h3>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/investment">
+                    자세히 보기
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                국민연금공단의 최신 포트폴리오 변화와 투자 전략을 분석합니다
+              </p>
+            </Card>
+            
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center">
+                  <Brain className="mr-2 h-5 w-5" />
+                  에이전트 관리
+                </h3>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/agent-workflows">
+                    자세히 보기
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                AI 에이전트들의 분석 워크플로우를 관리하고 모니터링합니다
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
