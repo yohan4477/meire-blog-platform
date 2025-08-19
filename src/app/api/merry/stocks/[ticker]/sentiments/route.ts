@@ -97,7 +97,7 @@ export async function GET(
         };
       }
       
-      // 🔥 최종 단순화: sentiment + key_reasoning만 (date 제거)
+      // 🔥 최종 단순화: sentiment + key_reasoning만
       const postSentimentPair = {
         post: {
           id: record.post_id

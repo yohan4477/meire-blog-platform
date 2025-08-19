@@ -57,7 +57,6 @@ interface PricePoint {
   sentiments?: {
     sentiment: string;
     score: number;
-    confidence: number;
     keywords?: any;
     context?: string;
     key_reasoning?: string;
