@@ -22,7 +22,8 @@ class StockPriceUpdater {
       { ticker: 'AAPL', symbol: 'AAPL' },
       { ticker: 'NVDA', symbol: 'NVDA' },
       { ticker: 'GOOGL', symbol: 'GOOGL' },
-      { ticker: 'MSFT', symbol: 'MSFT' }
+      { ticker: 'MSFT', symbol: 'MSFT' },
+      { ticker: 'INTC', symbol: 'INTC' }  // 인텔 추가
     ];
     
     for (const stock of tickers) {

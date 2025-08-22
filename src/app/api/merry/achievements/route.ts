@@ -99,109 +99,6 @@ async function analyzeMerryAchievements(limit: number) {
           details: "ESG 중심 투자 원칙을 개인 포트폴리오에 적용하여 연평균 12% 수익률과 리스크 30% 감소 달성"
         }
       ],
-      daughterPortfolio: {
-        totalValue: 127500000, // 1억 2750만원
-        totalInvested: 85000000, // 8500만원 투입
-        totalReturn: 42500000, // 4250만원 수익
-        returnRate: 50.0, // 50% 수익률
-        period: "2020년 1월 ~ 현재 (5년)",
-        benchmark: {
-          kospi: 15.2,
-          sp500: 68.5,
-          nasdaq: 72.1
-        },
-        topHoldings: [
-          {
-            ticker: "TSLA",
-            name: "테슬라",
-            weight: 25.5,
-            returnRate: 185.6,
-            invested: 15000000,
-            currentValue: 42840000
-          },
-          {
-            ticker: "NVDA", 
-            name: "엔비디아",
-            weight: 20.2,
-            returnRate: 156.8,
-            invested: 12000000,
-            currentValue: 30816000
-          },
-          {
-            ticker: "005930",
-            name: "삼성전자",
-            weight: 15.8,
-            returnRate: -8.5,
-            invested: 18000000,
-            currentValue: 16470000
-          },
-          {
-            ticker: "AAPL",
-            name: "애플",
-            weight: 12.3,
-            returnRate: 22.4,
-            invested: 13000000,
-            currentValue: 15912000
-          },
-          {
-            ticker: "MSFT",
-            name: "마이크로소프트", 
-            weight: 10.1,
-            returnRate: 34.7,
-            invested: 10000000,
-            currentValue: 13470000
-          }
-        ],
-        monthlyContribution: 1500000, // 월 150만원 적립
-        strategy: "메가트렌드 기반 장기투자",
-        riskLevel: "중위험 중수익"
-      },
-      sectorInsights: [
-        {
-          sector: "전기차",
-          insight: "테슬라 외에도 리비안, 루시드 등 신생 기업들의 성장 가능성 강조",
-          accuracy: true,
-          impact: "high"
-        },
-        {
-          sector: "AI/반도체",
-          insight: "ChatGPT 이전부터 AI 혁명과 관련 반도체 수요 증가 예측",
-          accuracy: true,
-          impact: "high"
-        },
-        {
-          sector: "메타버스",
-          insight: "메타버스 과대광고 경고와 현실적인 도입 시기 제시",
-          accuracy: true,
-          impact: "medium"
-        },
-        {
-          sector: "원자재",
-          insight: "리튬, 니켈 등 전기차 배터리 원자재 수급 불균형 예측",
-          accuracy: true,
-          impact: "medium"
-        }
-      ],
-      marketTiming: [
-        {
-          event: "2020년 3월 코로나 대폭락",
-          prediction: "V자 회복 예측 및 기술주 집중 매수 권고",
-          accuracy: true,
-          timing: "저점 +3일"
-        },
-        {
-          event: "2022년 1월 금리인상 우려",
-          prediction: "성장주 대비 가치주 선호 전환 예측",
-          accuracy: true,
-          timing: "하락 시작 -2주"
-        },
-        {
-          event: "2023년 3월 실리콘밸리은행 사태",
-          prediction: "금융시스템 리스크보다 일시적 충격으로 진단",
-          accuracy: true,
-          timing: "회복 시작 +1주"
-        }
-      ],
       investmentPhilosophy: {
         core: "장기 메가트렌드 기반 투자",
         principles: [
@@ -209,25 +106,8 @@ async function analyzeMerryAchievements(limit: number) {
           "시장 타이밍보다 기업 펀더멘털 우선",
           "리스크 관리와 분산투자 병행",
           "감정보다 데이터 기반 의사결정"
-        ],
-        successRate: {
-          stockPicks: "78%",
-          sectorRotation: "85%", 
-          marketTiming: "72%"
-        }
+        ]
       },
-      recentActivities: [
-        {
-          date: "2025-01-10",
-          activity: "2025년 AI 반도체 전망 업데이트",
-          focus: "엔비디아, AMD, 인텔 경쟁 구도 분석"
-        },
-        {
-          date: "2025-01-05", 
-          activity: "전기차 시장 점유율 분석",
-          focus: "테슬라 vs 중국 BYD 경쟁"
-        }
-      ]
     };
 
     return achievements;

@@ -54,6 +54,8 @@ interface PricePoint {
   postTitle?: string;
   postId?: number;
   isCurrentPrice?: boolean;
+  isActualData?: boolean; // 🆕 실제 데이터인지 보완된 데이터인지 구분
+  missingDataNote?: string; // 🆕 데이터 누락 메모
   sentiments?: {
     sentiment: string;
     score: number;
@@ -69,6 +71,17 @@ interface PricePoint {
     uncertainty_factors?: string[];
     data_source?: string;
   }[];
+}
+
+interface PriceDataResponse {
+  prices: PricePoint[];
+  dataQuality: {
+    totalDays: number;
+    actualDataDays: number;
+    missingDataDays: number;
+    hasCurrentDayData: boolean;
+    lastActualDate: string;
+  };
 }
 
 interface StockPriceChartProps {
@@ -91,14 +104,12 @@ export default memo(function StockPriceChart({
 }: StockPriceChartProps) {
   // CSS 애니메이션 정의 - 제자리에서 나타나는 효과 (확대 없이)
   const animationStyles = `
-    @keyframes fadeInScale {
+    @keyframes fadeInPlace {
       0% {
         opacity: 0;
-        transform: scale(0);
       }
       100% {
         opacity: 1;
-        transform: scale(1);
       }
     }
   `;
@@ -118,7 +129,7 @@ export default memo(function StockPriceChart({
   }, []);
 
   // 🚀 ULTRA: useState 최소화 및 성능 최적화
-  const [priceData, setPriceData] = useState<PricePoint[]>([]);
+  const [priceData, setPriceData] = useState<PriceDataResponse | null>(null);
   const [currentPrice, setCurrentPrice] = useState<number>(0);
   const [changePercent, setChangePercent] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -136,7 +147,7 @@ export default memo(function StockPriceChart({
     setLoadingState({ chart: true, markers: true, details: true });
     
     // 🔥 즉시 이전 상태 초기화로 빠른 UI 반응
-    setPriceData([]);
+    setPriceData(null);
     setCurrentPrice(0);
     setChangePercent(0);
     setSentimentStats(null);
@@ -158,12 +169,23 @@ export default memo(function StockPriceChart({
           sentiments: []      // 아직 로딩 중
         }));
         
-        setPriceData(basicPriceData);
+        setPriceData({
+          prices: basicPriceData,
+          dataQuality: priceResult.dataQuality || {
+            totalDays: basicPriceData.length,
+            actualDataDays: basicPriceData.length,
+            missingDataDays: 0,
+            hasCurrentDayData: true,
+            lastActualDate: basicPriceData[basicPriceData.length - 1]?.date
+          }
+        });
         
         // 🚀 현재가 계산 (즉시 표시)
         if (basicPriceData.length >= 2) {
-          const latest = basicPriceData[basicPriceData.length - 1];
-          const previous = basicPriceData[basicPriceData.length - 2];
+          // 날짜순으로 정렬된 데이터에서 최신 데이터 가져오기
+          const sortedData = [...basicPriceData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          const latest = sortedData[sortedData.length - 1];
+          const previous = sortedData[sortedData.length - 2];
           setCurrentPrice(latest.price);
           setChangePercent(((latest.price - previous.price) / previous.price) * 100);
         }
@@ -231,14 +253,15 @@ export default memo(function StockPriceChart({
           
           return {
             ...point,
-            hasMention: postsData.length > 0,
-            postTitles: postsData.map((post: any) => post.post_title || post.title).filter(Boolean),
             sentiments: sentiments
           };
         });
         
         // 🎯 점진적 업데이트
-        setPriceData(enrichedData);
+        setPriceData(prev => ({
+          ...prev!,
+          prices: enrichedData
+        }));
         setLoadingState(prev => ({ ...prev, markers: false }));
         
         // 🔥 마커 표시 활성화
@@ -253,6 +276,17 @@ export default memo(function StockPriceChart({
       }
     } catch (error) {
       console.error('Data fetch error:', error);
+      // 에러 시 빈 데이터 구조 설정
+      setPriceData({
+        prices: [],
+        dataQuality: {
+          totalDays: 0,
+          actualDataDays: 0,
+          missingDataDays: 0,
+          hasCurrentDayData: false,
+          lastActualDate: ''
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -289,19 +323,20 @@ export default memo(function StockPriceChart({
     };
   }, []);
   
-  // 줌 상태 (토스 스타일 - 간단하게)
-  // 줌 기능 제거 (사용자 요청)
-  // const [zoomDomain, setZoomDomain] = useState<{start?: string, end?: string}>({});
-  // const [isZooming, setIsZooming] = useState(false);
-  // const [zoomArea, setZoomArea] = useState<{start?: string, end?: string}>({});
+  // 줌 상태 (토스 스타일 줌 기능)
+  const [zoomDomain, setZoomDomain] = useState<{start?: string, end?: string}>({});
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomArea, setZoomArea] = useState<{start?: string, end?: string}>({});
   
-  // 모바일 터치 상태
+  // 모바일 터치 상태 (핀치 제스처 지원)
   const [touchState, setTouchState] = useState<{
     startX?: number;
     startY?: number;
     isTouch: boolean;
     touchStartTime?: number;
-  }>({ isTouch: false });
+    initialDistance?: number;
+    isPinching: boolean;
+  }>({ isTouch: false, isPinching: false });
   
   // 모바일 감지
   const [isMobile, setIsMobile] = useState(false);
@@ -330,7 +365,16 @@ export default memo(function StockPriceChart({
   }, []);
 
   // 줌 기능 제거 - priceData를 직접 사용
-  const filteredData = priceData;
+  // 🆕 데이터를 날짜 순으로 정렬 (오래된 날짜 → 최신 날짜)
+  const filteredData = useMemo(() => {
+    if (!priceData?.prices || !Array.isArray(priceData.prices)) return [];
+    
+    return [...priceData.prices].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateA.getTime() - dateB.getTime(); // 오래된 날짜가 먼저 오도록 정렬
+    });
+  }, [priceData]);
 
   // 🚀 ULTRA: 메모이제이션된 툴팁 컴포넌트
   const TossTooltip = memo(({ active, payload, label }: any) => {
@@ -420,29 +464,138 @@ export default memo(function StockPriceChart({
     );
   });
 
-  // 줌 이벤트 핸들러 제거 (사용자 요청)
+  // 토스 스타일 줌 이벤트 핸들러
+  const handleZoomIn = useCallback(() => {
+    if (filteredData.length === 0) return;
+    
+    const totalDays = filteredData.length;
+    const currentRange = zoomDomain.start && zoomDomain.end ? 
+      Math.floor((new Date(zoomDomain.end).getTime() - new Date(zoomDomain.start).getTime()) / (1000 * 60 * 60 * 24)) :
+      totalDays;
+    
+    const newRange = Math.max(7, Math.floor(currentRange * 0.7)); // 30% 줌인, 최소 7일
+    const centerIndex = zoomDomain.start && zoomDomain.end ?
+      Math.floor(filteredData.findIndex(d => d.date === zoomDomain.start) + (filteredData.findIndex(d => d.date === zoomDomain.end) - filteredData.findIndex(d => d.date === zoomDomain.start)) / 2) :
+      Math.floor(totalDays * 0.8); // 기본적으로 최근쪽 중심
+    
+    const startIndex = Math.max(0, centerIndex - Math.floor(newRange / 2));
+    const endIndex = Math.min(totalDays - 1, startIndex + newRange);
+    
+    setZoomDomain({
+      start: filteredData[startIndex].date,
+      end: filteredData[endIndex].date
+    });
+  }, [filteredData, zoomDomain]);
+
+  const handleZoomOut = useCallback(() => {
+    if (filteredData.length === 0) return;
+    
+    const totalDays = filteredData.length;
+    const currentRange = zoomDomain.start && zoomDomain.end ? 
+      Math.floor((new Date(zoomDomain.end).getTime() - new Date(zoomDomain.start).getTime()) / (1000 * 60 * 60 * 24)) :
+      totalDays;
+    
+    const newRange = Math.min(totalDays, Math.floor(currentRange * 1.5)); // 50% 줌아웃
+    
+    if (newRange >= totalDays * 0.95) {
+      // 거의 전체면 완전히 리셋
+      setZoomDomain({});
+      return;
+    }
+    
+    const centerIndex = zoomDomain.start && zoomDomain.end ?
+      Math.floor(filteredData.findIndex(d => d.date === zoomDomain.start) + (filteredData.findIndex(d => d.date === zoomDomain.end) - filteredData.findIndex(d => d.date === zoomDomain.start)) / 2) :
+      Math.floor(totalDays * 0.8);
+    
+    const startIndex = Math.max(0, centerIndex - Math.floor(newRange / 2));
+    const endIndex = Math.min(totalDays - 1, startIndex + newRange);
+    
+    setZoomDomain({
+      start: filteredData[startIndex].date,
+      end: filteredData[endIndex].date
+    });
+  }, [filteredData, zoomDomain]);
+
+  const handleZoomReset = useCallback(() => {
+    setZoomDomain({});
+  }, []);
   
-  // 모바일 터치 이벤트 핸들러
+  // 두 점 간의 거리 계산 함수
+  const getDistance = (touches: TouchList) => {
+    if (touches.length < 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // 마우스 휠 줌 핸들러
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    
+    if (e.deltaY < 0) {
+      // 휠 업 = 줌인
+      handleZoomIn();
+    } else {
+      // 휠 다운 = 줌아웃
+      handleZoomOut();
+    }
+  };
+
+  // 모바일 터치 이벤트 핸들러 (핀치 줌 지원)
   const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    if (touch) {
+    console.log('터치 시작:', e.touches.length, '개 터치');
+    
+    if (e.touches.length === 1) {
+      // 단일 터치 - 기본 터치 상태 설정
+      const touch = e.touches[0];
       setTouchState({
         startX: touch.clientX,
         startY: touch.clientY,
         isTouch: true,
+        touchStartTime: Date.now(),
+        isPinching: false
+      });
+    } else if (e.touches.length === 2) {
+      // 두 손가락 터치 - 핀치 제스처 시작
+      const distance = getDistance(e.touches);
+      console.log('핀치 제스처 시작:', distance);
+      setTouchState({
+        isTouch: true,
+        isPinching: true,
+        initialDistance: distance,
         touchStartTime: Date.now()
       });
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    // 차트 드래그/줌을 비활성화하여 툴팁 스와이프와 충돌 방지
-    // 모바일에서는 터치 이벤트를 자연스럽게 흘려보냄
+    if (e.touches.length === 2 && touchState.isPinching && touchState.initialDistance) {
+      // 핀치 제스처 처리
+      e.preventDefault(); // 기본 스크롤 방지
+      
+      const currentDistance = getDistance(e.touches);
+      const scaleChange = currentDistance / touchState.initialDistance;
+      
+      console.log('핀치 제스처 감지:', { currentDistance, initialDistance: touchState.initialDistance, scaleChange });
+      
+      if (scaleChange > 1.05) {
+        // 손가락을 벌림 = 줌인 (민감도 낮춤)
+        console.log('줌인 실행');
+        handleZoomIn();
+        setTouchState(prev => ({ ...prev, initialDistance: currentDistance }));
+      } else if (scaleChange < 0.95) {
+        // 손가락을 모음 = 줌아웃 (민감도 낮춤)
+        console.log('줌아웃 실행');
+        handleZoomOut();
+        setTouchState(prev => ({ ...prev, initialDistance: currentDistance }));
+      }
+    }
+    // 단일 터치는 자연스럽게 툴팁 동작 허용
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // 터치 종료 시 상태만 리셋
-    setTouchState({ isTouch: false });
+    // 터치 종료 시 상태 리셋
+    setTouchState({ isTouch: false, isPinching: false });
   };
 
   // 줌 리셋 제거
@@ -553,9 +706,10 @@ export default memo(function StockPriceChart({
             </div>
           )}
           
-          {/* 감정 분석 범례 (로딩 완료 후 표시) */}
+          {/* 감정 분석 범례 및 데이터 품질 정보 (로딩 완료 후 표시) */}
           {!loadingState.chart && (
-            <div className="text-center" style={{display: 'flex', justifyContent: 'center', width: '100%'}}>
+            <div className="text-center space-y-2" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%'}}>
+              {/* 감정 분석 범례 */}
               <div className="inline-flex items-center justify-center gap-3 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#16a34a' }}></div>
@@ -574,6 +728,17 @@ export default memo(function StockPriceChart({
                   <span className="text-xs">메르 언급</span>
                 </div>
               </div>
+              
+              {/* 🆕 토스 스타일 데이터 품질 정보 표시 */}
+              {priceData && priceData.dataQuality && (
+                <div className="text-xs text-gray-500 flex items-center justify-center gap-4">
+                  <span>📊 거래일 {priceData.dataQuality.totalDays}일</span>
+                  <span>✅ 실제 종가 데이터</span>
+                  {priceData.dataQuality.lastActualDate && (
+                    <span>📅 최신 {priceData.dataQuality.lastActualDate}</span>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -581,19 +746,35 @@ export default memo(function StockPriceChart({
         {/* 토스 스타일 차트 영역 - 조건부 렌더링으로 범례 문제 완전 해결 */}
         <div 
           className="relative h-64 sm:h-80 p-2 sm:p-4"
-          onTouchStart={isMobile ? handleTouchStart : undefined}
-          onTouchMove={isMobile ? handleTouchMove : undefined}
-          onTouchEnd={isMobile ? handleTouchEnd : undefined}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onWheel={handleWheel}
           style={{ 
-            touchAction: isMobile ? 'pan-y' : 'auto' // 모바일에서 세로 스크롤만 허용
+            touchAction: 'manipulation' // 핀치 줌 허용
           }}
         >
+          {/* 줌 리셋 버튼만 유지 (필요시만 표시) */}
+          {(zoomDomain.start || zoomDomain.end) && (
+            <div className="absolute top-4 right-4 z-10">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomReset}
+                className="w-8 h-8 p-0 bg-white/90 hover:bg-white border-gray-200 shadow-sm"
+                disabled={loading}
+                title="전체 보기로 돌아가기"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
           {/* 🔥 CRITICAL FIX: 데이터 로딩 완료 후에만 차트 렌더링 */}
           {filteredData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart 
                 data={filteredData}
-                margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                margin={{ top: 5, right: 40, left: 5, bottom: 5 }}
                 legend={false}
                 layout="horizontal"
                 className="recharts-no-legend"
@@ -607,138 +788,92 @@ export default memo(function StockPriceChart({
                 strokeWidth={1}
               />
               
-              {/* X축 */}
+              {/* X축 - 토스 스타일: 거래일만 연속 표시 */}
               <XAxis 
                 dataKey="date"
                 axisLine={false}
                 tickLine={false}
+                domain={zoomDomain.start && zoomDomain.end ? [zoomDomain.start, zoomDomain.end] : ['dataMin', 'dataMax']}
                 tick={({ x, y, payload, index }: any) => {
                   const date = new Date(payload.value);
                   let text = '';
                   let isSpecial = false;
                   let shouldShow = true;
                   
-                  if (timeRange === '1Y' || timeRange === '6M') {
-                    const month = date.getMonth() + 1;
-                    const year = date.getFullYear();
-                    const day = date.getDate();
-                    const currentIndex = filteredData.findIndex(item => item.date === payload.value);
+                  // 토스 스타일: 거래일 인덱스 기반 표시
+                  const totalDataPoints = filteredData.length;
+                  
+                  if (timeRange === '1Y') {
+                    // 1년: 약 250 거래일 → 매월 1회 표시 (약 20일 간격)
+                    const interval = Math.floor(totalDataPoints / 12);
+                    shouldShow = index % interval === 0 || index === 0;
                     
-                    // 1월인 경우 년도로 표시
-                    if (month === 1) {
-                      text = `${year}년`;
-                      isSpecial = true;
-                    } else {
-                      text = `${month}월`;
-                    }
-                    
-                    // 1Y의 경우: 매월 1일에만 표시하고, 1일이 없는 달은 해당 월의 첫 번째 날짜에 표시
-                    if (timeRange === '1Y') {
-                      // 현재 월의 1일이 데이터에 있는지 확인
-                      const hasFirstDayInMonth = filteredData.some(item => {
-                        const itemDate = new Date(item.date);
-                        return itemDate.getMonth() === date.getMonth() && 
-                               itemDate.getFullYear() === year && 
-                               itemDate.getDate() === 1;
-                      });
-                      
-                      // 1일이 있는 경우: 1일에만 표시
-                      if (hasFirstDayInMonth) {
-                        if (day !== 1) {
-                          shouldShow = false;
-                        }
+                    if (shouldShow) {
+                      const month = date.getMonth() + 1;
+                      const year = date.getFullYear();
+                      if (month === 1) {
+                        text = `${year}년`;
+                        isSpecial = true;
                       } else {
-                        // 1일이 없는 경우: 해당 월의 첫 번째 날짜에 표시
-                        const isFirstInMonth = filteredData
-                          .filter(item => {
-                            const itemDate = new Date(item.date);
-                            return itemDate.getMonth() === date.getMonth() && 
-                                   itemDate.getFullYear() === year;
-                          })
-                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]?.date === payload.value;
-                        
-                        if (!isFirstInMonth) {
-                          shouldShow = false;
-                        }
+                        text = `${month}월`;
                       }
-                    } else {
-                      // 6M의 경우: 기존 중복 제거 로직 유지
-                      for (let i = 0; i < currentIndex; i++) {
-                        const prevDate = new Date(filteredData[i]?.date || '');
-                        const prevMonth = prevDate.getMonth() + 1;
-                        const prevYear = prevDate.getFullYear();
-                        let prevText = '';
-                        
+                    }
+                  } else if (timeRange === '6M') {
+                    // 6개월: 약 125 거래일 → 2주 간격 표시 (약 10일 간격)
+                    const interval = Math.floor(totalDataPoints / 12);
+                    shouldShow = index % interval === 0 || index === 0;
+                    
+                    if (shouldShow) {
+                      const month = date.getMonth() + 1;
+                      const day = date.getDate();
+                      text = `${month}/${day}`;
+                    }
+                  } else if (timeRange === '3M') {
+                    // 3개월: 약 63 거래일 → 주 1회 표시 (약 5일 간격)
+                    const interval = Math.max(Math.floor(totalDataPoints / 12), 5);
+                    shouldShow = index % interval === 0 || index === 0;
+                    
+                    if (shouldShow) {
+                      const month = date.getMonth() + 1;
+                      const day = date.getDate();
+                      text = `${month}/${day}`;
+                    }
+                  } else {
+                    // 1개월: 약 21 거래일 → 3-4일 간격 표시
+                    const interval = Math.max(Math.floor(totalDataPoints / 7), 3);
+                    shouldShow = index % interval === 0 || index === 0;
+                    
+                    if (shouldShow) {
+                      const month = date.getMonth() + 1;
+                      const day = date.getDate();
+                      text = `${month}/${day}`;
+                    }
+                  }
+                  
+                  // 중복 방지: 이전에 같은 텍스트가 표시된 경우 건너뛰기
+                  if (shouldShow && index > 0) {
+                    for (let i = index - 1; i >= Math.max(0, index - 5); i--) {
+                      const prevDate = new Date(filteredData[i]?.date || '');
+                      const prevMonth = prevDate.getMonth() + 1;
+                      const prevYear = prevDate.getFullYear();
+                      let prevText = '';
+                      
+                      if (timeRange === '1Y') {
                         if (prevMonth === 1) {
                           prevText = `${prevYear}년`;
                         } else {
                           prevText = `${prevMonth}월`;
                         }
-                        
-                        if (prevText === text) {
-                          shouldShow = false;
-                          break;
-                        }
-                      }
-                    }
-                  } else if (timeRange === '1M') {
-                    const day = date.getDate();
-                    const month = date.getMonth() + 1;
-                    const currentIndex = filteredData.findIndex(item => item.date === payload.value);
-                    
-                    // 1M: 3일마다 표시 (1일은 월만, 나머지는 일만)
-                    if (day === 1) {
-                      text = `${month}월`;
-                      isSpecial = true;
-                    } else if (currentIndex % 3 === 0) {
-                      text = `${day}일`;
-                    } else {
-                      shouldShow = false; // 3일 간격이 아니면 표시하지 않음
-                    }
-                    
-                    // 1일(월 표시)의 경우 중복 제거 로직 적용
-                    if (day === 1) {
-                      for (let i = 0; i < currentIndex; i++) {
-                        const prevDate = new Date(filteredData[i]?.date || '');
+                      } else {
                         const prevDay = prevDate.getDate();
-                        const prevMonth = prevDate.getMonth() + 1;
-                        
-                        if (prevDay === 1 && prevMonth === month) {
-                          shouldShow = false;
-                          break;
-                        }
+                        prevText = `${prevMonth}/${prevDay}`;
+                      }
+                      
+                      if (prevText === text) {
+                        shouldShow = false;
+                        break;
                       }
                     }
-                  } else if (timeRange === '3M') {
-                    const day = date.getDate();
-                    const month = date.getMonth() + 1;
-                    const currentIndex = filteredData.findIndex(item => item.date === payload.value);
-                    
-                    // 3M: 15일마다 표시 (1일은 월만, 나머지는 일만)
-                    if (day === 1) {
-                      text = `${month}월`;
-                      isSpecial = true;
-                    } else if (currentIndex % 15 === 0) {
-                      text = `${day}일`;
-                    } else {
-                      shouldShow = false; // 15일 간격이 아니면 표시하지 않음
-                    }
-                    
-                    // 1일(월 표시)의 경우 중복 제거 로직 적용
-                    if (day === 1) {
-                      for (let i = 0; i < currentIndex; i++) {
-                        const prevDate = new Date(filteredData[i]?.date || '');
-                        const prevDay = prevDate.getDate();
-                        const prevMonth = prevDate.getMonth() + 1;
-                        
-                        if (prevDay === 1 && prevMonth === month) {
-                          shouldShow = false;
-                          break;
-                        }
-                      }
-                    }
-                  } else {
-                    text = date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
                   }
                   
                   if (!shouldShow) {
@@ -860,7 +995,7 @@ export default memo(function StockPriceChart({
                     strokeWidth={strokeWidth}
                     style={{
                       opacity: 0,
-                      animation: `fadeInScale 0.2s ease-out ${0.05 + index * 0.01}s forwards`
+                      animation: `fadeInPlace 0.2s ease-out ${0.05 + index * 0.01}s forwards`
                     }}
                   />
                 );

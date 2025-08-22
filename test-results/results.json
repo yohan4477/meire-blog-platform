@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 1
+      "actualWorkers": 4
     },
     "preserveOutput": "always",
     "reporter": [
@@ -41,7 +41,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "chromium",
         "name": "chromium",
@@ -57,7 +57,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "firefox",
         "name": "firefox",
@@ -73,7 +73,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "webkit",
         "name": "webkit",
@@ -89,7 +89,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
@@ -105,7 +105,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
@@ -131,164 +131,1386 @@
   },
   "suites": [
     {
-      "title": "stock-page-performance-analysis.spec.ts",
-      "file": "stock-page-performance-analysis.spec.ts",
+      "title": "automated-system.test.js",
+      "file": "automated-system.test.js",
       "column": 0,
       "line": 0,
-      "specs": [
+      "specs": [],
+      "suites": [
         {
-          "title": "종목 페이지 구성별 로딩 타임 분석",
-          "ok": true,
-          "tags": [],
-          "tests": [
+          "title": "Automated Crawling System Tests",
+          "file": "automated-system.test.js",
+          "line": 255,
+          "column": 6,
+          "specs": [],
+          "suites": [
             {
-              "timeout": 30000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "chromium",
-              "projectName": "chromium",
-              "results": [
+              "title": "Sentiment Analysis System",
+              "file": "automated-system.test.js",
+              "line": 383,
+              "column": 8,
+              "specs": [
                 {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 6392,
-                  "errors": [],
-                  "stdout": [
+                  "title": "should perform sentiment analysis without external API",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
                     {
-                      "text": "📊 종목 페이지 성능 분석 시작...\n"
-                    },
-                    {
-                      "text": "🚀 Tesla 페이지 로딩 시작...\n"
-                    },
-                    {
-                      "text": "⏱️ 전체 페이지 로딩: 3762ms\n"
-                    },
-                    {
-                      "text": "📈 종목 헤더 섹션 분석...\n"
-                    },
-                    {
-                      "text": "⚠️ 현재가 표시 대기 타임아웃\n"
-                    },
-                    {
-                      "text": "📊 종목 헤더 섹션: 55ms\n"
-                    },
-                    {
-                      "text": "📈 차트 섹션 분석...\n"
-                    },
-                    {
-                      "text": "✅ Recharts wrapper found\n"
-                    },
-                    {
-                      "text": "📈 차트 섹션: 14ms\n"
-                    },
-                    {
-                      "text": "🎯 감정 분석 마커 분석...\n"
-                    },
-                    {
-                      "text": "🔵 차트에서 발견된 마커 개수: 19개 (reference-dot: 19, circles: 19)\n"
-                    },
-                    {
-                      "text": "🎯 감정 분석 마커: 16ms\n"
-                    },
-                    {
-                      "text": "📝 관련 포스트 섹션 분석...\n"
-                    },
-                    {
-                      "text": "⚠️ 관련 포스트 로딩 타임아웃\n"
-                    },
-                    {
-                      "text": "📝 관련 포스트 섹션: 2ms\n"
-                    },
-                    {
-                      "text": "🌐 API 응답 시간 분석...\n"
-                    },
-                    {
-                      "text": "\n📊 === 종목 페이지 성능 분석 결과 ===\n"
-                    },
-                    {
-                      "text": "⏱️ 섹션별 로딩 시간:\n"
-                    },
-                    {
-                      "text": "  🔴 전체_페이지_로딩: 3762ms\n"
-                    },
-                    {
-                      "text": "  🟢 종목_헤더_섹션: 55ms\n"
-                    },
-                    {
-                      "text": "  🟢 차트_섹션: 14ms\n"
-                    },
-                    {
-                      "text": "  🟢 감정_분석_마커: 16ms\n"
-                    },
-                    {
-                      "text": "  🟢 관련_포스트_섹션: 2ms\n"
-                    },
-                    {
-                      "text": "\n🌐 API 응답 시간:\n"
-                    },
-                    {
-                      "text": "  🔴 종목_정보_API: 907ms\n"
-                    },
-                    {
-                      "text": "  🔴 관련_포스트_API: 1365ms\n"
-                    },
-                    {
-                      "text": "  🔴 주가_차트_API: 1236ms\n"
-                    },
-                    {
-                      "text": "  🔴 감정_분석_API: 1359ms\n"
-                    },
-                    {
-                      "text": "\n🎯 성능 기준 검증:\n"
-                    },
-                    {
-                      "text": "🔴 FAIL: 전체 로딩시간 3762ms > 3초 기준 위반!\n"
-                    },
-                    {
-                      "text": "\n🔍 병목 지점 분석:\n"
-                    },
-                    {
-                      "text": "⚠️ 가장 느린 섹션들:\n"
-                    },
-                    {
-                      "text": "  1. 전체_페이지_로딩: 3762ms\n"
-                    },
-                    {
-                      "text": "  2. 종목_헤더_섹션: 55ms\n"
-                    },
-                    {
-                      "text": "  3. 감정_분석_마커: 16ms\n"
-                    },
-                    {
-                      "text": "\n✅ 성능 분석 완료! 스크린샷 저장됨.\n"
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:10.163Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
                     }
                   ],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2025-08-22T07:14:05.234Z",
+                  "id": "9a8b8ee325b885b56afb-0d4ac0ee6553f224fe6f",
+                  "file": "automated-system.test.js",
+                  "line": 385,
+                  "column": 5
+                },
+                {
+                  "title": "should detect stock mentions in posts correctly",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 1,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:10.191Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-aa4a9fd81bcb71ea55a9",
+                  "file": "automated-system.test.js",
+                  "line": 408,
+                  "column": 5
+                },
+                {
+                  "title": "should follow CLAUDE.md sentiment analysis requirements",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 2,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:10.173Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-61da369accd872c72105",
+                  "file": "automated-system.test.js",
+                  "line": 427,
+                  "column": 5
+                },
+                {
+                  "title": "should perform sentiment analysis without external API",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:11.817Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-fdd30da7b2a33811f9a1",
+                  "file": "automated-system.test.js",
+                  "line": 385,
+                  "column": 5
+                },
+                {
+                  "title": "should detect stock mentions in posts correctly",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 2,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:11.808Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-e269ce171c53cb85b4cb",
+                  "file": "automated-system.test.js",
+                  "line": 408,
+                  "column": 5
+                },
+                {
+                  "title": "should follow CLAUDE.md sentiment analysis requirements",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 1,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:11.840Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-607e729ad050f83d3fc0",
+                  "file": "automated-system.test.js",
+                  "line": 427,
+                  "column": 5
+                },
+                {
+                  "title": "should perform sentiment analysis without external API",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 2,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:13.380Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-9a873951504a7169b976",
+                  "file": "automated-system.test.js",
+                  "line": 385,
+                  "column": 5
+                },
+                {
+                  "title": "should detect stock mentions in posts correctly",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:13.397Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-45f521f5558aeed82da9",
+                  "file": "automated-system.test.js",
+                  "line": 408,
+                  "column": 5
+                },
+                {
+                  "title": "should follow CLAUDE.md sentiment analysis requirements",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 10,
+                          "parallelIndex": 1,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:13.423Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-9aab035b05db9572b1cb",
+                  "file": "automated-system.test.js",
+                  "line": 427,
+                  "column": 5
+                },
+                {
+                  "title": "should perform sentiment analysis without external API",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "Mobile Chrome",
+                      "projectName": "Mobile Chrome",
+                      "results": [
+                        {
+                          "workerIndex": 12,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:15.329Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-1ef3125477760d9bc0b2",
+                  "file": "automated-system.test.js",
+                  "line": 385,
+                  "column": 5
+                },
+                {
+                  "title": "should detect stock mentions in posts correctly",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "Mobile Chrome",
+                      "projectName": "Mobile Chrome",
+                      "results": [
+                        {
+                          "workerIndex": 13,
+                          "parallelIndex": 1,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:15.373Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-64a669502edf0e2ad2d5",
+                  "file": "automated-system.test.js",
+                  "line": 408,
+                  "column": 5
+                },
+                {
+                  "title": "should follow CLAUDE.md sentiment analysis requirements",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "Mobile Chrome",
+                      "projectName": "Mobile Chrome",
+                      "results": [
+                        {
+                          "workerIndex": 14,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:17.134Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-f70fbac8d0e00a56db0f",
+                  "file": "automated-system.test.js",
+                  "line": 427,
+                  "column": 5
+                },
+                {
+                  "title": "should perform sentiment analysis without external API",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "Mobile Safari",
+                      "projectName": "Mobile Safari",
+                      "results": [
+                        {
+                          "workerIndex": 16,
+                          "parallelIndex": 3,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:18.016Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-d2f9ac7ac911fe3b70e6",
+                  "file": "automated-system.test.js",
+                  "line": 385,
+                  "column": 5
+                },
+                {
+                  "title": "should detect stock mentions in posts correctly",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "Mobile Safari",
+                      "projectName": "Mobile Safari",
+                      "results": [
+                        {
+                          "workerIndex": 17,
+                          "parallelIndex": 2,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:18.336Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-cb12840cc6878c3ec091",
+                  "file": "automated-system.test.js",
+                  "line": 408,
+                  "column": 5
+                },
+                {
+                  "title": "should follow CLAUDE.md sentiment analysis requirements",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "Mobile Safari",
+                      "projectName": "Mobile Safari",
+                      "results": [
+                        {
+                          "workerIndex": 18,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 0,
+                          "error": {
+                            "message": "SqliteError: UNIQUE constraint failed: blog_posts.id",
+                            "stack": "SqliteError: UNIQUE constraint failed: blog_posts.id\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15",
+                            "location": {
+                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                              "column": 16,
+                              "line": 198
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 196 |\u001b[39m\n \u001b[90m 197 |\u001b[39m     testPosts\u001b[33m.\u001b[39mforEach(post \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 198 |\u001b[39m       postStmt\u001b[33m.\u001b[39mrun(post\u001b[33m.\u001b[39mid\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mtitle\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcontent\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mexcerpt\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcreated_date\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mviews\u001b[33m,\u001b[39m post\u001b[33m.\u001b[39mcategory)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 199 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 200 |\u001b[39m\n \u001b[90m 201 |\u001b[39m     \u001b[36mconst\u001b[39m stockStmt \u001b[33m=\u001b[39m db\u001b[33m.\u001b[39mprepare(\u001b[32m`\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 16,
+                                "line": 198
+                              },
+                              "message": "SqliteError: UNIQUE constraint failed: blog_posts.id\n\n  196 |\n  197 |     testPosts.forEach(post => {\n> 198 |       postStmt.run(post.id, post.title, post.content, post.excerpt, post.created_date, post.views, post.category);\n      |                ^\n  199 |     });\n  200 |\n  201 |     const stockStmt = db.prepare(`\n    at forEach (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:198:16)\n    at Function.createTestDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:197:15)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:259:15"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                                "column": 10,
+                                "line": 217
+                              },
+                              "message": "Error: UNKNOWN: unknown error, copyfile 'C:\\Users\\y\\meire-blog-platform\\database.backup.db' -> 'C:\\Users\\y\\meire-blog-platform\\database.db'\n\n  215 |     // Restore original database\n  216 |     if (fs.existsSync(TEST_CONFIG.BACKUP_DATABASE_PATH)) {\n> 217 |       fs.copyFileSync(TEST_CONFIG.BACKUP_DATABASE_PATH, TEST_CONFIG.DATABASE_PATH);\n      |          ^\n  218 |       fs.unlinkSync(TEST_CONFIG.BACKUP_DATABASE_PATH);\n  219 |       console.log('✅ Original database restored');\n  220 |     }\n    at Function.restoreDatabase (C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:217:10)\n    at C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js:269:15"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-08-22T10:11:18.640Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\automated-system.test.js",
+                            "column": 16,
+                            "line": 198
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "9a8b8ee325b885b56afb-5c92b20893d97ae4ab94",
+                  "file": "automated-system.test.js",
+                  "line": 427,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "performance\\database-optimization.spec.ts",
+      "file": "performance/database-optimization.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Database Performance Optimization Tests",
+          "file": "performance/database-optimization.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load sentiment data API under 500ms",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
                   "annotations": [],
-                  "attachments": []
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 1137,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.7258.5 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.7258.5 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 3007,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 3007,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.7258.5 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-22T10:11:10.033Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 3007,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
                 }
               ],
-              "status": "expected"
+              "id": "11f0f3c0fb9c729e72bc-1cca4552ea134de81d30",
+              "file": "performance/database-optimization.spec.ts",
+              "line": 63,
+              "column": 7
+            },
+            {
+              "title": "should load sentiment data API under 500ms",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 1807,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0.2) Gecko/20100101 Firefox/140.0.2\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0.2) Gecko/20100101 Firefox/140.0.2\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 3007,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 3007,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0.2) Gecko/20100101 Firefox/140.0.2\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-22T10:11:12.887Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-firefox\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-firefox\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 3007,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "11f0f3c0fb9c729e72bc-a202d1fb2584e11de50e",
+              "file": "performance/database-optimization.spec.ts",
+              "line": 63,
+              "column": 7
+            },
+            {
+              "title": "should load sentiment data API under 500ms",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 1008,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 3007,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 3007,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-22T10:11:15.094Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-webkit\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-webkit\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 3007,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "11f0f3c0fb9c729e72bc-6c63a80af7ab0e81a9db",
+              "file": "performance/database-optimization.spec.ts",
+              "line": 63,
+              "column": 7
+            },
+            {
+              "title": "should load sentiment data API under 500ms",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 877,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.7258.5 Mobile Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.7258.5 Mobile Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 3007,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 3007,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.7258.5 Mobile Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-22T10:11:17.026Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-Mobile-Chrome\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-Mobile-Chrome\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 3007,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "11f0f3c0fb9c729e72bc-eda68066497fb34406ab",
+              "file": "performance/database-optimization.spec.ts",
+              "line": 63,
+              "column": 7
+            },
+            {
+              "title": "should load sentiment data API under 500ms",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 738,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 3007,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 3007,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:3007\nCall log:\n\u001b[2m  - → GET http://localhost:3007/api/merry/stocks/TSLA/sentiments?period=6mo\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:3007\n    at C:\\Users\\y\\meire-blog-platform\\tests\\performance\\database-optimization.spec.ts:66:41"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-22T10:11:19.175Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-Mobile-Safari\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\performance-database-optim-9edef-timent-data-API-under-500ms-Mobile-Safari\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 3007,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "11f0f3c0fb9c729e72bc-6bcad29df1c6c1e79f04",
+              "file": "performance/database-optimization.spec.ts",
+              "line": 63,
+              "column": 7
             }
-          ],
-          "id": "9d636115b74e829a4bef-4833eed3f206a09007bc",
-          "file": "stock-page-performance-analysis.spec.ts",
-          "line": 3,
-          "column": 5
+          ]
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-08-22T07:14:04.121Z",
-    "duration": 8225.889,
-    "expected": 1,
+    "startTime": "2025-08-22T10:11:08.040Z",
+    "duration": 12024.166,
+    "expected": 0,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 20,
     "flaky": 0
   }
 }

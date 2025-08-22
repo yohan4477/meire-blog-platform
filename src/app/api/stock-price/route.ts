@@ -21,11 +21,24 @@ export async function GET(request: NextRequest) {
     // 실제 주식 가격 데이터 조회
     const priceData = await fetchStockPriceData(ticker, period);
 
+    // 데이터 품질 분석 (하이브리드 방식: 주말/휴일 제외 + 평일 누락시 전날 가격)
+    const totalDays = priceData?.length || 0;
+    const actualDataDays = priceData?.filter((item: any) => item.isActualData !== false).length || 0;
+    const filledDataDays = priceData?.filter((item: any) => item.isActualData === false).length || 0;
+    
     const response = NextResponse.json({
       success: true,
       ticker,
       period,
       prices: priceData,
+      dataQuality: {
+        totalDays,
+        actualDataDays,
+        filledDataDays,
+        hasCurrentDayData: priceData?.length > 0 && priceData[priceData.length - 1]?.isActualData !== false,
+        lastActualDate: priceData?.reverse().find((item: any) => item.isActualData !== false)?.date,
+        dataMethod: '하이브리드 방식: 주말/휴일 제외, 평일 누락시 전날 가격 사용'
+      },
       fetchedAt: new Date().toISOString()
     });
 
@@ -60,7 +73,7 @@ async function fetchStockPriceData(ticker: string, period: string) {
       startDate.setDate(startDate.getDate() - periodDays);
       const startDateStr = startDate.toISOString().split('T')[0];
       
-      // 🔥 4개 DB 최적화: stock_prices 테이블에서 직접 조회
+      // 🔥 4개 DB 최적화: stock_prices 테이블에서 직접 조회 (날짜 오름차순 정렬 강제)
       const priceRecords = await new Promise((resolve, reject) => {
         stockDB.db.all(`
           SELECT date, close_price, volume
@@ -80,14 +93,15 @@ async function fetchStockPriceData(ticker: string, period: string) {
       }
       
       console.log(`📊 Found ${records.length} DB records for ${ticker}`);
+      console.log(`🔍 First record date: ${records[0]?.date}, Last record date: ${records[records.length-1]?.date}`);
       
       // DB 데이터를 차트 형식으로 변환 (한국 종목은 원화로 처리)
       const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
       
-      return records.map((record: any) => ({
-        date: record.date,
-        price: isKoreanStock ? Math.round(record.close_price) : parseFloat(record.close_price.toFixed(2))
-      }));
+      // 🆕 누락된 날짜 채우기 및 전날 가격으로 보완
+      const processedData = fillMissingDates(records, startDateStr, isKoreanStock, ticker);
+      
+      return processedData;
       
     } catch (error) {
       console.error(`DB에서 주식 데이터 조회 실패 (시도 ${retryCount + 1}/${maxRetries + 1}):`, error);
@@ -111,6 +125,65 @@ async function fetchStockPriceData(ticker: string, period: string) {
       }
     }
   }
+}
+
+// 🆕 하이브리드 방식: 주말/휴일 건너뛰기 + 평일 누락시 전날 가격 사용
+function fillMissingDates(records: any[], startDateStr: string, isKoreanStock: boolean, ticker: string) {
+  if (records.length === 0) return [];
+  
+  // 날짜순 정렬 (오름차순: 오래된 날짜 → 최신 날짜)
+  const sortedRecords = [...records].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  
+  const result = [];
+  let lastKnownPrice = null;
+  
+  for (let i = 0; i < sortedRecords.length; i++) {
+    const record = sortedRecords[i];
+    const currentDate = new Date(record.date);
+    const dayOfWeek = currentDate.getDay(); // 0=일요일, 1=월요일, ..., 6=토요일
+    
+    // 주말 (토요일=6, 일요일=0) 건너뛰기 - 토스 방식 적용
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      continue;
+    }
+    
+    let price = record.close_price;
+    let isActualData = true;
+    
+    // 평일인데 가격이 없거나 0인 경우 전날 가격 사용
+    if (!price || price === 0) {
+      if (lastKnownPrice !== null) {
+        price = lastKnownPrice;
+        isActualData = false; // 실제 데이터가 아님을 표시
+        console.log(`📊 ${ticker} ${record.date}: 종가 없음, 전날 가격 사용 (${price})`);
+      } else {
+        // 첫 데이터부터 가격이 없으면 건너뛰기
+        console.warn(`⚠️ ${ticker} ${record.date}: 첫 데이터부터 가격 없음, 건너뛰기`);
+        continue;
+      }
+    }
+    
+    const finalPrice = isKoreanStock ? Math.round(price) : parseFloat(price.toFixed(2));
+    
+    result.push({
+      date: record.date,
+      price: finalPrice,
+      isActualData: isActualData
+    });
+    
+    // 실제 데이터인 경우에만 마지막 가격으로 저장
+    if (isActualData) {
+      lastKnownPrice = finalPrice;
+    }
+  }
+  
+  const actualDataCount = result.filter(item => item.isActualData).length;
+  const filledDataCount = result.filter(item => !item.isActualData).length;
+  
+  console.log(`📊 ${ticker}: 총 ${result.length}개 거래일 데이터 (실제: ${actualDataCount}개, 전날가격: ${filledDataCount}개, 주말/휴일 제외)`);
+  
+  // 최종 결과도 날짜 오름차순으로 정렬 보장
+  return result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 // Yahoo Finance fallback (DB에 데이터가 없을 때만 사용)

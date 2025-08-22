@@ -239,11 +239,14 @@
 
 ### 🎯 **감정 분석 시스템 개발 시**
 - **참조 문서**: `@docs/stock-page-requirements.md` 감정 분석 섹션 (필수)
-- **담당 컴포넌트**: `src/lib/sentiment-analyzer.js`, `src/components/merry/StockPriceChart.tsx`
+- **담당 컴포넌트**: Claude 직접 분석 로직, `src/components/merry/StockPriceChart.tsx`
 - **관련 API**: `/api/merry/stocks/[ticker]/sentiments`
 - **핵심 철학**: **외부 API 없이 Claude가 직접 분석**, 근거만 봐도 감정 판단이 논리적으로 납득 가능
-- **금지 사항**: 키워드 분석, 패턴 매칭, 글자수 기준, 감정 분석 API 사용 절대 금지
-- **품질 기준**: 구체적 사실, 인과관계 명확, 투자 관점, 간결성
+- **금지 사항**: 키워드 분석, 패턴 매칭, 자동화된 로직, 글자수 기준, 감정 분석 API, 규칙 기반 시스템 절대 금지
+- **품질 기준**: 구체적 사실, 인과관계 명확, 투자 관점, 간결성, 명사 종결 (예: 충분합니다 → 충분)
+- **🔥 글자수 요구사항**: **100자 이상 200자 이하 근거 제공** (기존 50자의 2-4배, 적절한 상한선)
+- **🔥 분석 깊이**: 단순 감정이 아닌 **투자 임팩트와 시장 영향도까지 포함한 종합적 분석**
+- **🔥 데이터 테이블**: `post_stock_analysis` 테이블 사용 (stock-page-requirements.md 규격)
 
 ### 📈 **메르 주간보고 개발 시**
 - **참조 문서**: `@docs/weekly-report-requirements.md` (필수 참조)
@@ -950,59 +953,39 @@ SuperClaude v3.0.0.2가 설치되어 있으므로 다음 명령어들도 활용�
 
 ---
 
-## 🎯 감정 분석 시스템 완전 요구사항
+## 🎯 감정 분석 시스템 요구사항
 
 ### 📊 **시스템 개요**
-**목적**: 메르의 블로그 포스트에서 언급된 각 종목에 대한 감정(긍정/부정/중립)을 AI로 분석하여 차트에 색상 마커로 표시
+**목적**: 메르의 블로그 포스트에서 언급된 각 종목에 대한 감정(긍정/부정/중립)을 Claude가 직접 분석하여 차트에 색상 마커로 표시
 
-**구현 완료**: 2025년 8월 완전 구현 및 테스트 검증 완료
+**분석 방식**: **🚨 AI API 사용 절대 금지! Claude가 수동으로 직접 분석만 허용** (stock-page-requirements.md 준수)
 
 ### 🗄️ **데이터베이스 구조**
 
-#### post_stock_sentiments 테이블 (필수)
+#### post_stock_analysis 테이블 (필수)
 ```sql
-CREATE TABLE post_stock_sentiments (
+-- Claude 직접 분석 전용 테이블 (stock-page-requirements.md 규격)
+CREATE TABLE post_stock_analysis (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER NOT NULL,
     ticker TEXT NOT NULL,
     sentiment TEXT NOT NULL CHECK (sentiment IN ('positive', 'negative', 'neutral')),
     sentiment_score DECIMAL(4,3) NOT NULL,
     confidence DECIMAL(4,3) NOT NULL,
-    keywords TEXT,
+    reasoning TEXT NOT NULL, -- 핵심 근거 (필수)
     context_snippet TEXT,
-    analyzed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
     UNIQUE(post_id, ticker)
 );
 ```
 
-### 🤖 **AI 감정 분석 엔진**
-
-#### 파일 구조 (필수)
-- **`src/lib/sentiment-analyzer.js`**: 메인 감정 분석 엔진
-- **`scripts/analyze-sentiment.js`**: 배치 분석 실행 스크립트
-- **`src/app/api/merry/stocks/[ticker]/sentiments/route.ts`**: 감정 분석 API
-
-#### 종목명 매핑 (확장 가능)
-```javascript
-tickerToNameMap = {
-  '005930': ['삼성전자', '삼성', '삼성디스플레이'],
-  'TSLA': ['테슬라', 'Tesla'],
-  'AAPL': ['애플', 'Apple'],
-  'NVDA': ['엔비디아', 'NVIDIA'],
-  'GOOGL': ['구글', 'Google', '알파벳'],
-  // 새로운 종목 추가시 이 형식으로 확장
-};
-```
-
-#### 감정 키워드 사전 (향상 가능)
-```javascript
-sentimentKeywords = {
-  positive: ['상승', '증가', '성장', '호재', '긍정적', '좋은', '유망', '전망', '기대', '투자', '추천', '매수'],
-  negative: ['하락', '감소', '악재', '부정적', '나쁜', '우려', '위험', '리스크', '매도', '하향', '악화'],
-  neutral: ['유지', '보합', '관망', '중립', '분석', '검토', '평가', '현황', '발표', '공시']
-};
-```
+#### 🚫 **금지된 자동화 방식들 (절대 사용 금지)**
+- ❌ **키워드 사전 사용 금지**: 키워드 리스트나 사전 기반 분석 절대 금지
+- ❌ **패턴 매칭 금지**: 정규식이나 패턴 매칭을 통한 자동 분석 금지  
+- ❌ **AI API 호출 금지**: OpenAI, Anthropic, Claude API 등 모든 AI API 사용 금지
+- ❌ **규칙 기반 시스템 금지**: if-else 규칙이나 알고리즘 기반 분석 금지
+- ✅ **유일한 허용 방식**: Claude가 포스트 내용을 읽고 수동으로 직접 분석
 
 ### 📈 **차트 통합 표시**
 
@@ -1105,16 +1088,16 @@ sentimentKeywords = {
 - **API 응답**: 12시간 캐시
 - **차트 데이터**: 감정 + 가격 데이터 통합 캐싱
 
-### 🔧 **배치 실행**
+### 🔧 **Claude 직접 분석 실행**
 
-#### 감정 분석 실행 방법
+#### 수동 감정 분석 실행 방법 (유일한 허용 방식)
 ```bash
-# 모든 미분석 포스트 분석 (최대 100개)
+# Claude가 직접 분석하는 수동 방식만 허용
 cd meire-blog-platform
-node scripts/analyze-sentiment.js
+node scripts/claude-direct-analysis.js
 
-# 특정 개수만 분석
-# SentimentAnalyzer.analyzeAllPosts(50) 수정 후 실행
+# 사용자가 포스트 ID와 종목 입력 → Claude가 직접 분석 → 수동 결과 입력
+# 🚨 자동화된 배치 분석 스크립트는 모두 삭제됨
 ```
 
 #### 분석 결과 확인
@@ -1129,15 +1112,15 @@ sqlite3 database.db "SELECT * FROM post_stock_sentiments LIMIT 10;"
 ### 📋 **운영 및 유지보수**
 
 #### 정기 작업 (권장)
-1. **주간 배치 분석**: 새로운 포스트에 대한 감정 분석 실행
-2. **종목명 사전 업데이트**: 새로운 종목 언급시 매핑 추가
-3. **키워드 사전 개선**: 분석 정확도 향상을 위한 키워드 추가
+1. **수동 감정 분석**: 새로운 포스트에 대해 Claude가 직접 수동 분석
+2. **종목명 매핑 확인**: 새로운 종목 언급시 수동으로 확인 및 추가
+3. **분석 품질 검토**: Claude의 분석 근거와 논리 검토
 
-#### 확장 계획
-- **더 정교한 AI 모델**: GPT 기반 감정 분석 고도화
-- **감정 강도 분석**: 단순 3단계를 넘어선 세밀한 감정 스코어링
-- **감정 트렌드 차트**: 시간별 감정 변화 추이 시각화
-- **감정 기반 추천**: 긍정적 감정 종목 자동 추천 시스템
+#### 🚫 **금지된 확장 계획들**
+- ❌ **AI 모델 자동화**: GPT, Claude API 등 자동화 분석 절대 금지
+- ❌ **자동 감정 스코어링**: 알고리즘 기반 점수 계산 금지
+- ❌ **자동 추천 시스템**: 감정 기반 자동 추천 시스템 금지
+- ✅ **허용 확장**: 수동 분석 결과의 시각화, 차트 개선, UI/UX 향상
 
 ### 🎯 **품질 보증**
 
@@ -1150,7 +1133,7 @@ sqlite3 database.db "SELECT * FROM post_stock_sentiments LIMIT 10;"
 
 ---
 
-> 📝 **마지막 업데이트**: 2025-08-14  
+> 📝 **마지막 업데이트**: 2025-08-22  
 > 💬 **문의사항**: 이 가이드라인에 대한 질문이나 개선사항이 있으면 언제든지 알려주세요.
 > 🚀 **SuperClaude 통합**: v3.0.0.2 설치 완료 및 가이드라인 통합
-> 🎯 **감정 분석**: 완전 구현 및 테스트 검증 완료
+> 🚨 **AI API 완전 금지**: 모든 자동화 AI API 제거, Claude 직접 수동 분석만 허용
