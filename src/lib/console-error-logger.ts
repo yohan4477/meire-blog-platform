@@ -335,6 +335,15 @@ class ConsoleErrorLogger {
    * 섹션 오류 API로 에러 전송
    */
   private async sendToSectionErrorAPI(errorData: ConsoleErrorData): Promise<void> {
+    // API 전송 실패가 무한루프를 만들지 않도록 강화된 조건부 처리
+    if (errorData.message.includes('Console Error Logger') || 
+        errorData.message.includes('Failed to fetch') ||
+        errorData.message.includes('sendToSectionErrorAPI') ||
+        errorData.message.includes('API 전송 실패') ||
+        errorData.message.includes('TypeError: Failed to fetch')) {
+      return; // 로거 자체 및 네트워크 에러는 API로 전송하지 않음
+    }
+    
     try {
       // 컴포넌트명 추출 및 섹션명 생성
       const componentName = errorData.componentContext || 'ConsoleError';
@@ -370,23 +379,42 @@ class ConsoleErrorLogger {
         console.error('🚨 [CRITICAL] F12 콘솔 크리티컬 에러 감지:', errorData.message);
       }
 
+      // AbortController로 타임아웃 설정 (무한 대기 방지)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5초 타임아웃
+      
       const response = await fetch('/api/section-errors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(sectionErrorData),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const result = await response.json();
-        console.log(`✅ [Console Logger] F12 에러 로그 기록 완료: ${result.errorHash}`);
+        // 성공 로그도 조건부로만 출력 (스팸 방지)
+        if (errorData.severity === 'critical') {
+          console.log(`✅ [Console Logger] F12 크리티컬 에러 기록 완료: ${result.errorHash}`);
+        }
       } else {
-        throw new Error(`API 응답 실패: ${response.status}`);
+        // 단순히 무시하고 로그만 남김 (무한 루프 방지)
+        // 상세 로깅은 개발 환경에서만 활성화
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`⚠️ [Console Logger] API 응답 실패: ${response.status}`);
+        }
       }
-    } catch (err) {
-      // 로거 자체 오류가 무한 루프를 만들지 않도록 처리
-      this.originalConsoleError.call(console, '[Console Error Logger] API 전송 실패:', err);
+    } catch (err: any) {
+      // 로거 자체 오류는 원본 console.error로만 처리 (무한 루프 완전 방지)
+      // AbortError나 fetch 타임아웃은 무시 (정상적인 타임아웃)
+      if (process.env.NODE_ENV === 'development' && 
+          err.name !== 'AbortError' && 
+          !err.message.includes('fetch')) {
+        this.originalConsoleError.call(console, '[Console Logger] API 전송 실패:', err.message);
+      }
     }
   }
 

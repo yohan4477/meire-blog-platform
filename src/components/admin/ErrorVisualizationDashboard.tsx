@@ -93,8 +93,8 @@ export default function ErrorVisualizationDashboard() {
       componentStats.categories.add(category);
       
       // 더 높은 심각도로 업데이트
-      const severityOrder = { low: 0, medium: 1, high: 2, critical: 3 };
-      if (severityOrder[severityLevel] > severityOrder[componentStats.severityLevel]) {
+      const severityOrder: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
+      if ((severityOrder[severityLevel] ?? 0) > (severityOrder[componentStats.severityLevel] ?? 0)) {
         componentStats.severityLevel = severityLevel;
       }
       
@@ -160,7 +160,9 @@ export default function ErrorVisualizationDashboard() {
     
     errors.forEach(error => {
       const date = new Date(error.timestamp).toISOString().split('T')[0];
-      timeMap.set(date, (timeMap.get(date) || 0) + 1);
+      if (date) {
+        timeMap.set(date, (timeMap.get(date) || 0) + 1);
+      }
     });
 
     return Array.from(timeMap.entries()).map(([date, count]) => ({

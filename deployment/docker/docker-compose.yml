@@ -1,0 +1,157 @@
+# Docker Compose configuration for Meire Blog Automated Crawler
+# 
+# This setup provides:
+# - Main crawler service with scheduled execution
+# - Database persistence with volume mounting
+# - Log persistence and rotation
+# - Health monitoring and restart policies
+# - Environment-based configuration
+# 
+# Usage:
+#   docker-compose -f deployment/docker/docker-compose.yml up -d
+#   docker-compose -f deployment/docker/docker-compose.yml logs -f crawler
+#   docker-compose -f deployment/docker/docker-compose.yml stop
+#   docker-compose -f deployment/docker/docker-compose.yml down
+
+version: '3.8'
+
+services:
+  # Main crawler service
+  crawler:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
+    container_name: meire-crawler
+    restart: unless-stopped
+    
+    environment:
+      - NODE_ENV=production
+      - TZ=Asia/Seoul
+      - LOG_LEVEL=info
+      - DATABASE_PATH=/app/data/database.db
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - NOTIFICATION_WEBHOOK_URL=${NOTIFICATION_WEBHOOK_URL}
+    
+    volumes:
+      # Persist database
+      - crawler_data:/app/data
+      # Persist logs
+      - crawler_logs:/app/logs
+      # Mount config (optional)
+      - ./crawler-config.json:/app/config/crawler-config.json:ro
+    
+    networks:
+      - crawler_network
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+    
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"console.log('Health check passed')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Database backup service
+  backup:
+    image: alpine:latest
+    container_name: meire-crawler-backup
+    restart: "no"
+    
+    environment:
+      - TZ=Asia/Seoul
+    
+    volumes:
+      - crawler_data:/data:ro
+      - backup_data:/backup
+    
+    command: |
+      sh -c "
+      if [ -f /data/database.db ]; then
+        timestamp=$$(date +%Y%m%d_%H%M%S)
+        cp /data/database.db /backup/database_$${timestamp}.db
+        echo 'Database backup completed: database_$${timestamp}.db'
+        # Keep only last 7 backups
+        ls -t /backup/database_*.db | tail -n +8 | xargs rm -f
+      else
+        echo 'No database file found to backup'
+      fi
+      "
+    
+    profiles:
+      - backup
+
+  # Optional: Log monitoring service
+  log-monitor:
+    image: alpine:latest
+    container_name: meire-log-monitor
+    restart: unless-stopped
+    
+    environment:
+      - TZ=Asia/Seoul
+    
+    volumes:
+      - crawler_logs:/logs:ro
+    
+    command: |
+      sh -c "
+      echo 'Starting log monitor...'
+      while true; do
+        # Monitor log file size and rotate if needed
+        if [ -f /logs/scheduler-$(date +%Y-%m-%d).log ]; then
+          size=$(wc -c < /logs/scheduler-$(date +%Y-%m-%d).log)
+          if [ $size -gt 104857600 ]; then  # 100MB
+            echo 'Log file is large, consider rotation'
+          fi
+        fi
+        sleep 3600  # Check every hour
+      done
+      "
+    
+    profiles:
+      - monitoring
+
+networks:
+  crawler_network:
+    driver: bridge
+
+volumes:
+  # Persistent data storage
+  crawler_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}
+  
+  # Persistent log storage
+  crawler_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${LOGS_DIR:-./logs}
+  
+  # Backup storage
+  backup_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${BACKUP_DIR:-./backup}

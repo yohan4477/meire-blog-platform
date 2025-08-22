@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
     
     // 검색어로 필터링 (한글 종목명, 영문 티커, 회사명으로 검색)
-    const searchResults = allStocks.filter(stock => {
+    const searchResults = allStocks.filter((stock: any) => {
       const queryLower = query.toLowerCase();
       const nameLower = stock.name?.toLowerCase() || '';
       const tickerLower = stock.ticker?.toLowerCase() || '';
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 검색 결과를 관련도 순으로 정렬
-    searchResults.sort((a, b) => {
+    searchResults.sort((a: any, b: any) => {
       const queryLower = query.toLowerCase();
       
       // 정확한 매칭이 우선
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 최대 10개 결과만 반환
-    const limitedResults = searchResults.slice(0, 10).map(stock => ({
+    const limitedResults = searchResults.slice(0, 10).map((stock: any) => ({
       ticker: stock.ticker,
       name: stock.name || stock.company_name,
       market: stock.market,

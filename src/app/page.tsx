@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, TrendingUp, BarChart3, User, Newspaper, Brain, Bell } from 'lucide-react';
+import { ArrowRight, TrendingUp, BarChart3, User, Bell, Brain } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,8 +32,6 @@ const MerryProfileTab = dynamic(
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [merryPosts, setMerryPosts] = useState<any[]>([]);
-  const [curatedNews, setCuratedNews] = useState<any[]>([]);
-  const [dailyDigest, setDailyDigest] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('profile');
 
   // 🚀 병렬 API 호출로 성능 최적화
@@ -42,14 +40,13 @@ export default function Home() {
       setLoading(true);
       
       try {
-        // 핵심 데이터 병렬 로딩 (가장 중요한 API들)
-        const [merryResponse, curatedResponse] = await Promise.all([
-          fetch('/api/merry?limit=2').catch(err => ({ error: err })),
-          fetch('/api/financial-curation?action=curated&limit=3').catch(err => ({ error: err }))
-        ]);
+        // 핵심 데이터 로딩 (올바른 API 엔드포인트 사용)
+        const merryResponse = await fetch('/api/merry/posts?limit=2').catch(err => ({ error: err }));
 
         // 메르 블로그 포스트 처리 (안전한 JSON 파싱)
-        if (!merryResponse.error) {
+        if ('error' in merryResponse) {
+          console.warn('메르 블로그 fetch 실패:', merryResponse.error);
+        } else {
           try {
             const merryResult = await merryResponse.json();
             if (merryResult.success && merryResult.data) {
@@ -61,43 +58,13 @@ export default function Home() {
           }
         }
 
-        // 큐레이션 뉴스 처리 (안전한 JSON 파싱)
-        if (!curatedResponse.error) {
-          try {
-            const curatedData = await curatedResponse.json();
-            if (curatedData.success && Array.isArray(curatedData.data)) {
-              setCuratedNews(curatedData.data.slice(0, 3));
-            } else {
-              console.warn('큐레이션 뉴스 데이터가 배열이 아님:', curatedData);
-            }
-          } catch (jsonError) {
-            console.warn('큐레이션 뉴스 JSON 파싱 실패:', jsonError);
-            // Fallback 데이터 사용
-          }
-        }
-
-        // 다이제스트는 비동기로 나중에 로드 (성능 최적화)
-        setTimeout(async () => {
-          try {
-            const digestResponse = await fetch('/api/financial-curation?action=digest');
-            const digestData = await digestResponse.json();
-            
-            if (digestData.success) {
-              setDailyDigest(digestData.data);
-            }
-          } catch (error) {
-            console.error('Daily digest 로딩 실패:', error);
-            // JSON 파싱 에러도 여기서 안전하게 처리됨
-          }
-        }, 1000); // 1초로 단축
+        // financial-curation 관련 코드 모두 제거
 
       } catch (error) {
         console.error('데이터 로딩 실패:', error);
         
         // 에러 발생시 빈 데이터 처리 (가짜 데이터 제거)
         setMerryPosts([]);
-        setCuratedNews([]);
-        setDailyDigest(null);
       } finally {
         setLoading(false);
       }
@@ -133,6 +100,12 @@ export default function Home() {
                   <TrendingUp className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>
+              <Button variant="default" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base">
+                <Link href="/merry/weekly-report" className="flex items-center justify-center">
+                  <span className="truncate">📊 메르 주간보고</span>
+                  <BarChart3 className="ml-2 h-4 w-4 flex-shrink-0" />
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -161,108 +134,10 @@ export default function Home() {
 
 
           <TabsContent value="insights" className="mt-6 space-y-6">
-            {/* AI 금융 큐레이션 섹션 */}
+            {/* AI 금융 큐레이션 섹션 제거됨 */}
             <div className="bg-card rounded-lg p-6">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-3xl font-bold">🤖 AI 금융 큐레이션</h2>
-                  <p className="text-muted-foreground mt-2">
-                    Goldman Sachs, Bloomberg, BlackRock AI 에이전트가 분석한 실시간 금융 인사이트
-                  </p>
-                </div>
-                <Button variant="ghost" asChild>
-                  <Link href="/financial-curation">
-                    전체보기
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-
-              {/* 오늘의 시장 요약 */}
-              {dailyDigest && (
-                <Card className="p-6 mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Newspaper className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-2">📊 오늘의 시장 요약</h3>
-                      <p className="text-muted-foreground mb-3">{dailyDigest.summary}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-sm font-medium text-muted-foreground">주요 섹터:</span>
-                        {Array.isArray(dailyDigest.sectors_in_focus) && dailyDigest.sectors_in_focus.length > 0 ? (
-                          dailyDigest.sectors_in_focus.map((sector: string, index: number) => (
-                            <Badge key={index} variant="secondary">{sector || '석터'}</Badge>
-                          ))
-                        ) : (
-                          <Badge variant="outline" className="text-muted-foreground">
-                            석터 정보 없음
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              )}
-
-              {/* 큐레이션된 콘텐츠 */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {Array.isArray(curatedNews) && curatedNews.length > 0 ? curatedNews.map((content) => (
-                  <Card key={content.id} className="p-6 hover:shadow-lg transition-shadow">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Badge 
-                          variant={content.type === 'NEWS' ? 'secondary' : 
-                                  content.type === 'ANALYSIS' ? 'default' : 'destructive'}
-                          className="text-xs"
-                        >
-                          <span className="mr-1">
-                            {content.type === 'NEWS' ? <Newspaper className="h-3 w-3" /> :
-                             content.type === 'ANALYSIS' ? <BarChart3 className="h-3 w-3" /> :
-                             <Brain className="h-3 w-3" />}
-                          </span>
-                          {content.type}
-                        </Badge>
-                        <div className="flex items-center space-x-1">
-                          <TrendingUp className="h-3 w-3 text-green-500" />
-                          <span className="text-xs font-medium">
-                            {Math.round(content.relevance_score * 100)}%
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <h4 className="font-semibold text-sm leading-tight">{content.title}</h4>
-                      
-                      <p className="text-xs text-muted-foreground line-clamp-3">
-                        {content.content}
-                      </p>
-                      
-                      <div className="flex flex-wrap gap-1">
-                        {Array.isArray(content.tags) && content.tags.length > 0 ? (
-                          content.tags.slice(0, 3).map((tag: string, index: number) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {tag || '태그'}
-                            </Badge>
-                          ))
-                        ) : (
-                          <Badge variant="outline" className="text-xs text-muted-foreground">
-                            태그 없음
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(content.created_date).toLocaleString('ko-KR')}
-                      </div>
-                    </div>
-                  </Card>
-                )) : (
-                  <Card className="p-6 col-span-full">
-                    <div className="text-center text-muted-foreground">
-                      <p>큐레이션된 뉴스를 불러오는 중입니다...</p>
-                    </div>
-                  </Card>
-                )}
+              <div className="text-center text-muted-foreground">
+                <p>AI 금융 큐레이션 기능이 제거되었습니다.</p>
               </div>
             </div>
           </TabsContent>

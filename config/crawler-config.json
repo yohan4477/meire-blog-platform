@@ -1,0 +1,27 @@
+{
+  "crawling": {
+    "schedule": "0 0,3,6,9,12,15,18,21 * * *",
+    "timezone": "Asia/Seoul",
+    "batchSize": 10,
+    "maxPosts": 50,
+    "timeout": 300000
+  },
+  "database": {
+    "path": "./database.db",
+    "backupEnabled": true,
+    "backupInterval": "daily"
+  },
+  "notifications": {
+    "enabled": false,
+    "webhookUrl": "",
+    "alertThreshold": {
+      "memory": 500,
+      "errorRate": 0.1
+    }
+  },
+  "performance": {
+    "loadingTimeLimit": 3000,
+    "apiResponseLimit": 500,
+    "chartRenderLimit": 1500
+  }
+}

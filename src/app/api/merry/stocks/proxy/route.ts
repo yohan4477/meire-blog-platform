@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('❌ Proxy error:', error);
     return NextResponse.json(
-      { error: 'API 호출 실패', details: error.message },
+      { error: 'API 호출 실패', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

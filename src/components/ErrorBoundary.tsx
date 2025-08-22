@@ -7,16 +7,16 @@ import { Button } from '@/components/ui/button';
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: React.ErrorInfo;
-  errorId?: string;
+  error?: Error | undefined;
+  errorInfo?: React.ErrorInfo | undefined;
+  errorId?: string | undefined;
   isReporting?: boolean;
   reportSent?: boolean;
 }
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
-  fallback?: React.ComponentType<{ error?: Error; retry: () => void }>;
+  fallback?: React.ComponentType<{ error?: Error | undefined; retry: () => void }>;
   level?: 'page' | 'component' | 'section';
   componentName?: string;
   sectionName?: string;
@@ -84,7 +84,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo });
     
     // 섹션 오류 자동 리포팅
@@ -204,7 +204,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     }
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       const { fallback: Fallback, level = 'component', showDetails = false } = this.props;
       

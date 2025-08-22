@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 4
+      "actualWorkers": 1
     },
     "preserveOutput": "always",
     "reporter": [
@@ -41,7 +41,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 4
+          "actualWorkers": 1
         },
         "id": "chromium",
         "name": "chromium",
@@ -57,7 +57,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 4
+          "actualWorkers": 1
         },
         "id": "firefox",
         "name": "firefox",
@@ -73,7 +73,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 4
+          "actualWorkers": 1
         },
         "id": "webkit",
         "name": "webkit",
@@ -89,7 +89,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 4
+          "actualWorkers": 1
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
@@ -105,7 +105,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 4
+          "actualWorkers": 1
         },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
@@ -131,476 +131,164 @@
   },
   "suites": [
     {
-      "title": "full-site-e2e.spec.ts",
-      "file": "full-site-e2e.spec.ts",
+      "title": "stock-page-performance-analysis.spec.ts",
+      "file": "stock-page-performance-analysis.spec.ts",
       "column": 0,
       "line": 0,
-      "specs": [],
-      "suites": [
+      "specs": [
         {
-          "title": "🌐 전 페이지 E2E 테스트 - 메르 블로그 플랫폼",
-          "file": "full-site-e2e.spec.ts",
-          "line": 24,
-          "column": 6,
-          "specs": [],
-          "suites": [
+          "title": "종목 페이지 구성별 로딩 타임 분석",
+          "ok": true,
+          "tags": [],
+          "tests": [
             {
-              "title": "📊 종목 상세 페이지 (/merry/stocks/[ticker])",
-              "file": "full-site-e2e.spec.ts",
-              "line": 80,
-              "column": 8,
-              "specs": [
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
                 {
-                  "title": "종목 상세 페이지 (005930) - 차트 및 포스트 연동 검증",
-                  "ok": false,
-                  "tags": [],
-                  "tests": [
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6392,
+                  "errors": [],
+                  "stdout": [
                     {
-                      "timeout": 30000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
-                          "status": "failed",
-                          "duration": 8524,
-                          "error": {
-                            "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('h1')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3005/merry/stocks/005930\" navigation to finish...\u001b[22m\n",
-                            "stack": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('h1')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3005/merry/stocks/005930\" navigation to finish...\u001b[22m\n\n    at C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts:92:42",
-                            "location": {
-                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts",
-                              "column": 42,
-                              "line": 92
-                            },
-                            "snippet": "\u001b[0m \u001b[90m 90 |\u001b[39m         \n \u001b[90m 91 |\u001b[39m         \u001b[90m// 종목 정보 기본 표시 확인\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 92 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'h1'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 93 |\u001b[39m         \n \u001b[90m 94 |\u001b[39m         \u001b[90m// 차트 컴포넌트 로딩 확인 (최우선순위 요구사항 1)\u001b[39m\n \u001b[90m 95 |\u001b[39m         \u001b[36mconst\u001b[39m chartContainer \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'[data-testid=\"stock-chart\"], .recharts-wrapper, [class*=\"chart\"]'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
-                          },
-                          "errors": [
-                            {
-                              "location": {
-                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts",
-                                "column": 42,
-                                "line": 92
-                              },
-                              "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('h1')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3005/merry/stocks/005930\" navigation to finish...\u001b[22m\n\n\n  90 |         \n  91 |         // 종목 정보 기본 표시 확인\n> 92 |         await expect(page.locator('h1')).toBeVisible();\n     |                                          ^\n  93 |         \n  94 |         // 차트 컴포넌트 로딩 확인 (최우선순위 요구사항 1)\n  95 |         const chartContainer = page.locator('[data-testid=\"stock-chart\"], .recharts-wrapper, [class*=\"chart\"]');\n    at C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts:92:42"
-                            }
-                          ],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2025-08-18T12:47:38.506Z",
-                          "annotations": [],
-                          "attachments": [
-                            {
-                              "name": "screenshot",
-                              "contentType": "image/png",
-                              "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\full-site-e2e-🌐-전-페이지-E2E-b2026-페이지-005930---차트-및-포스트-연동-검증-chromium\\test-failed-1.png"
-                            },
-                            {
-                              "name": "video",
-                              "contentType": "video/webm",
-                              "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\full-site-e2e-🌐-전-페이지-E2E-b2026-페이지-005930---차트-및-포스트-연동-검증-chromium\\video.webm"
-                            },
-                            {
-                              "name": "error-context",
-                              "contentType": "text/markdown",
-                              "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\full-site-e2e-🌐-전-페이지-E2E-b2026-페이지-005930---차트-및-포스트-연동-검증-chromium\\error-context.md"
-                            }
-                          ],
-                          "errorLocation": {
-                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts",
-                            "column": 42,
-                            "line": 92
-                          }
-                        }
-                      ],
-                      "status": "unexpected"
+                      "text": "📊 종목 페이지 성능 분석 시작...\n"
+                    },
+                    {
+                      "text": "🚀 Tesla 페이지 로딩 시작...\n"
+                    },
+                    {
+                      "text": "⏱️ 전체 페이지 로딩: 3762ms\n"
+                    },
+                    {
+                      "text": "📈 종목 헤더 섹션 분석...\n"
+                    },
+                    {
+                      "text": "⚠️ 현재가 표시 대기 타임아웃\n"
+                    },
+                    {
+                      "text": "📊 종목 헤더 섹션: 55ms\n"
+                    },
+                    {
+                      "text": "📈 차트 섹션 분석...\n"
+                    },
+                    {
+                      "text": "✅ Recharts wrapper found\n"
+                    },
+                    {
+                      "text": "📈 차트 섹션: 14ms\n"
+                    },
+                    {
+                      "text": "🎯 감정 분석 마커 분석...\n"
+                    },
+                    {
+                      "text": "🔵 차트에서 발견된 마커 개수: 19개 (reference-dot: 19, circles: 19)\n"
+                    },
+                    {
+                      "text": "🎯 감정 분석 마커: 16ms\n"
+                    },
+                    {
+                      "text": "📝 관련 포스트 섹션 분석...\n"
+                    },
+                    {
+                      "text": "⚠️ 관련 포스트 로딩 타임아웃\n"
+                    },
+                    {
+                      "text": "📝 관련 포스트 섹션: 2ms\n"
+                    },
+                    {
+                      "text": "🌐 API 응답 시간 분석...\n"
+                    },
+                    {
+                      "text": "\n📊 === 종목 페이지 성능 분석 결과 ===\n"
+                    },
+                    {
+                      "text": "⏱️ 섹션별 로딩 시간:\n"
+                    },
+                    {
+                      "text": "  🔴 전체_페이지_로딩: 3762ms\n"
+                    },
+                    {
+                      "text": "  🟢 종목_헤더_섹션: 55ms\n"
+                    },
+                    {
+                      "text": "  🟢 차트_섹션: 14ms\n"
+                    },
+                    {
+                      "text": "  🟢 감정_분석_마커: 16ms\n"
+                    },
+                    {
+                      "text": "  🟢 관련_포스트_섹션: 2ms\n"
+                    },
+                    {
+                      "text": "\n🌐 API 응답 시간:\n"
+                    },
+                    {
+                      "text": "  🔴 종목_정보_API: 907ms\n"
+                    },
+                    {
+                      "text": "  🔴 관련_포스트_API: 1365ms\n"
+                    },
+                    {
+                      "text": "  🔴 주가_차트_API: 1236ms\n"
+                    },
+                    {
+                      "text": "  🔴 감정_분석_API: 1359ms\n"
+                    },
+                    {
+                      "text": "\n🎯 성능 기준 검증:\n"
+                    },
+                    {
+                      "text": "🔴 FAIL: 전체 로딩시간 3762ms > 3초 기준 위반!\n"
+                    },
+                    {
+                      "text": "\n🔍 병목 지점 분석:\n"
+                    },
+                    {
+                      "text": "⚠️ 가장 느린 섹션들:\n"
+                    },
+                    {
+                      "text": "  1. 전체_페이지_로딩: 3762ms\n"
+                    },
+                    {
+                      "text": "  2. 종목_헤더_섹션: 55ms\n"
+                    },
+                    {
+                      "text": "  3. 감정_분석_마커: 16ms\n"
+                    },
+                    {
+                      "text": "\n✅ 성능 분석 완료! 스크린샷 저장됨.\n"
                     }
                   ],
-                  "id": "96a4f7ee1e9a47910ab7-68ca449e3a79170662f6",
-                  "file": "full-site-e2e.spec.ts",
-                  "line": 82,
-                  "column": 11
-                },
-                {
-                  "title": "종목 상세 페이지 (TSLA) - 차트 및 포스트 연동 검증",
-                  "ok": false,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 30000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
-                          "status": "failed",
-                          "duration": 11463,
-                          "error": {
-                            "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('h1')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n",
-                            "stack": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('h1')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n    at C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts:92:42",
-                            "location": {
-                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts",
-                              "column": 42,
-                              "line": 92
-                            },
-                            "snippet": "\u001b[0m \u001b[90m 90 |\u001b[39m         \n \u001b[90m 91 |\u001b[39m         \u001b[90m// 종목 정보 기본 표시 확인\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 92 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'h1'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 93 |\u001b[39m         \n \u001b[90m 94 |\u001b[39m         \u001b[90m// 차트 컴포넌트 로딩 확인 (최우선순위 요구사항 1)\u001b[39m\n \u001b[90m 95 |\u001b[39m         \u001b[36mconst\u001b[39m chartContainer \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'[data-testid=\"stock-chart\"], .recharts-wrapper, [class*=\"chart\"]'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
-                          },
-                          "errors": [
-                            {
-                              "location": {
-                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts",
-                                "column": 42,
-                                "line": 92
-                              },
-                              "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('h1')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n\n  90 |         \n  91 |         // 종목 정보 기본 표시 확인\n> 92 |         await expect(page.locator('h1')).toBeVisible();\n     |                                          ^\n  93 |         \n  94 |         // 차트 컴포넌트 로딩 확인 (최우선순위 요구사항 1)\n  95 |         const chartContainer = page.locator('[data-testid=\"stock-chart\"], .recharts-wrapper, [class*=\"chart\"]');\n    at C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts:92:42"
-                            }
-                          ],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2025-08-18T12:47:38.564Z",
-                          "annotations": [],
-                          "attachments": [
-                            {
-                              "name": "screenshot",
-                              "contentType": "image/png",
-                              "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\full-site-e2e-🌐-전-페이지-E2E-b383e-세-페이지-TSLA---차트-및-포스트-연동-검증-chromium\\test-failed-1.png"
-                            },
-                            {
-                              "name": "video",
-                              "contentType": "video/webm",
-                              "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\full-site-e2e-🌐-전-페이지-E2E-b383e-세-페이지-TSLA---차트-및-포스트-연동-검증-chromium\\video.webm"
-                            },
-                            {
-                              "name": "error-context",
-                              "contentType": "text/markdown",
-                              "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\full-site-e2e-🌐-전-페이지-E2E-b383e-세-페이지-TSLA---차트-및-포스트-연동-검증-chromium\\error-context.md"
-                            }
-                          ],
-                          "errorLocation": {
-                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts",
-                            "column": 42,
-                            "line": 92
-                          }
-                        }
-                      ],
-                      "status": "unexpected"
-                    }
-                  ],
-                  "id": "96a4f7ee1e9a47910ab7-999e2b44d7f4cb96f31a",
-                  "file": "full-site-e2e.spec.ts",
-                  "line": 82,
-                  "column": 11
-                },
-                {
-                  "title": "종목 상세 페이지 (AAPL) - 차트 및 포스트 연동 검증",
-                  "ok": false,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 30000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 2,
-                          "parallelIndex": 2,
-                          "status": "failed",
-                          "duration": 11495,
-                          "error": {
-                            "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('h1')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n",
-                            "stack": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('h1')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n    at C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts:92:42",
-                            "location": {
-                              "file": "C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts",
-                              "column": 42,
-                              "line": 92
-                            },
-                            "snippet": "\u001b[0m \u001b[90m 90 |\u001b[39m         \n \u001b[90m 91 |\u001b[39m         \u001b[90m// 종목 정보 기본 표시 확인\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 92 |\u001b[39m         \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'h1'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 93 |\u001b[39m         \n \u001b[90m 94 |\u001b[39m         \u001b[90m// 차트 컴포넌트 로딩 확인 (최우선순위 요구사항 1)\u001b[39m\n \u001b[90m 95 |\u001b[39m         \u001b[36mconst\u001b[39m chartContainer \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'[data-testid=\"stock-chart\"], .recharts-wrapper, [class*=\"chart\"]'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
-                          },
-                          "errors": [
-                            {
-                              "location": {
-                                "file": "C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts",
-                                "column": 42,
-                                "line": 92
-                              },
-                              "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('h1')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n\n  90 |         \n  91 |         // 종목 정보 기본 표시 확인\n> 92 |         await expect(page.locator('h1')).toBeVisible();\n     |                                          ^\n  93 |         \n  94 |         // 차트 컴포넌트 로딩 확인 (최우선순위 요구사항 1)\n  95 |         const chartContainer = page.locator('[data-testid=\"stock-chart\"], .recharts-wrapper, [class*=\"chart\"]');\n    at C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts:92:42"
-                            }
-                          ],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2025-08-18T12:47:38.546Z",
-                          "annotations": [],
-                          "attachments": [
-                            {
-                              "name": "screenshot",
-                              "contentType": "image/png",
-                              "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\full-site-e2e-🌐-전-페이지-E2E-600a1-세-페이지-AAPL---차트-및-포스트-연동-검증-chromium\\test-failed-1.png"
-                            },
-                            {
-                              "name": "video",
-                              "contentType": "video/webm",
-                              "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\full-site-e2e-🌐-전-페이지-E2E-600a1-세-페이지-AAPL---차트-및-포스트-연동-검증-chromium\\video.webm"
-                            },
-                            {
-                              "name": "error-context",
-                              "contentType": "text/markdown",
-                              "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\full-site-e2e-🌐-전-페이지-E2E-600a1-세-페이지-AAPL---차트-및-포스트-연동-검증-chromium\\error-context.md"
-                            }
-                          ],
-                          "errorLocation": {
-                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\full-site-e2e.spec.ts",
-                            "column": 42,
-                            "line": 92
-                          }
-                        }
-                      ],
-                      "status": "unexpected"
-                    }
-                  ],
-                  "id": "96a4f7ee1e9a47910ab7-74b603b42cbf693152ed",
-                  "file": "full-site-e2e.spec.ts",
-                  "line": 82,
-                  "column": 11
-                },
-                {
-                  "title": "차트 인터랙션 기능 검증",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 30000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 3,
-                          "parallelIndex": 3,
-                          "status": "passed",
-                          "duration": 3739,
-                          "errors": [],
-                          "stdout": [
-                            {
-                              "text": "✅ 차트 인터랙션 기능 확인됨\n"
-                            }
-                          ],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2025-08-18T12:47:38.535Z",
-                          "annotations": [],
-                          "attachments": []
-                        }
-                      ],
-                      "status": "expected"
-                    }
-                  ],
-                  "id": "96a4f7ee1e9a47910ab7-3c6a48439ecf1ad095b8",
-                  "file": "full-site-e2e.spec.ts",
-                  "line": 116,
-                  "column": 9
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "merry-stock-requirements.spec.ts",
-      "file": "merry-stock-requirements.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Merry Stock Screen Requirements",
-          "file": "merry-stock-requirements.spec.ts",
-          "line": 4,
-          "column": 6,
-          "specs": [
-            {
-              "title": "메르 언급 종목만 차트 데이터 표시",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-08-22T07:14:05.234Z",
                   "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
-                      "status": "timedOut",
-                      "duration": 30268,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at C:\\Users\\y\\meire-blog-platform\\tests\\merry-stock-requirements.spec.ts:6:8",
-                        "location": {
-                          "file": "C:\\Users\\y\\meire-blog-platform\\tests\\merry-stock-requirements.spec.ts",
-                          "column": 8,
-                          "line": 6
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 4 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Merry Stock Screen Requirements'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n \u001b[90m 5 |\u001b[39m   \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 6 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m   |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 7 |\u001b[39m     \u001b[90m// 개발 서버 연결 대기\u001b[39m\n \u001b[90m 8 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'http://localhost:3004'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 9 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\merry-stock-requirements.spec.ts",
-                            "column": 8,
-                            "line": 6
-                          },
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n  4 | test.describe('Merry Stock Screen Requirements', () => {\n  5 |   \n> 6 |   test.beforeEach(async ({ page }) => {\n    |        ^\n  7 |     // 개발 서버 연결 대기\n  8 |     await page.goto('http://localhost:3004');\n  9 |     await page.waitForLoadState('networkidle');\n    at C:\\Users\\y\\meire-blog-platform\\tests\\merry-stock-requirements.spec.ts:6:8"
-                        },
-                        {
-                          "location": {
-                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\merry-stock-requirements.spec.ts",
-                            "column": 16,
-                            "line": 8
-                          },
-                          "message": "Error: page.goto: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/\", waiting until \"load\"\u001b[22m\n\n\n   6 |   test.beforeEach(async ({ page }) => {\n   7 |     // 개발 서버 연결 대기\n>  8 |     await page.goto('http://localhost:3004');\n     |                ^\n   9 |     await page.waitForLoadState('networkidle');\n  10 |   });\n  11 |\n    at C:\\Users\\y\\meire-blog-platform\\tests\\merry-stock-requirements.spec.ts:8:16"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-18T12:47:42.894Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\merry-stock-requirements-M-ef5bc-rements-메르-언급-종목만-차트-데이터-표시-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\merry-stock-requirements-M-ef5bc-rements-메르-언급-종목만-차트-데이터-표시-chromium\\video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\merry-stock-requirements-M-ef5bc-rements-메르-언급-종목만-차트-데이터-표시-chromium\\error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "C:\\Users\\y\\meire-blog-platform\\tests\\merry-stock-requirements.spec.ts",
-                        "column": 8,
-                        "line": 6
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
+                  "attachments": []
                 }
               ],
-              "id": "07c38109bc8e435c31e3-9c0c995587d4fd1efa64",
-              "file": "merry-stock-requirements.spec.ts",
-              "line": 91,
-              "column": 7
+              "status": "expected"
             }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "stock-page.spec.ts",
-      "file": "stock-page.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "종목 페이지 요구사항 테스트",
-          "file": "stock-page.spec.ts",
-          "line": 8,
-          "column": 6,
-          "specs": [
-            {
-              "title": "차트 로딩 및 렌더링 테스트",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 4,
-                      "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 40056,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\stock-page.spec.ts",
-                            "column": 16,
-                            "line": 47
-                          },
-                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3004/merry/stocks/TSLA\", waiting until \"load\"\u001b[22m\n\n\n  45 |\n  46 |   test('차트 로딩 및 렌더링 테스트', async ({ page }) => {\n> 47 |     await page.goto('http://localhost:3004/merry/stocks/TSLA');\n     |                ^\n  48 |     \n  49 |     // 차트 렌더링 시간 측정 (1.5초 이내)\n  50 |     const chartStartTime = Date.now();\n    at C:\\Users\\y\\meire-blog-platform\\tests\\stock-page.spec.ts:47:16"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-18T12:47:50.822Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\stock-page-종목-페이지-요구사항-테스트-차트-로딩-및-렌더링-테스트-chromium\\video-1.webm"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\stock-page-종목-페이지-요구사항-테스트-차트-로딩-및-렌더링-테스트-chromium\\video.webm"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "7e36ae36515ffd40db10-2861eb755eaba640412d",
-              "file": "stock-page.spec.ts",
-              "line": 46,
-              "column": 7
-            }
-          ]
+          ],
+          "id": "9d636115b74e829a4bef-4833eed3f206a09007bc",
+          "file": "stock-page-performance-analysis.spec.ts",
+          "line": 3,
+          "column": 5
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-08-18T12:47:36.966Z",
-    "duration": 54734.299,
+    "startTime": "2025-08-22T07:14:04.121Z",
+    "duration": 8225.889,
     "expected": 1,
     "skipped": 0,
-    "unexpected": 5,
+    "unexpected": 0,
     "flaky": 0
   }
 }

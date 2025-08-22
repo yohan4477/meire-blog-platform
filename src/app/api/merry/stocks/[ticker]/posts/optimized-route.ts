@@ -132,7 +132,7 @@ export async function GET(
     console.error('최적화된 종목별 포스트 조회 오류:', error);
     return NextResponse.json({
       success: false,
-      error: { message: '종목별 포스트 조회 실패', details: error.message }
+      error: { message: '종목별 포스트 조회 실패', details: error instanceof Error ? error.message : 'Unknown error' }
     }, { status: 500 });
   }
 }

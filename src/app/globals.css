@@ -217,4 +217,52 @@
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
+  
+  /* 🔥 CRITICAL FIX: Recharts 범례 완전 제거 */
+  .recharts-legend-wrapper,
+  .recharts-default-legend,
+  .recharts-legend-item-list,
+  .recharts-legend-item {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* 🔥 차트별 범례 제거 클래스 */
+  .recharts-no-legend .recharts-legend-wrapper {
+    display: none !important;
+  }
+  
+  /* 🔥 전역 범례 제거 (모든 Recharts 컴포넌트) */
+  .recharts-wrapper .recharts-legend-wrapper {
+    display: none !important;
+  }
+  
+  /* 🚨 ULTIMATE FIX: 모든 Recharts 범례 완전 차단 */
+  .recharts-legend-wrapper,
+  .recharts-default-legend,
+  .recharts-legend-item-list,
+  .recharts-legend-item {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    pointer-events: none !important;
+  }
+  
+  /* 🎯 커스텀 범례 강제 가운데 정렬 */
+  .text-center {
+    text-align: center !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+  
+  .inline-flex {
+    justify-content: center !important;
+    align-items: center !important;
+  }
 }

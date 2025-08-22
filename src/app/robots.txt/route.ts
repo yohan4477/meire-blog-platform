@@ -5,7 +5,7 @@ export function GET() {
 Allow: /
 
 # Sitemaps
-Sitemap: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/sitemap.xml
+Sitemap: ${process.env['NEXT_PUBLIC_BASE_URL'] || 'http://localhost:3000'}/sitemap.xml
 `;
 
   return new NextResponse(robotsTxt, {

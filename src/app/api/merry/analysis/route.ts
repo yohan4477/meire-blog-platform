@@ -66,6 +66,14 @@ export async function POST(request: NextRequest) {
     }
 
     const post = posts[0];
+    
+    if (!post) {
+      return NextResponse.json({
+        success: false,
+        error: '포스트를 찾을 수 없습니다.',
+        data: null
+      }, { status: 404 });
+    }
 
     // 2. 기존 분석이 있는지 확인
     if (!forceReAnalysis) {

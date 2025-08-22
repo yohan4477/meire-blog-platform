@@ -36,7 +36,7 @@ interface Comment {
 
 export default function MerryPostPage() {
   const params = useParams();
-  const postId = params.id as string;
+  const postId = params['id'] as string;
   
   const [post, setPost] = useState<MerryPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);

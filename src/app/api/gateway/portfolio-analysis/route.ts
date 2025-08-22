@@ -40,12 +40,23 @@ const PostBodySchema = z.object({
     riskAnalysis: z.boolean().optional().default(true),
     performanceComparison: z.boolean().optional().default(true),
     rebalancingRecommendations: z.boolean().optional().default(false),
-  }).optional().default({}),
+  }).optional().default({
+    includeNPS: true,
+    includeKRX: false,
+    includeFSS: false,
+    includeNews: false,
+    includeFinancials: false,
+    riskAnalysis: true,
+    performanceComparison: true,
+    rebalancingRecommendations: false,
+  }),
   timeframe: z.object({
     start: z.string().optional(),
     end: z.string().optional(),
     period: z.enum(['1d', '5d', '1m', '3m', '6m', '1y', '2y', '5y']).optional().default('1y'),
-  }).optional().default({}),
+  }).optional().default({
+    period: '1y'
+  }),
 });
 
 export async function GET(request: NextRequest) {
@@ -235,7 +246,8 @@ export async function POST(request: NextRequest) {
 
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
-        const { type, symbol, data } = result.value;
+        const { type, data } = result.value;
+        const symbol = (result.value as any).symbol;
         
         if (symbol) {
           // 심볼별 데이터
@@ -457,7 +469,12 @@ function calculateRiskAnalysis(holdings: any[], quotes: any[]): any {
 
 function compareWithNPS(holdings: any[], npsData: any[]): any {
   // NPS와의 비교 분석
-  const comparison = {
+  const comparison: {
+    commonHoldings: any[];
+    uniqueHoldings: any[];
+    npsTopHoldings: any[];
+    analysis: string;
+  } = {
     commonHoldings: [],
     uniqueHoldings: [],
     npsTopHoldings: npsData.slice(0, 10),
@@ -486,7 +503,12 @@ function compareWithNPS(holdings: any[], npsData: any[]): any {
 
 function analyzeFundamentals(financialsData: any): any {
   // 재무제표 분석
-  const analysis = {
+  const analysis: {
+    averageMetrics: any;
+    valueStocks: any[];
+    growthStocks: any[];
+    riskStocks: any[];
+  } = {
     averageMetrics: {},
     valueStocks: [],
     growthStocks: [],
@@ -517,7 +539,14 @@ function analyzeFundamentals(financialsData: any): any {
 
 function analyzeNewsSentiment(newsData: any): any {
   // 뉴스 센티멘트 분석
-  const analysis = {
+  const analysis: {
+    overallSentiment: string;
+    positiveStories: number;
+    negativeStories: number;
+    neutralStories: number;
+    keyTopics: any[];
+    riskAlerts: any[];
+  } = {
     overallSentiment: 'neutral',
     positiveStories: 0,
     negativeStories: 0,
@@ -672,7 +701,8 @@ function convertAnalysisToCSV(analysis: any): string {
 }
 
 function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0].replace(/-/g, '');
+  const parts = date.toISOString().split('T');
+  return (parts[0] || '').replace(/-/g, '');
 }
 
 function getErrorStatus(errorCode?: string): number {

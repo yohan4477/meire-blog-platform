@@ -451,70 +451,44 @@ class StockDB {
           first_mentioned_date,
           last_mentioned_date,
           is_merry_mentioned,
-          analyzed_count,
           description,
           tags,
           sector,
           industry
         FROM stocks
         WHERE ticker = ?
+        ORDER BY LENGTH(description) DESC, LENGTH(tags) DESC, created_at DESC
+        LIMIT 1
       `, [ticker], (err, row) => {
-        if (err || !row) {
-          // stocks에 없으면 merry_mentioned_stocks에서 조회
-          console.log(`📊 Ticker ${ticker} not in stocks table, trying merry_mentioned_stocks`);
+        if (err) {
+          console.error(`❌ Error querying stocks table for ${ticker}:`, err);
+          reject(err);
+        } else if (!row) {
+          // stocks 테이블에 없으면 stock_mentions_unified에서 조회
+          console.log(`📊 Ticker ${ticker} not found in stocks, trying stock_mentions_unified`);
           this.db.get(`
             SELECT 
               ticker,
-              ticker as company_name,
-              ticker as company_name_kr,
-              'NASDAQ' as market,
-              'USD' as currency,
-              mention_count,
-              last_mentioned_at as first_mentioned_date,
-              last_mentioned_at as last_mentioned_date,
+              company_name,
+              company_name_kr,
+              market,
+              currency,
+              sector,
+              industry,
+              COUNT(*) as mention_count,
+              MIN(mentioned_date) as first_mentioned_date,
+              MAX(mentioned_date) as last_mentioned_date,
               1 as is_merry_mentioned,
-              0 as analyzed_count,
               '' as description,
-              '[]' as tags,
-              '' as sector,
-              '' as industry
-            FROM merry_mentioned_stocks
+              '[]' as tags
+            FROM stock_mentions_unified
             WHERE ticker = ?
-            GROUP BY ticker
-          `, [ticker], (err2, row2) => {
-            if (err2 || !row2) {
-              // 마지막으로 stock_mentions_unified에서 조회
-              console.log(`📊 Ticker ${ticker} not found, trying stock_mentions_unified`);
-              this.db.get(`
-                SELECT 
-                  ticker,
-                  company_name,
-                  company_name_kr,
-                  market,
-                  currency,
-                  sector,
-                  industry,
-                  COUNT(*) as mention_count,
-                  MIN(mentioned_date) as first_mentioned_date,
-                  MAX(mentioned_date) as last_mentioned_date,
-                  1 as is_merry_mentioned,
-                  0 as analyzed_count,
-                  '' as description,
-                  '[]' as tags
-                FROM stock_mentions_unified
-                WHERE ticker = ?
-                GROUP BY ticker, company_name, company_name_kr, market, currency, sector, industry
-              `, [ticker], (err3, row3) => {
-                if (err3) {
-                  reject(err3);
-                } else {
-                  resolve(row3 || null);
-                }
-              });
+            GROUP BY ticker, company_name, company_name_kr, market, currency, sector, industry
+          `, [ticker], (err3, row3) => {
+            if (err3) {
+              reject(err3);
             } else {
-              // merry_mentioned_stocks에서 찾은 경우
-              console.log(`✅ Found ${ticker} in merry_mentioned_stocks`);
-              resolve(row2);
+              resolve(row3 || null);
             }
           });
         } else {

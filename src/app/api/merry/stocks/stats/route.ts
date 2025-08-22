@@ -19,31 +19,31 @@ export async function GET(request: NextRequest) {
         analyzedPostsResult
       ] = await Promise.all([
         new Promise((resolve, reject) => {
-          stockDB.db.get('SELECT COUNT(*) as count FROM stocks WHERE is_merry_mentioned = 1 AND mention_count > 0', (err, row) => {
+          stockDB.db.get('SELECT COUNT(*) as count FROM stocks WHERE is_merry_mentioned = 1 AND mention_count > 0', (err: any, row: any) => {
             if (err) reject(err);
             else resolve(row);
           });
         }),
         new Promise((resolve, reject) => {
-          stockDB.db.get('SELECT COUNT(*) as count FROM stocks WHERE is_merry_mentioned = 1 AND mention_count > 0 AND market IN ("KOSPI", "KOSDAQ", "KRX")', (err, row) => {
+          stockDB.db.get('SELECT COUNT(*) as count FROM stocks WHERE is_merry_mentioned = 1 AND mention_count > 0 AND market IN ("KOSPI", "KOSDAQ", "KRX")', (err: any, row: any) => {
             if (err) reject(err);
             else resolve(row);
           });
         }),
         new Promise((resolve, reject) => {
-          stockDB.db.get('SELECT COUNT(*) as count FROM stocks WHERE is_merry_mentioned = 1 AND mention_count > 0 AND market IN ("NASDAQ", "NYSE")', (err, row) => {
+          stockDB.db.get('SELECT COUNT(*) as count FROM stocks WHERE is_merry_mentioned = 1 AND mention_count > 0 AND market IN ("NASDAQ", "NYSE")', (err: any, row: any) => {
             if (err) reject(err);
             else resolve(row);
           });
         }),
         new Promise((resolve, reject) => {
-          stockDB.db.get('SELECT COUNT(*) as count FROM blog_posts', (err, row) => {
+          stockDB.db.get('SELECT COUNT(*) as count FROM blog_posts', (err: any, row: any) => {
             if (err) reject(err);
             else resolve(row);
           });
         }),
         new Promise((resolve, reject) => {
-          stockDB.db.get('SELECT COUNT(DISTINCT post_id) as count FROM sentiments', (err, row) => {
+          stockDB.db.get('SELECT COUNT(DISTINCT post_id) as count FROM sentiments', (err: any, row: any) => {
             if (err) reject(err);
             else resolve(row);
           });
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     console.error('📊 Stats API Error:', error);
     return NextResponse.json({
       success: false,
-      error: { message: '통계 데이터 조회 실패', details: error.message }
+      error: { message: '통계 데이터 조회 실패', details: error instanceof Error ? error.message : 'Unknown error' }
     }, { status: 500 });
   }
 }

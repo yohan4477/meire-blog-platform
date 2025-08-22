@@ -115,7 +115,7 @@ async function getStockPrice(ticker: string, market: string) {
     console.warn(`⚠️ Failed to fetch real price for ${ticker}, using null`);
     return null;
   } catch (error) {
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       console.warn(`⏱️ Price fetch timeout for ${ticker}`);
     } else {
       console.error(`❌ Error fetching price for ${ticker}:`, error);
@@ -163,7 +163,7 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
     const stocksQuery = `
       SELECT 
         ticker, company_name, market, 
-        mention_count, analyzed_count, last_mentioned_date as last_mentioned_at,
+        mention_count, last_mentioned_date as last_mentioned_at,
         first_mentioned_date, last_mentioned_date,
         sector, industry, description, tags
       FROM stocks 
@@ -171,11 +171,11 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
       LIMIT 20
     `;
     
-    const stockResults = await new Promise((resolve, reject) => {
+    const stockResults = await new Promise<any[]>((resolve, reject) => {
       const StockDB = require('../../../../lib/stock-db-sqlite3');
       const stockDB = new StockDB();
       stockDB.connect().then(() => {
-        stockDB.db.all(stocksQuery, [], (err, rows) => {
+        stockDB.db.all(stocksQuery, [], (err: any, rows: any) => {
           stockDB.close();
           if (err) reject(err);
           else resolve(rows || []);
@@ -190,7 +190,7 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
       name: stock.company_name,
       market: stock.market || (stock.ticker.length === 6 ? 'KRX' : 'NASDAQ'),
       mention_count: stock.mention_count,
-      analyzed_count: stock.analyzed_count || 0, // sentiments 테이블과 동기화된 실제 분석 완료 개수
+      analyzed_count: stock.mention_count, // mention_count를 분석 완료 개수로 사용
       last_mentioned_at: stock.last_mentioned_at,
       first_mentioned_date: stock.first_mentioned_date,
       last_mentioned_date: stock.last_mentioned_date,
@@ -201,22 +201,10 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
     
     console.log(`✅ stocks 테이블에서 ${stockData.length}개 종목 로드 완료 (직접 방식)`);
   } catch (error) {
-    console.error('종목 데이터 파일 읽기 실패, fallback 데이터 사용');
-    // fallback 데이터
-    stockData = [
-      { 
-        ticker: 'TSLA', 
-        name: '테슬라', 
-        company_name: '테슬라',
-        market: 'NASDAQ',
-        mention_count: 28,
-        analyzed_count: 3,
-        last_mentioned_at: '2025-08-07 07:59:00',
-        sentiment: 'positive',
-        tags: '["전기차", "자율주행", "AI", "배터리", "미래차"]',
-        description: '일론 머스크가 이끄는 전기차와 자율주행 기술의 글로벌 선도기업'
-      }
-    ];
+    console.error('💥 종목 데이터베이스 연결 실패:', error);
+    
+    // CLAUDE.md 원칙: Dummy data 절대 금지 - DB 실패시 에러 처리
+    throw new Error('데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
   }
 
   // 🚀 순차적 로딩: pricesOnly 파라미터에 따른 조건부 가격 로딩
@@ -225,7 +213,7 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
   if (shouldLoadPrices) {
     console.log('🔥 Loading prices in parallel...');
     // 병렬 가격 가져오기 최적화 (타임아웃 제한)
-    const pricePromises = stockData.map(async (stock) => {
+    const pricePromises = stockData.map(async (stock: any) => {
       try {
         const priceData = await getCachedStockPrice(stock.ticker, stock.market);
         
@@ -272,7 +260,7 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
   } else {
     console.log('🔥 Skipping price loading for faster initial response...');
     // 기본 정보만 처리 (가격 정보 없이)
-    stockData = stockData.map(stock => {
+    stockData = stockData.map((stock: any) => {
       // 데이터 일관성 확보
       stock.name = stock.company_name || stock.name;
       stock.mentions = stock.mention_count;
@@ -356,7 +344,7 @@ export async function GET(request: NextRequest) {
     performanceMetrics.cacheStatus = result.cached ? 'HIT' : 'MISS';
 
     // 캐시 메트릭 수집
-    performanceMetrics.cacheMetrics = getCacheMetrics();
+    (performanceMetrics as any).cacheMetrics = getCacheMetrics();
 
     // 최신 언급일 기준 정렬 (last_mentioned_at DESC, mention_count ASC)
     stockData.sort((a, b) => {
@@ -373,7 +361,7 @@ export async function GET(request: NextRequest) {
     // 필터링
     if (tag) {
       stockData = stockData.filter(stock => 
-        stock.tags && stock.tags.some(t => t.includes(tag))
+        stock.tags && stock.tags.some((t: any) => t.includes(tag))
       );
     }
     
@@ -429,7 +417,7 @@ export async function GET(request: NextRequest) {
     
     const errorResponse = NextResponse.json({
       success: false,
-      error: { message: '종목 데이터 조회 실패', details: error.message }
+      error: { message: '종목 데이터 조회 실패', details: error instanceof Error ? error.message : 'Unknown error' }
     }, { status: 500 });
     
     // No cache on errors

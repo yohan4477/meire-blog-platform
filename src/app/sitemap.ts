@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://your-app.vercel.app';
+const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] || 'https://your-app.vercel.app';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 정적 사이트맵 생성 (데이터베이스 없이)

@@ -1,0 +1,321 @@
+name: 🕐 Automated Blog Crawling & Analysis
+
+on:
+  schedule:
+    # Run every 3 hours at specific times: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 KST
+    - cron: '0 15,18,21,0,3,6,9,12 * * *'  # UTC times for KST schedule
+  workflow_dispatch:  # Manual trigger for testing
+    inputs:
+      force_full_crawl:
+        description: 'Force full crawl (including old posts)'
+        required: false
+        default: 'false'
+        type: boolean
+      skip_cache_clear:
+        description: 'Skip cache clearing'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  NODE_VERSION: '20'
+  DATABASE_PATH: './database.db'
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  automated-crawling:
+    name: 🚀 Automated Crawling & Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: ⚡ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: |
+          npm ci --only=production
+          npm install node-cron axios cheerio better-sqlite3
+
+      - name: 🗄️ Setup Database
+        run: |
+          # Ensure database exists and has proper structure
+          if [ ! -f "${{ env.DATABASE_PATH }}" ]; then
+            echo "Creating new database..."
+            node scripts/initialize-database.js
+          fi
+          
+          # Verify critical tables exist
+          node -e "
+            const sqlite3 = require('better-sqlite3');
+            const db = sqlite3('${{ env.DATABASE_PATH }}');
+            
+            const tables = ['blog_posts', 'stocks', 'merry_mentioned_stocks', 'post_stock_sentiments'];
+            
+            tables.forEach(table => {
+              const exists = db.prepare('SELECT name FROM sqlite_master WHERE type=\"table\" AND name=?').get(table);
+              if (!exists) {
+                console.error(\`❌ Critical table \${table} missing!\`);
+                process.exit(1);
+              }
+            });
+            
+            console.log('✅ All critical tables verified');
+            db.close();
+          "
+
+      - name: 🕐 Set Crawl Time Context
+        id: crawl-context
+        run: |
+          CURRENT_HOUR=$(date +%H)
+          CURRENT_DATE=$(date +%Y-%m-%d)
+          CURRENT_TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+          
+          echo "crawl_hour=$CURRENT_HOUR" >> $GITHUB_OUTPUT
+          echo "crawl_date=$CURRENT_DATE" >> $GITHUB_OUTPUT
+          echo "crawl_timestamp=$CURRENT_TIMESTAMP" >> $GITHUB_OUTPUT
+          
+          # Determine crawl strategy based on time
+          if [ "$CURRENT_HOUR" -eq "00" ] || [ "$CURRENT_HOUR" -eq "12" ]; then
+            echo "crawl_type=intensive" >> $GITHUB_OUTPUT
+            echo "📅 Intensive crawl scheduled (midnight/noon)"
+          else
+            echo "crawl_type=standard" >> $GITHUB_OUTPUT
+            echo "⏰ Standard crawl scheduled"
+          fi
+
+      - name: 🔍 Execute Blog Crawling
+        id: crawling
+        run: |
+          echo "🚀 Starting blog crawling at ${{ steps.crawl-context.outputs.crawl_timestamp }}"
+          
+          # Run the automated crawling script
+          node scripts/automated-crawl.js \
+            --type="${{ steps.crawl-context.outputs.crawl_type }}" \
+            --date="${{ steps.crawl-context.outputs.crawl_date }}" \
+            --force-full="${{ github.event.inputs.force_full_crawl || 'false' }}" \
+            --github-actions="true"
+
+      - name: 📊 Update Stock Mentions
+        if: steps.crawling.outcome == 'success'
+        run: |
+          echo "📈 Updating stock mention tracking..."
+          node scripts/update-stock-mentions.js --date="${{ steps.crawl-context.outputs.crawl_date }}"
+
+      - name: 🧠 Perform Sentiment Analysis
+        if: steps.crawling.outcome == 'success'
+        run: |
+          echo "🎯 Performing AI sentiment analysis..."
+          node scripts/automated-sentiment-analysis.js \
+            --date="${{ steps.crawl-context.outputs.crawl_date }}" \
+            --batch-size="20"
+
+      - name: 🎯 Update Merry's Pick Rankings
+        if: steps.crawling.outcome == 'success'
+        run: |
+          echo "🌟 Updating Merry's Pick rankings..."
+          node scripts/update-merry-picks.js --recalculate-all
+
+      - name: 🧹 Clear Caches
+        if: steps.crawling.outcome == 'success' && github.event.inputs.skip_cache_clear != 'true'
+        run: |
+          echo "🗑️ Clearing application caches..."
+          
+          # Clear database caches
+          node -e "
+            const sqlite3 = require('better-sqlite3');
+            const db = sqlite3('${{ env.DATABASE_PATH }}');
+            
+            // Clear cache tables
+            const cacheTables = ['merry_picks_cache', 'stock_price_cache', 'sentiment_cache'];
+            cacheTables.forEach(table => {
+              try {
+                db.prepare('DELETE FROM ' + table).run();
+                console.log('🗑️ Cleared cache table: ' + table);
+              } catch (e) {
+                console.log('ℹ️ Cache table ' + table + ' not found or already empty');
+              }
+            });
+            
+            db.close();
+            console.log('✅ Database cache clearing completed');
+          "
+
+      - name: 📊 Generate Crawl Report
+        if: always()
+        id: report
+        run: |
+          echo "📋 Generating crawl report..."
+          
+          # Create comprehensive report
+          REPORT_FILE="crawl-report-${{ steps.crawl-context.outputs.crawl_date }}-${{ steps.crawl-context.outputs.crawl_hour }}.json"
+          
+          node -e "
+            const sqlite3 = require('better-sqlite3');
+            const fs = require('fs');
+            const db = sqlite3('${{ env.DATABASE_PATH }}');
+            
+            // Get crawling statistics
+            const newPosts = db.prepare('SELECT COUNT(*) as count FROM blog_posts WHERE created_date >= ?').get('${{ steps.crawl-context.outputs.crawl_date }}');
+            const totalMentions = db.prepare('SELECT COUNT(*) as count FROM merry_mentioned_stocks WHERE mentioned_date >= ?').get('${{ steps.crawl-context.outputs.crawl_date }}');
+            const newSentiments = db.prepare('SELECT COUNT(*) as count FROM post_stock_sentiments WHERE analyzed_at >= ?').get('${{ steps.crawl-context.outputs.crawl_date }}');
+            
+            const topStocks = db.prepare(`
+              SELECT ticker, COUNT(*) as mentions 
+              FROM merry_mentioned_stocks 
+              WHERE mentioned_date >= ? 
+              GROUP BY ticker 
+              ORDER BY mentions DESC 
+              LIMIT 5
+            `).all('${{ steps.crawl-context.outputs.crawl_date }}');
+            
+            const report = {
+              timestamp: '${{ steps.crawl-context.outputs.crawl_timestamp }}',
+              crawl_type: '${{ steps.crawl-context.outputs.crawl_type }}',
+              success: true,
+              statistics: {
+                new_posts: newPosts.count,
+                total_mentions: totalMentions.count,
+                new_sentiments: newSentiments.count,
+                top_mentioned_stocks: topStocks
+              },
+              github_actions: {
+                run_id: '${{ github.run_id }}',
+                run_number: '${{ github.run_number }}',
+                workflow: '${{ github.workflow }}'
+              }
+            };
+            
+            fs.writeFileSync('$REPORT_FILE', JSON.stringify(report, null, 2));
+            console.log('📄 Report saved to: $REPORT_FILE');
+            
+            // Output summary
+            console.log('📊 CRAWL SUMMARY:');
+            console.log('  📝 New posts: ' + newPosts.count);
+            console.log('  📈 Stock mentions: ' + totalMentions.count);
+            console.log('  🎯 Sentiment analyses: ' + newSentiments.count);
+            console.log('  ⭐ Top stocks: ' + topStocks.map(s => s.ticker).join(', '));
+            
+            db.close();
+          "
+          
+          echo "report_file=$REPORT_FILE" >> $GITHUB_OUTPUT
+
+      - name: 🔄 Trigger Site Revalidation
+        if: steps.crawling.outcome == 'success'
+        run: |
+          echo "🌐 Triggering site revalidation..."
+          
+          # If using Vercel, trigger revalidation
+          if [ ! -z "${{ secrets.VERCEL_WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.VERCEL_WEBHOOK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d '{"type": "crawl_update", "timestamp": "${{ steps.crawl-context.outputs.crawl_timestamp }}"}'
+            echo "📡 Vercel revalidation triggered"
+          fi
+          
+          # If using Cloudflare Pages, purge cache
+          if [ ! -z "${{ secrets.CLOUDFLARE_ZONE_ID }}" ] && [ ! -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d '{"purge_everything": true}'
+            echo "☁️ Cloudflare cache purged"
+          fi
+
+      - name: 📧 Send Notification
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          EMOJI="✅"
+          
+          if [ "$STATUS" != "success" ]; then
+            EMOJI="❌"
+          fi
+          
+          echo "$EMOJI Crawling job completed with status: $STATUS"
+          
+          # Send notification if webhook URL is configured
+          if [ ! -z "${{ secrets.NOTIFICATION_WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.NOTIFICATION_WEBHOOK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"text\": \"$EMOJI 메르 블로그 자동 크롤링 완료\",
+                \"attachments\": [{
+                  \"color\": \"$([ '$STATUS' = 'success' ] && echo 'good' || echo 'danger')\",
+                  \"fields\": [{
+                    \"title\": \"실행 시간\",
+                    \"value\": \"${{ steps.crawl-context.outputs.crawl_timestamp }}\",
+                    \"short\": true
+                  }, {
+                    \"title\": \"상태\",
+                    \"value\": \"$STATUS\",
+                    \"short\": true
+                  }, {
+                    \"title\": \"실행 ID\",
+                    \"value\": \"${{ github.run_id }}\",
+                    \"short\": true
+                  }]
+                }]
+              }"
+          fi
+
+      - name: 📤 Upload Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crawl-report-${{ steps.crawl-context.outputs.crawl_date }}-${{ steps.crawl-context.outputs.crawl_hour }}
+          path: |
+            crawl-report-*.json
+            database.db
+          retention-days: 7
+
+  # Health check job to verify system status
+  health-check:
+    name: 🏥 System Health Check
+    runs-on: ubuntu-latest
+    needs: automated-crawling
+    if: always()
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚡ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🔍 Run Health Checks
+        run: |
+          echo "🏥 Running system health checks..."
+          
+          # Add health check script if available
+          if [ -f "scripts/health-check.js" ]; then
+            node scripts/health-check.js --github-actions
+          else
+            echo "ℹ️ No health check script found, skipping detailed checks"
+          fi
+          
+          echo "✅ Health check completed"
+
+# Security settings
+permissions:
+  contents: read
+  actions: read
+  issues: write  # For creating issue reports if needed
+
+# Environment protection rules
+concurrency:
+  group: automated-crawling
+  cancel-in-progress: false  # Don't cancel running crawls

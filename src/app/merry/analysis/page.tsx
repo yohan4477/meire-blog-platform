@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ interface CausalChain {
   chain_title: string;
   chain_description: string;
   confidence_score: number;
-  prediction_horizon: string;
+  prediction_horizon: '1w' | '1m' | '3m' | '6m' | '1y';
   investment_thesis: string;
   created_at: string;
   source_post_id: number;
@@ -63,8 +63,8 @@ export default function MerryAnalysisPage() {
     return 'text-red-600 bg-red-50';
   };
 
-  const getHorizonIcon = (horizon: string) => {
-    const iconMap: Record<string, JSX.Element> = {
+  const getHorizonIcon = (horizon: string): React.ReactNode => {
+    const iconMap: Record<string, React.ReactNode> = {
       '1w': <Clock className="h-4 w-4" />,
       '1m': <Clock className="h-4 w-4" />,
       '3m': <TrendingUp className="h-4 w-4" />,
@@ -289,7 +289,7 @@ export default function MerryAnalysisPage() {
                 analysisData?.chains.map((chain) => (
                   <CausalChainVisualization
                     key={chain.id}
-                    chain={chain}
+                    chain={{...chain, steps: [], correlations: []}}
                     onViewPost={handleViewPost}
                   />
                 ))

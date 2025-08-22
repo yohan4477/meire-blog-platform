@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         error: {
           code: 'MIGRATION_FAILED',
           message: migrationResult.error || 'MySQL 데이터 마이그레이션 실패',
-          details: migrationResult.details,
+          details: migrationResult.details || '',
           timestamp: new Date().toISOString()
         }
       };
@@ -270,10 +270,10 @@ function extractStatsFromOutput(output: string): {
   const skippedMatch = output.match(/건너뛴 포스트.*: (\d+)개/);
   const errorsMatch = output.match(/오류 발생: (\d+)개/);
 
-  if (totalMatch) stats.totalPosts = parseInt(totalMatch[1]);
-  if (migratedMatch) stats.migratedPosts = parseInt(migratedMatch[1]);
-  if (skippedMatch) stats.skipped = parseInt(skippedMatch[1]);
-  if (errorsMatch) stats.errors = parseInt(errorsMatch[1]);
+  if (totalMatch) stats.totalPosts = parseInt(totalMatch[1] || '0');
+  if (migratedMatch) stats.migratedPosts = parseInt(migratedMatch[1] || '0');
+  if (skippedMatch) stats.skipped = parseInt(skippedMatch[1] || '0');
+  if (errorsMatch) stats.errors = parseInt(errorsMatch[1] || '0');
 
   return stats;
 }

@@ -127,7 +127,7 @@ async function predictRecommendationProbability(postId: number) {
       success: true,
       data: {
         postId,
-        title: post[0].title,
+        title: post[0]?.title || 'Unknown',
         recommendationProbability: probability,
         analysis,
         prediction: {

@@ -67,23 +67,24 @@ async function fetchStockPriceData(ticker: string, period: string) {
           FROM stock_prices 
           WHERE ticker = ? AND date >= ?
           ORDER BY date ASC
-        `, [ticker, startDateStr], (err, rows) => {
+        `, [ticker, startDateStr], (err: any, rows: any) => {
           if (err) reject(err);
           else resolve(rows || []);
         });
       });
       
-      if (priceRecords.length === 0) {
+      const records = priceRecords as any[];
+      if (records.length === 0) {
         console.warn(`⚠️ No price data found in DB for ${ticker}, falling back to Yahoo Finance`);
         return await fetchFromYahooFinance(ticker, period);
       }
       
-      console.log(`📊 Found ${priceRecords.length} DB records for ${ticker}`);
+      console.log(`📊 Found ${records.length} DB records for ${ticker}`);
       
       // DB 데이터를 차트 형식으로 변환 (한국 종목은 원화로 처리)
       const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
       
-      return (priceRecords as any[]).map(record => ({
+      return records.map((record: any) => ({
         date: record.date,
         price: isKoreanStock ? Math.round(record.close_price) : parseFloat(record.close_price.toFixed(2))
       }));
@@ -242,6 +243,6 @@ function getPeriodTimestamp(period: string): number {
     '5y': 5 * 365 * 24 * 60 * 60
   };
 
-  return now - (periods[period] || periods['1y']);
+  return now - (periods[period] || periods['1y']!);
 }
 

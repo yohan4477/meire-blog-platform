@@ -15,7 +15,7 @@ interface PostPageProps {
 
 async function getPost(id: string): Promise<BlogPost | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
+    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] || 'http://localhost:3001';
     const response = await fetch(`${baseUrl}/api/posts/${id}`, {
       cache: 'no-store'
     });
@@ -137,7 +137,7 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="text-sm text-muted-foreground">
             <p>작성일: {formatDate(post.created_date)}</p>
-            {post.updated_at !== post.created_date && (
+            {post.updated_at && post.updated_at !== post.created_date && (
               <p>수정일: {formatDate(post.updated_at)}</p>
             )}
           </div>

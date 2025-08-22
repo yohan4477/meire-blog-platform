@@ -88,7 +88,13 @@
       "Bash(start http://localhost:3031/merry/stocks/005930)",
       "Bash(start:*)",
       "Bash(git commit:*)",
-      "Bash(del temp_reasoning_updates.sql)"
+      "Bash(del temp_reasoning_updates.sql)",
+      "Bash(npm test:*)",
+      "Bash(tasklist:*)",
+      "Bash(wmic:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(dir:*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": [],

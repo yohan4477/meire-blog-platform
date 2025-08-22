@@ -50,30 +50,19 @@ export async function GET(
 
 async function findPostsByTickerFromDB(ticker: string, limit: number, offset: number, period: string = '6mo') {
   try {
-    // 기간 계산 (Stock Price API와 통일된 로직)
+    // 🚨 stock-page-requirements.md 준수: 허용된 4개 테이블만 사용
+    // 허용 테이블: stocks, stock_prices, blog_posts, post_stock_analysis
+    
+    // 기간 계산
     const endDate = new Date();
     const startDate = new Date();
     
-    // Stock Price API와 통일된 기간 처리 (1M, 3M, 6M, 1Y 표준 사용)
     switch (period.toLowerCase()) {
-      case '1y':
-      case '1year':
-        startDate.setFullYear(endDate.getFullYear() - 1);
-        break;
-      case '6m':
-      case '6mo':
-        startDate.setMonth(endDate.getMonth() - 6);
-        break;
-      case '3m':
-      case '3mo':
-        startDate.setMonth(endDate.getMonth() - 3);
-        break;
-      case '1m':
-      case '1mo':
-        startDate.setMonth(endDate.getMonth() - 1);
-        break;
-      default:
-        startDate.setMonth(endDate.getMonth() - 6);
+      case '1y': case '1year': startDate.setFullYear(endDate.getFullYear() - 1); break;
+      case '6m': case '6mo': startDate.setMonth(endDate.getMonth() - 6); break;
+      case '3m': case '3mo': startDate.setMonth(endDate.getMonth() - 3); break;
+      case '1m': case '1mo': startDate.setMonth(endDate.getMonth() - 1); break;
+      default: startDate.setMonth(endDate.getMonth() - 6);
     }
     
     const startDateStr = startDate.toISOString().split('T')[0];
@@ -81,106 +70,86 @@ async function findPostsByTickerFromDB(ticker: string, limit: number, offset: nu
     
     console.log(`📅 Posts date range filter: ${startDateStr} ~ ${endDateStr} (period: ${period})`);
     
-    // 🔥 4개 DB 최적화: merry_mentioned_stocks 테이블 직접 사용
+    // 개수 조회
     const countQuery = `
       SELECT COUNT(*) as total 
-      FROM merry_mentioned_stocks 
-      WHERE ticker = ?
-        AND mentioned_date >= ?
-        AND mentioned_date <= ?
+      FROM post_stock_analysis psa
+      JOIN blog_posts bp ON psa.post_id = bp.id
+      WHERE psa.ticker = ?
+        AND bp.created_date >= ?
+        AND bp.created_date <= ?
     `;
-    const countResult = await performantDb.query(countQuery, [ticker, startDateStr, endDateStr]);
-    const total = countResult[0]?.total || 0;
     
-    // 🚀 최적화된 JOIN 쿼리: 한 번에 모든 데이터 가져오기
+    let total = 0;
+    try {
+      const countResult = await performantDb.query(countQuery, [ticker, startDateStr, endDateStr]);
+      total = countResult[0]?.total || 0;
+    } catch (error) {
+      console.error('💥 post_stock_analysis 테이블 조회 실패:', error);
+      if (error instanceof Error && error.message.includes('no such table')) {
+        console.error('🚨 CRITICAL: post_stock_analysis 테이블이 존재하지 않음 - stock-page-requirements.md 위반');
+      }
+      throw error;
+    }
+    
+    // 메인 쿼리
     const optimizedQuery = `
       SELECT 
-        -- 언급 정보
-        m.id as mention_id,
-        m.mentioned_date,
-        m.context as mention_context,
-        m.sentiment_score,
-        m.mention_type,
-        
-        -- 실제 포스트 정보
-        b.id as post_id,
-        b.title,
-        b.excerpt,
-        b.views,
-        b.created_date as blog_created_date,
-        b.category,
-        
-        -- 계산된 필드
-        DATE(m.mentioned_date) as date_key
-        
-      FROM merry_mentioned_stocks m
-      LEFT JOIN blog_posts b ON m.post_id = b.id
-      WHERE m.ticker = ?
-        AND m.mentioned_date >= ?
-        AND m.mentioned_date <= ?
-      ORDER BY m.mentioned_date DESC 
+        bp.id as post_id,
+        bp.title,
+        bp.excerpt,
+        bp.views,
+        bp.created_date,
+        bp.category,
+        psa.sentiment,
+        psa.reasoning as key_reasoning,
+        psa.confidence
+      FROM post_stock_analysis psa
+      JOIN blog_posts bp ON psa.post_id = bp.id
+      WHERE psa.ticker = ?
+        AND bp.created_date >= ?
+        AND bp.created_date <= ?
+      ORDER BY bp.created_date DESC 
       LIMIT ? OFFSET ?
     `;
     
-    const startTime = Date.now();
-    const mentions = await performantDb.query(
+    const posts = await performantDb.query(
       optimizedQuery, 
       [ticker, startDateStr, endDateStr, limit, offset],
-      `posts-optimized-${ticker}-${period}`, // 캐시 키
-      300000 // 5분 캐시
+      `posts-analysis-${ticker}-${period}`,
+      300000
     );
-    const queryTime = Date.now() - startTime;
     
     const hasMore = (offset + limit) < total;
     
-    console.log(`⚡ Optimized query completed in ${queryTime}ms for ${ticker}: ${mentions.length}/${total} posts`);
+    console.log(`⚡ Found ${posts.length}/${total} posts for ${ticker} (${period})`);
     
-    // 🚀 향상된 데이터 매핑: 실제 포스트 정보 포함
     return {
-      posts: mentions.map(row => ({
-        // 기본 포스트 정보 (실제 블로그 데이터)
-        id: row.post_id || row.mention_id,
-        title: row.title || `메르 포스트 #${row.post_id} - ${ticker} 언급`,
-        excerpt: row.excerpt || row.mention_context || `${ticker} 관련 메르 포스트`,
+      posts: posts.map(row => ({
+        id: row.post_id,
+        title: row.title,
+        excerpt: row.excerpt || `${ticker} 관련 포스트`,
         views: row.views || 0,
-        category: row.category || row.mention_type || '투자분석',
-        
-        // 날짜 정보
-        created_date: row.blog_created_date || row.mentioned_date,
-        mentioned_date: row.mentioned_date,
-        date: row.date_key, // YYYY-MM-DD 형식
-        
-        // 언급 메타데이터
-        mention_context: row.mention_context,
-        sentiment_score: row.sentiment_score,
-        mention_type: row.mention_type,
-        
-        // 성능 디버깅 정보
-        _performance: {
-          query_time_ms: queryTime,
-          from_cache: queryTime < 10,
-          optimization: "JOIN with blog_posts"
-        }
+        category: row.category || '투자분석',
+        created_date: row.created_date,
+        sentiment: row.sentiment,
+        key_reasoning: row.key_reasoning,
+        confidence: row.confidence
       })),
       total,
       hasMore,
       limit,
-      offset,
-      performance: {
-        query_time_ms: queryTime,
-        optimization: "JOIN with blog_posts table",
-        cache_duration: "5 minutes"
-      }
-    };
-  } catch (error) {
-    console.error('merry_mentioned_stocks 조회 실패:', error);
-    return {
-      posts: [],
-      total: 0,
-      hasMore: false,
-      limit,
       offset
     };
+  } catch (error) {
+    console.error('💥 post_stock_analysis 조회 실패:', error);
+    
+    // 🚨 문제를 명확히 표시
+    if (error instanceof Error && error.message.includes('no such table')) {
+      throw new Error('post_stock_analysis 테이블이 존재하지 않음 - stock-page-requirements.md 위반');
+    }
+    
+    throw error;
   }
 }
 

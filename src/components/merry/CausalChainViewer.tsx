@@ -104,7 +104,7 @@ const getConfidenceColor = (score: number) => {
 
 // 예측 기간 표시
 const getPredictionHorizonText = (horizon: string) => {
-  const mapping = {
+  const mapping: Record<string, string> = {
     '1w': '1주',
     '1m': '1개월', 
     '3m': '3개월',
@@ -127,7 +127,7 @@ const getImpactColor = (impact: string) => {
 };
 
 const getImpactText = (impact: string) => {
-  const mapping = {
+  const mapping: Record<string, string> = {
     'strong_positive': '강한 긍정',
     'positive': '긍정',
     'neutral': '중립',

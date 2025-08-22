@@ -39,9 +39,14 @@ export async function GET(
         return addSecurityHeaders(createNotFoundResponse('Post'));
       }
 
+      const post = posts[0];
+      if (!post) {
+        return addSecurityHeaders(createNotFoundResponse('Post'));
+      }
+
       return addSecurityHeaders(createSuccessResponse(
-        posts[0],
-        `Retrieved post: ${posts[0].title}`
+        post,
+        `Retrieved post: ${post.title}`
       ));
 
     } catch (error) {

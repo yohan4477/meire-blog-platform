@@ -14,124 +14,121 @@ export async function GET(
     
     console.log(`📊 Fetching sentiment data for ${ticker} (${period})`);
     
-    const stockDB = getStockDB();
-    await stockDB.connect();
+    // 🚨 stock-page-requirements.md 준수: 허용된 4개 테이블만 사용
+    // 허용 테이블: stocks, stock_prices, blog_posts, post_stock_analysis
     
-    // Period to days mapping (지원: 1M, 3M, 6M, 1Y 및 1mo, 3mo, 6mo, 1y)
+    // Period to days mapping
     const periodDays = 
       (period === '1M' || period === '1mo') ? 30 :
       (period === '3M' || period === '3mo') ? 90 :
       (period === '6M' || period === '6mo') ? 180 : 365;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - periodDays);
-    // DATETIME 형식용 - ISO string 사용
     const startDateString = startDate.toISOString().replace('T', ' ').replace('Z', '');
     
-    // 🚀 ULTRA PERFORMANCE: 극한 최적화된 캐시 전략
-    const cacheKey = `sentiments-${ticker}-${period}-v2`;
-    console.log('⚡ ULTRA: 극한 성능 모드 활성화');
-    
-    // 🔥 최종 단순화: sentiment + key_reasoning만 가져오기
+    // 🔥 post_stock_analysis 테이블에서 감정 분석 데이터 조회
     const query = `
       SELECT 
-        s.sentiment,
-        s.key_reasoning,
-        s.created_at as created_date,
-        s.post_id
-      FROM sentiments s
-      WHERE s.ticker = ? AND s.created_at >= ?
-      ORDER BY s.created_at DESC
+        psa.sentiment,
+        psa.reasoning as key_reasoning,
+        psa.analyzed_at as created_date,
+        psa.post_id,
+        bp.title as post_title
+      FROM post_stock_analysis psa
+      LEFT JOIN blog_posts bp ON psa.post_id = bp.id
+      WHERE psa.ticker = ? AND psa.analyzed_at >= ?
+      ORDER BY psa.analyzed_at DESC
       LIMIT 50
     `;
     
-    let sentimentData;
+    const cacheKey = `sentiments-${ticker}-${period}-v4`;
+    let sentimentData: any[] = [];
+    
     try {
-      // Try optimized database first
       sentimentData = await performantDb.query(
         query, 
         [ticker, startDateString], 
         cacheKey, 
-        43200000 // 12시간 캐시로 극한 성능 (감정 분석은 변경 빈도 낮음)
+        300000 // 5분 캐시
       );
-      console.log(`⚡ Optimized query returned ${sentimentData.length} records in <50ms`);
+      console.log(`⚡ Found ${sentimentData.length} sentiment records for ${ticker}`);
     } catch (error) {
-      console.warn('⚠️ Optimized query failed, falling back to legacy method:', error);
-      // Fallback to legacy method
-      await stockDB.connect();
-      sentimentData = await new Promise((resolve, reject) => {
-        stockDB.db.all(query, [ticker, startDateString], (err, rows) => {
-          if (err) {
-            console.error('Legacy sentiment query failed:', err);
-            reject(err);
-          } else {
-            console.log(`✅ Legacy query found ${rows?.length || 0} sentiment records`);
-            resolve(rows || []);
-          }
-        });
+      console.error('💥 post_stock_analysis 테이블 조회 실패:', error);
+      
+      // 🚨 명확한 문제 표시 - stock-page-requirements.md 위반 상황
+      if (error instanceof Error && error.message.includes('no such table')) {
+        console.error('🚨 CRITICAL: post_stock_analysis 테이블이 존재하지 않음 - stock-page-requirements.md 위반');
+        return NextResponse.json({
+          error: 'post_stock_analysis 테이블이 존재하지 않음',
+          code: 'TABLE_NOT_FOUND', 
+          message: 'stock-page-requirements.md에서 요구하는 post_stock_analysis 테이블이 데이터베이스에 없습니다.'
+        }, { status: 500 });
+      }
+      
+      // 다른 오류도 명확히 표시
+      return NextResponse.json({
+        error: '감정 분석 데이터 조회 실패',
+        code: 'SENTIMENT_QUERY_FAILED',
+        details: error instanceof Error ? error.message : String(error)
+      }, { status: 500 });
+    }
+    
+    // 🚨 데이터 없음을 명확히 표시 - stock-page-requirements.md 위반 상황
+    if (sentimentData.length === 0) {
+      console.error(`🚨 WARNING: ${ticker}에 대한 감정 분석 데이터 없음 - post_stock_analysis 테이블 비어있음`);
+      return NextResponse.json({
+        ticker,
+        period,
+        sentimentByDate: {},
+        summary: { positive: 0, negative: 0, neutral: 0, total: 0 },
+        totalMentions: 0,
+        warning: 'post_stock_analysis 테이블에 감정 분석 데이터가 없습니다',
+        message: 'stock-page-requirements.md 요구사항을 충족하려면 감정 분석 데이터가 필요합니다'
       });
     }
     
-    stockDB.close(); // 글로벌 인스턴스는 유지됨
+    // 간단한 데이터 그룹핑
+    const sentimentByDate: any = {};
+    const sentimentSummary = { positive: 0, negative: 0, neutral: 0, total: 0 };
     
-    // 🚀 ULTRA: 메모리 최적화된 데이터 그룹핑 (Object.create 사용)
-    const sentimentByDate = Object.create(null);
-    const sentimentSummary = {
-      positive: 0,
-      negative: 0, 
-      neutral: 0,
-      total: 0
-    };
-    
-    (sentimentData as any[]).forEach(record => {
-      // created_date는 DATETIME 형식 (예: '2025-08-15 16:44:00')
-      // sentiments.created_at을 사용하므로 ISO string일 수 있음
+    sentimentData.forEach(record => {
       const dateStr = record.created_date || record.analyzed_at;
-      const date = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0]; // 날짜 부분만 추출
-      
-      console.log(`🔍 Processing sentiment record: ${dateStr} → ${date} (${record.sentiment})`);
+      const date = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
       
       if (!sentimentByDate[date]) {
         sentimentByDate[date] = {
           date,
-          postSentimentPairs: [] // 포스트-감정 분석 쌍으로 변경
+          postSentimentPairs: []
         };
       }
       
-      // 🔥 최종 단순화: sentiment + key_reasoning만
-      const postSentimentPair = {
-        post: {
-          id: record.post_id
+      sentimentByDate[date].postSentimentPairs.push({
+        post: { 
+          id: record.post_id,
+          title: record.post_title || ''
         },
         sentiment: {
           sentiment: record.sentiment,
-          key_reasoning: record.key_reasoning || ''
+          reasoning: record.key_reasoning || ''
         }
-      };
-
-      sentimentByDate[date].postSentimentPairs.push(postSentimentPair);
+      });
       
-      // 🚀 ULTRA: 조건부 증가로 성능 최적화
-      const sentiment = record.sentiment;
-      if (sentiment === 'positive') sentimentSummary.positive++;
-      else if (sentiment === 'negative') sentimentSummary.negative++;
-      else if (sentiment === 'neutral') sentimentSummary.neutral++;
+      // 집계
+      if (record.sentiment === 'positive') sentimentSummary.positive++;
+      else if (record.sentiment === 'negative') sentimentSummary.negative++;
+      else if (record.sentiment === 'neutral') sentimentSummary.neutral++;
       sentimentSummary.total++;
     });
     
-    const response = {
+    console.log(`📈 Found ${sentimentData.length} sentiment records for ${ticker} (${period})`);
+    
+    return NextResponse.json({
       ticker,
       period,
       sentimentByDate,
       summary: sentimentSummary,
       totalMentions: sentimentSummary.total
-    };
-    
-    console.log(`📈 Sentiment summary for ${ticker}:`, sentimentSummary);
-    console.log(`🔍 sentimentByDate keys:`, Object.keys(sentimentByDate));
-    console.log(`🔍 Sample sentiment data:`, sentimentData.slice(0, 3));
-    console.log(`🚨 TOTAL SENTIMENT RECORDS FOUND: ${sentimentData.length}`);
-    
-    return NextResponse.json(response);
+    });
     
   } catch (error) {
     console.error('감정 분석 데이터 조회 실패:', error);

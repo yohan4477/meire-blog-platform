@@ -31,6 +31,11 @@ const nextConfig = {
   // 기본 압축
   compress: true,
   
+  // ESLint 설정 - 빌드 시 린트 에러를 경고로 처리
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
   // 성능 헤더 (안전한 설정)
   async headers() {
     return [

@@ -14,6 +14,7 @@ import {
  */
 export async function GET(request: NextRequest) {
   return withPerformanceMonitoring(async () => {
+    const start = Date.now();
     try {
       const { searchParams } = new URL(request.url);
       const symbolsParam = searchParams.get('symbols');
@@ -66,10 +67,9 @@ export async function GET(request: NextRequest) {
         result.data || [],
         message,
         {
-          symbolsRequested: symbols.length,
-          symbolsReturned: result.data?.length || 0,
-          cacheStatus: 'mixed' // This could be enhanced to show actual cache status
-        }
+          totalCount: result.data?.length || 0,
+          processingTime: Date.now() - start
+        } as any
       ));
 
     } catch (error) {
@@ -91,6 +91,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   return withPerformanceMonitoring(async () => {
+    const start = Date.now();
     try {
       const body = await request.json();
       const { holdings } = body;
@@ -170,10 +171,9 @@ export async function POST(request: NextRequest) {
         result.data || [],
         `Retrieved prices for ${result.data?.length || 0} symbols from portfolio`,
         {
-          holdingsProcessed: holdings.length,
-          symbolsExtracted: symbols.length,
-          pricesReturned: result.data?.length || 0
-        }
+          totalCount: result.data?.length || 0,
+          processingTime: Date.now() - start
+        } as any
       ));
 
     } catch (error) {

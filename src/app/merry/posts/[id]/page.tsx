@@ -54,7 +54,7 @@ interface PostData {
 
 export default function MerryPostDetailPage() {
   const params = useParams();
-  const postId = params.id as string;
+  const postId = params['id'] as string;
   
   const [postData, setPostData] = useState<PostData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,8 +136,8 @@ export default function MerryPostDetailPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: postData?.post.title,
-          text: postData?.post.excerpt,
+          title: postData?.post.title || '메르 포스트',
+          text: postData?.post.excerpt || '메르의 투자 인사이트',
           url: window.location.href
         });
       } catch (error) {

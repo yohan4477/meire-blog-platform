@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
 
     // JSON 응답에 추가 메타데이터 포함
     if (result.success && result.data) {
-      result.metadata = {
+      (result as any).metadata = {
         ...result.metadata,
         dataType: validatedParams.type,
         totalRecords: Array.isArray(result.data) ? result.data.length : 1,
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     const BatchSchema = z.object({
       requests: z.array(z.object({
         type: z.enum(['nps', 'krx', 'fss']),
-        params: z.record(z.any()).optional().default({}),
+        params: z.record(z.string(), z.any()).optional().default({}),
         id: z.string().optional() // 요청 식별자
       })).max(10) // 최대 10개 배치 요청
     });
@@ -216,9 +216,10 @@ export async function POST(request: NextRequest) {
       if (result.status === 'fulfilled') {
         return result.value;
       } else {
+        const request = validatedBody.requests[index];
         return {
-          id: validatedBody.requests[index].id || `batch_${index}`,
-          type: validatedBody.requests[index].type,
+          id: request?.id || `batch_${index}`,
+          type: request?.type || 'unknown',
           success: false,
           error: {
             code: 'BATCH_REQUEST_REJECTED',

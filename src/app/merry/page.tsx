@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, User, Tag, Eye, MessageSquare, Heart, Share2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar, User, Tag, Eye, MessageSquare, Heart, Share2, Filter } from 'lucide-react';
 import Link from 'next/link';
 
 interface MerryPost {
@@ -25,65 +26,113 @@ interface MerryPost {
 export default function MerryPage() {
   const [posts, setPosts] = useState<MerryPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [stockFilter, setStockFilter] = useState<boolean>(false);
+  const [macroFilter, setMacroFilter] = useState<boolean>(false);
+  const [tickerFilter, setTickerFilter] = useState<string>('all');
+  const [availableStocks, setAvailableStocks] = useState<Array<{ticker: string, name: string, count: number}>>([]);
 
-  // API에서 메르 블로그 데이터 가져오기
+  // 필터 변경시 포스트 다시 로드
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/merry');
-        const result = await response.json();
+    loadPosts(true);
+  }, [dateFilter, stockFilter, macroFilter, tickerFilter]);
 
-        if (result.success && result.data) {
-          const apiPosts: MerryPost[] = result.data.map((post: any) => ({
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            excerpt: post.excerpt || '',
-            category: post.category || '일상',
-            author: post.author || '메르',
-            createdAt: new Date(post.created_date).toISOString().split('T')[0],
-            views: post.views || 0,
-            likes: post.likes || 0,
-            comments: post.comments_count || 0,
-            tags: post.tags || [],
-            featured: post.featured || false
-          }));
-          setPosts(apiPosts);
-        } else {
-          // API 실패 시 fallback 데이터
-          console.warn('메르 블로그 API 실패, fallback 데이터 사용');
-          const fallbackPosts: MerryPost[] = [
-            {
-              id: 1,
-              title: '우리형 메르의 첫 번째 이야기',
-              content: '안녕하세요, 우리형 메르입니다. 이곳에서 다양한 이야기를 공유하려고 해요.',
-              excerpt: '메르의 첫 번째 포스트입니다. 앞으로 재미있는 이야기들을 많이 공유할 예정이에요.',
-              category: '일상',
-              author: '메르',
-              createdAt: '2025-01-10',
-              views: 156,
-              likes: 12,
-              comments: 3,
-              tags: ['소개', '첫글', '일상'],
-              featured: true
-            }
-          ];
-          setPosts(fallbackPosts);
-        }
-      } catch (error) {
-        console.error('메르 블로그 데이터 가져오기 실패:', error);
-        // 에러 시에도 fallback 데이터 사용
-        setPosts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
+  // 초기 로드 및 종목 목록 로드
+  useEffect(() => {
+    loadPosts(true);
+    loadAvailableStocks();
   }, []);
 
-  // 모든 포스트 표시 (카테고리 필터링 제거)
+  const loadAvailableStocks = async () => {
+    try {
+      const response = await fetch('/api/merry/stocks');
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // 언급 횟수가 있는 종목만 필터링하고 정렬
+        const stocksWithMentions = result.data
+          .filter((stock: any) => stock.mention_count > 0)
+          .map((stock: any) => ({
+            ticker: stock.ticker,
+            name: stock.name || stock.ticker,
+            count: stock.mention_count
+          }))
+          .sort((a: any, b: any) => b.count - a.count);
+        
+        setAvailableStocks(stocksWithMentions);
+      }
+    } catch (error) {
+      console.error('종목 목록 로드 실패:', error);
+    }
+  };
+
+  const loadPosts = async (resetPosts = false) => {
+    if (resetPosts) {
+      setLoading(true);
+      setPosts([]);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const offset = resetPosts ? 0 : posts.length;
+      const limit = 10;
+      
+      // URL 파라미터 구성
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        offset: offset.toString()
+      });
+      
+      if (dateFilter && dateFilter !== 'all') params.append('date', dateFilter);
+      if (stockFilter) params.append('stocks', '1');
+      if (macroFilter) params.append('macro', '1');
+      if (tickerFilter && tickerFilter !== 'all') params.append('ticker', tickerFilter);
+
+      const response = await fetch(`/api/merry/posts?${params.toString()}`);
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // API 데이터를 MerryPost 형식으로 변환
+        const formattedPosts: MerryPost[] = result.data.map((post: any) => ({
+          id: post.id,
+          title: post.title,
+          content: post.content || post.excerpt,
+          excerpt: post.excerpt || post.content?.substring(0, 200) + '...',
+          category: post.category || '일반',
+          author: '메르',
+          createdAt: post.createdAt || post.date,
+          views: post.views || 0,
+          likes: post.likes || 0,
+          comments: post.comments || 0,
+          tags: post.tags || [],
+          featured: post.featured || false
+        }));
+        
+        if (resetPosts) {
+          setPosts(formattedPosts);
+        } else {
+          setPosts(prev => [...prev, ...formattedPosts]);
+        }
+        
+        // 더 보기 버튼 표시 여부 결정
+        setHasMore(result.meta?.hasNext || false);
+      } else {
+        console.error('포스트 로드 실패:', result.error);
+      }
+    } catch (error) {
+      console.error('API 호출 실패:', error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMorePosts = () => {
+    loadPosts(false);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -122,76 +171,88 @@ export default function MerryPage() {
       </div>
 
 
-      {/* Featured Posts */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">✨ 추천 포스트</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          {posts.filter(post => post.featured).map((post) => (
-            <Card key={post.id} className="group hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="outline" className="text-amber-600">추천</Badge>
-                </div>
-                <CardTitle className="group-hover:text-blue-600 transition-colors">
-                  <Link href={`/merry/${post.id}`}>
-                    {post.title}
-                  </Link>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
-                
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                  <div className="flex items-center gap-1">
-                    <User size={14} />
-                    {post.author}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar size={14} />
-                    {formatDate(post.createdAt)}
-                  </div>
-                </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Eye size={14} />
-                      {post.views}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Heart size={14} />
-                      {post.likes}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MessageSquare size={14} />
-                      {post.comments}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    <Share2 size={14} />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      {/* 필터 섹션 */}
+      <div className="mb-8">
+        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+          <Filter size={20} className="text-gray-600" />
+          <span className="text-sm font-medium text-gray-700">필터:</span>
+          
+          <Select value={dateFilter} onValueChange={setDateFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="기간" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 기간</SelectItem>
+              <SelectItem value="week">최근 1주</SelectItem>
+              <SelectItem value="month">최근 1개월</SelectItem>
+              <SelectItem value="quarter">최근 3개월</SelectItem>
+              <SelectItem value="year">최근 1년</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button 
+            variant={stockFilter ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStockFilter(!stockFilter)}
+          >
+            📈 종목
+          </Button>
+
+          <Button 
+            variant={macroFilter ? "default" : "outline"}
+            size="sm"
+            onClick={() => setMacroFilter(!macroFilter)}
+          >
+            🌐 매크로
+          </Button>
+
+          <Select value={tickerFilter} onValueChange={setTickerFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="종목 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">모든 종목</SelectItem>
+              {availableStocks.map((stock) => (
+                <SelectItem key={stock.ticker} value={stock.ticker}>
+                  {stock.name} ({stock.ticker}) - {stock.count}개
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {(dateFilter !== 'all' || stockFilter || macroFilter || tickerFilter !== 'all') && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => {
+                setDateFilter('all');
+                setStockFilter(false);
+                setMacroFilter(false);
+                setTickerFilter('all');
+              }}
+            >
+              초기화
+            </Button>
+          )}
         </div>
       </div>
 
       {/* All Posts */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          📝 모든 포스트
+          📝 모든 포스트 
+          {posts.length > 0 && (
+            <span className="text-base font-normal text-gray-500 ml-2">
+              ({posts.length}개)
+            </span>
+          )}
         </h2>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
             <Card key={post.id} className="group hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  {post.featured && (
-                    <Badge variant="outline" className="text-amber-600">추천</Badge>
-                  )}
-                </div>
                 <CardTitle className="group-hover:text-blue-600 transition-colors">
                   <Link href={`/merry/${post.id}`}>
                     {post.title}
@@ -291,11 +352,35 @@ export default function MerryPage() {
           ))}
         </div>
 
-        {posts.length === 0 && (
+        {/* 더보기 버튼 */}
+        {hasMore && posts.length > 0 && (
+          <div className="flex justify-center mt-8">
+            <Button 
+              onClick={loadMorePosts}
+              disabled={loadingMore}
+              size="lg"
+              className="px-8"
+            >
+              {loadingMore ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                  로딩 중...
+                </>
+              ) : (
+                '더보기 (10개씩)'
+              )}
+            </Button>
+          </div>
+        )}
+
+        {posts.length === 0 && !loading && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-lg mb-4">📝</div>
             <p className="text-gray-600">
-              아직 포스트가 없습니다.
+              {dateFilter !== 'all' || stockFilter || macroFilter || tickerFilter !== 'all'
+                ? '선택한 필터에 해당하는 포스트가 없습니다.'
+                : '아직 포스트가 없습니다.'
+              }
             </p>
           </div>
         )}

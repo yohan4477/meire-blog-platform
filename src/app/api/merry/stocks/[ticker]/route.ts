@@ -15,16 +15,18 @@ export async function GET(
     
     // 종목 기본 정보 가져오기 - 간단한 버전
     const stockInfo = await stockDB.getStockByTicker(ticker);
+    console.log(`🔍 stockInfo for ${ticker}:`, stockInfo);
     
     // stockInfo가 없어도 기본 정보로 처리
     const basicInfo = stockInfo || {
       ticker: ticker,
       company_name: ticker,
-      company_name_kr: ticker,
       market: ticker.length === 6 ? 'KOSPI' : 'NASDAQ',
       currency: ticker.length === 6 ? 'KRW' : 'USD',
       mention_count: 0,
-      is_merry_mentioned: 0
+      is_merry_mentioned: 0,
+      description: `${ticker} 종목`,
+      tags: ''
     };
     
     // 가격 데이터 가져오기 (6개월)
@@ -93,7 +95,7 @@ export async function GET(
         }
       }
     } catch (error) {
-      console.warn(`⚠️ Failed to fetch real-time price for ${ticker}:`, error.message);
+      console.warn(`⚠️ Failed to fetch real-time price for ${ticker}:`, error instanceof Error ? error.message : 'Unknown error');
     }
 
     // 응답 데이터 구성 - 실시간 가격 포함
@@ -101,12 +103,13 @@ export async function GET(
       success: true,
       data: {
         ticker: basicInfo.ticker,
-        name: basicInfo.company_name_kr || basicInfo.company_name || ticker,
+        name: basicInfo.company_name || ticker,
         market: basicInfo.market,
         currentPrice: priceInfo.currentPrice,
         priceChange: priceInfo.priceChange,
         currency: basicInfo.currency,
-        description: basicInfo.description || `${basicInfo.company_name_kr || ticker} 종목`,
+        description: basicInfo.description || `${basicInfo.company_name || ticker} 종목`,
+        tags: basicInfo.tags ? (typeof basicInfo.tags === 'string' ? JSON.parse(basicInfo.tags) : basicInfo.tags) : [],
         
         // 차트 데이터
         chartData: priceData,

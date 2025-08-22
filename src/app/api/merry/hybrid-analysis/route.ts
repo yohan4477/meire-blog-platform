@@ -64,6 +64,13 @@ async function compareApproaches(postId: number) {
 
     const analyzer = new HybridPatternAnalyzer();
     const currentPost = post[0];
+    
+    if (!currentPost) {
+      return NextResponse.json({
+        success: false,
+        error: '포스트를 찾을 수 없습니다.'
+      }, { status: 404 });
+    }
 
     // 1. 기존 룰 기반 분석 (간소화된 버전)
     const ruleBasedResult = await analyzeWithRuleBasedApproach(currentPost);

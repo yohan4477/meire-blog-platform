@@ -27,6 +27,7 @@ export function LoadMoreButton({
       const timer = setTimeout(() => setAnimate(true), 100);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [loading]);
 
   const getButtonContent = () => {

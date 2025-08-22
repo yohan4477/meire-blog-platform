@@ -63,7 +63,7 @@ export default function MerryStockPicks() {
       
       if (basicData.success && basicData.data && basicData.data.stocks) {
         // 1단계 데이터로 즉시 화면 렌더링 (가격 정보 없음)
-        setStocks(basicData.data.stocks.map(stock => ({
+        setStocks(basicData.data.stocks.map((stock: any) => ({
           ...stock,
           currentPrice: null,
           priceChange: null
@@ -90,7 +90,7 @@ export default function MerryStockPicks() {
               // 기존 데이터에 가격 정보만 업데이트
               setStocks(prevStocks => 
                 prevStocks.map(stock => {
-                  const updatedStock = pricesData.data.stocks.find(s => s.ticker === stock.ticker);
+                  const updatedStock = pricesData.data.stocks.find((s: any) => s.ticker === stock.ticker);
                   return updatedStock ? { ...stock, ...updatedStock } : stock;
                 })
               );
@@ -111,12 +111,18 @@ export default function MerryStockPicks() {
       }
     } catch (err) {
       console.error('📊 종목 데이터 로딩 에러:', err);
-      setError('종목 데이터 로딩 중 오류가 발생했습니다.');
+      
+      // 에러 메시지 구분
+      const errorMessage = err instanceof Error && err.message && err.message.includes('데이터베이스 연결')
+        ? '💥 데이터베이스 연결 실패 - 잠시 후 다시 시도해주세요'
+        : '📊 종목 데이터 로딩 실패 - 네트워크를 확인하고 새로고침해주세요';
+        
+      setError(errorMessage);
       setLoading(false);
     }
   };
 
-  const getSentimentIcon = (sentiment: string) => {
+  const getSentimentIcon = (sentiment: string | undefined) => {
     switch (sentiment) {
       case 'positive':
         return <TrendingUp className="w-4 h-4 text-green-500" />;
@@ -143,7 +149,7 @@ export default function MerryStockPicks() {
     }
     
     // 트럼프 관련 뱃지 (실제 데이터 기반)
-    const trumpRelatedStocks = {
+    const trumpRelatedStocks: Record<string, { mentions: number; relevance: string }> = {
       'INTC': { mentions: 3, relevance: 'high' },
       'LLY': { mentions: 6, relevance: 'high' },
       'UNH': { mentions: 4, relevance: 'medium' },
@@ -153,7 +159,7 @@ export default function MerryStockPicks() {
     
     if (trumpRelatedStocks[stock.ticker]) {
       const trumpData = trumpRelatedStocks[stock.ticker];
-      if (trumpData.relevance === 'high') {
+      if (trumpData && trumpData.relevance === 'high') {
         badges.push({
           icon: '🇺🇸',
           text: '트럼프 관련',
@@ -166,12 +172,12 @@ export default function MerryStockPicks() {
   };
 
   // 순위 뱃지 제거 - 최신 언급일 순, 언급 적은 순 정렬과 맞지 않음
-  const getRankingBadge = (stock: any, index: number, allStocks: any[]) => {
+  const getRankingBadge = (stock: any, index: number, allStocks: any[]): { icon: string; text: string; className: string } | null => {
     // 순위 뱃지 모두 제거
     return null;
   };
 
-  const getMarketColor = (market: string) => {
+  const getMarketColor = (market: string | undefined) => {
     switch (market) {
       case 'KOSPI':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
@@ -212,17 +218,28 @@ export default function MerryStockPicks() {
 
   if (error) {
     return (
-      <Card className="w-full">
+      <Card className="w-full border-red-200 dark:border-red-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            <span className="text-base sm:text-lg font-semibold whitespace-nowrap sm:whitespace-normal">
-              메르's Pick<span className="block sm:inline text-sm sm:text-base font-normal text-muted-foreground ml-2">주목할 종목</span>
+            <BarChart3 className="w-5 h-5 text-red-500" />
+            <span className="text-base sm:text-lg font-semibold whitespace-nowrap sm:whitespace-normal text-red-700 dark:text-red-300">
+              메르's Pick<span className="block sm:inline text-sm sm:text-base font-normal text-muted-foreground ml-2">로딩 실패</span>
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-red-500">{error}</p>
+          <div className="flex flex-col items-center gap-3 py-6">
+            <div className="text-4xl">⚠️</div>
+            <p className="text-red-600 dark:text-red-400 text-center font-medium">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.reload()}
+              className="border-red-200 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20"
+            >
+              다시 시도
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );

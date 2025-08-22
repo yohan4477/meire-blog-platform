@@ -340,7 +340,7 @@ export default function MerryStocksPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-lg">{stock.name || stock.company_name}</h3>
-                      {getSentimentIcon(stock.sentiment)}
+                      {getSentimentIcon(stock.sentiment || 'neutral')}
                     </div>
                     <div className="flex gap-2 mb-2">
                       <Badge variant="outline">{stock.ticker}</Badge>
@@ -413,7 +413,7 @@ export default function MerryStocksPage() {
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    첫 언급: {stock.first_mentioned_date ? new Date(stock.first_mentioned_date).toLocaleDateString('ko-KR') : '정보 없음'}
+                    첫 언급: {stock.firstMention ? new Date(stock.firstMention).toLocaleDateString('ko-KR') : '정보 없음'}
                   </span>
                   <span>
                     최근: {(stock.lastMention || stock.last_mentioned_at) ? new Date(stock.lastMention || stock.last_mentioned_at).toLocaleDateString('ko-KR') : '정보 없음'}

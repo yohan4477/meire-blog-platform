@@ -54,7 +54,10 @@ export async function GET(request: NextRequest) {
     }
 
     // 캐시 상태 확인
-    let cacheStatus = { connected: false, metrics: null };
+    let cacheStatus: { 
+      connected: boolean; 
+      metrics: { hitRate: number; totalRequests: number; averageResponseTime: number } | null 
+    } = { connected: false, metrics: null };
     try {
       // Redis 캐시 상태 확인 (실제 구현에서는 Redis 클라이언트 ping)
       cacheStatus = { 
@@ -77,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     // 전체 상태 결정
     const overallStatus = determineOverallStatus({
-      gateway: gatewayHealth.status === 'healthy',
+      gateway: (gatewayHealth as any).status === 'healthy' || gatewayHealth.success === true,
       database: databaseStatus.connected,
       cache: cacheStatus.connected,
       externalAPIs: externalAPIsStatus.healthy,
@@ -89,13 +92,13 @@ export async function GET(request: NextRequest) {
       status: overallStatus,
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      version: process.env.APP_VERSION || '1.0.0',
-      environment: process.env.NODE_ENV || 'development',
+      version: process.env['APP_VERSION'] || '1.0.0',
+      environment: process.env['NODE_ENV'] || 'development',
       
       // 핵심 서비스 상태
       services: {
         gateway: {
-          status: gatewayHealth.status,
+          status: (gatewayHealth as any).status || 'unknown',
           metrics: gateway.getMetrics()
         },
         database: databaseStatus,
@@ -124,7 +127,7 @@ export async function GET(request: NextRequest) {
       performance: {
         requestProcessingTime: Date.now() - startTime,
         averageResponseTime: gateway.getMetrics().averageResponseTime || 0,
-        errorRate: errorMetrics.errorRate,
+        errorRate: errorMetrics.summary?.errorRate || 0,
         cacheHitRate: cacheStatus.metrics?.hitRate || 0
       },
 
@@ -153,7 +156,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
       error: {
         message: 'Health check system failure',
-        details: process.env.NODE_ENV === 'development' 
+        details: process.env['NODE_ENV'] === 'development' 
           ? (error instanceof Error ? error.message : 'Unknown error')
           : undefined
       },
@@ -253,7 +256,7 @@ function determineOverallStatus(components: Record<string, boolean>): 'healthy' 
   }
 
   // 중요 컴포넌트가 실패하거나 에러가 많으면 degraded
-  if (important.some(component => !components[component]) || !components.errors) {
+  if (important.some(component => !components[component]) || !components['errors']) {
     return 'degraded';
   }
 
@@ -271,11 +274,11 @@ function getRecentIssues(errorMetrics: any, externalAPIsStatus: any): any[] {
   const issues = [];
 
   // 에러율이 높은 경우
-  if (errorMetrics.errorRate > 10) {
+  if (errorMetrics.summary?.errorRate > 10) {
     issues.push({
       type: 'high_error_rate',
       severity: 'warning',
-      message: `Error rate is high: ${errorMetrics.errorRate.toFixed(2)}%`,
+      message: `Error rate is high: ${errorMetrics.summary.errorRate.toFixed(2)}%`,
       timestamp: new Date().toISOString()
     });
   }

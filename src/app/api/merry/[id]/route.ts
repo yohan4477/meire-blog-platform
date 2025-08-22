@@ -43,10 +43,11 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       }, { status: 404 });
     }
 
+    const firstPost = posts[0];
     const post = {
-      ...posts[0],
+      ...firstPost,
       author: '메르', // 기본 작성자
-      createdAt: posts[0].created_date,
+      createdAt: firstPost?.created_date || new Date().toISOString(),
       likes: 0, // 기본값
       comments: 0, // 기본값  
       tags: [] // 태그는 추후 구현

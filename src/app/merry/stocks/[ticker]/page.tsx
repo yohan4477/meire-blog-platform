@@ -94,7 +94,7 @@ const getTagsLength = (stock: any): number => {
 export default function StockDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const ticker = params?.ticker as string;
+  const ticker = params?.['ticker'] as string;
   
   const [stock, setStock] = useState<Stock | null>(null);
   // URL 파라미터에서 period를 읽어서 timeRange 설정
@@ -104,11 +104,11 @@ export default function StockDetailPage() {
     if (urlPeriod && ['1M', '3M', '6M', '1Y'].includes(urlPeriod)) {
       return urlPeriod as '1M' | '3M' | '6M' | '1Y';
     }
-    // URL 파라미터가 없으면 기본값 설정
+    // URL 파라미터가 없으면 기본값 설정 (요구사항: 모바일 3M, 데스크탑 1Y)
     if (typeof window !== 'undefined') {
       return window.innerWidth < 640 ? '3M' : '1Y';
     }
-    return '1Y'; // SSR 시 기본값
+    return '1Y'; // SSR 시 데스크탑 기본값
   });
   const [postsState, setPostsState] = useState<PostsState>({
     posts: [],
@@ -192,12 +192,13 @@ export default function StockDetailPage() {
           mentions: data.data.stats?.totalMentions || 0,
           mention_count: data.data.stats?.totalMentions || 0,
           analyzed_count: data.data.mentions?.length || 0,
+          postCount: data.data.stats?.totalPosts || 0,
           lastMention: data.data.stats?.lastMention || '',
           firstMention: data.data.stats?.firstMention || '',
           first_mentioned_date: data.data.stats?.firstMention || '',
           last_mentioned_date: data.data.stats?.lastMention || '',
-          sentiment: 'neutral',
-          tags: [] // 태그는 별도 처리
+          sentiment: 'neutral' as 'positive' | 'neutral' | 'negative',
+          tags: data.data.tags || [] // stocks 테이블의 tags 컬럼 사용
         };
         
         console.log(`✅ Stock data loaded:`, stockData);
@@ -211,6 +212,8 @@ export default function StockDetailPage() {
           company_name: ticker,
           mentions: 0,
           lastMention: '',
+          firstMention: '',
+          postCount: 0,
           currentPrice: 0,
           priceChange: '+0.00%',
           currency: ticker.length === 6 ? 'KRW' : 'USD',
@@ -219,7 +222,7 @@ export default function StockDetailPage() {
           tags: ['투자', '종목'],
           mention_count: 0,
           analyzed_count: 0,
-          sentiment: 'neutral'
+          sentiment: 'neutral' as 'positive' | 'neutral' | 'negative'
         });
       }
     } catch (err) {
@@ -233,6 +236,8 @@ export default function StockDetailPage() {
         company_name: ticker,
         mentions: 0,
         lastMention: '',
+        firstMention: '',
+        postCount: 0,
         currentPrice: 0,
         priceChange: '+0.00%',
         currency: ticker.length === 6 ? 'KRW' : 'USD',
@@ -241,7 +246,7 @@ export default function StockDetailPage() {
         tags: ['투자', '종목'],
         mention_count: 0,
         analyzed_count: 0,
-        sentiment: 'neutral'
+        sentiment: 'neutral' as 'positive' | 'neutral' | 'negative'
       });
     } finally {
       console.log(`🏁 Loading completed for ${ticker}`);
@@ -251,7 +256,7 @@ export default function StockDetailPage() {
 
   const fetchAllRelatedPosts = async () => {
     try {
-      const response = await fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0`);
+      const response = await fetch(`/api/merry/stocks/${ticker}/posts?limit=1000&offset=0`);
       const data = await response.json();
       
       if (data.success) {
@@ -260,6 +265,12 @@ export default function StockDetailPage() {
           created_date: post.published_date || post.created_date
         })) : [];
         setAllPosts(allPostsData);
+        
+        // 전체 포스트 수를 postsState.total에 반영
+        setPostsState(prev => ({
+          ...prev,
+          total: data.data.total || allPostsData.length
+        }));
       }
     } catch (err) {
       console.error('전체 관련 포스트 로딩 실패:', err);
@@ -524,6 +535,7 @@ export default function StockDetailPage() {
           📱 <strong>모바일 팁:</strong> 핸드폰을 가로로 눕히면 1Y(1년) 차트로 자동 전환됩니다
         </div>
       </div>
+
 
       {/* 관련 포스트 */}
       <Card>

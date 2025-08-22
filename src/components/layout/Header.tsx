@@ -36,8 +36,8 @@ export default function Header() {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const searchTimeoutRef = useRef(null);
-  const searchRef = useRef(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState([
     {
       id: 1,
