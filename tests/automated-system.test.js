@@ -730,16 +730,15 @@ test.describe('Extended System Validation', () => {
     expect(workflowContent).toContain('sentiment-analysis');
   });
 
-  test('should validate deployment configurations exist', async () => {
-    const deploymentConfigs = [
-      path.join(__dirname, '..', 'deployment', 'pm2.config.js'),
-      path.join(__dirname, '..', 'deployment', 'docker', 'Dockerfile'),
-      path.join(__dirname, '..', 'deployment', 'docker', 'docker-compose.yml'),
-      path.join(__dirname, '..', 'deployment', 'windows', 'setup-task-scheduler.ps1')
+  test('should validate core system files exist', async () => {
+    const coreFiles = [
+      path.join(__dirname, '..', 'scripts', 'node-scheduler.js'),
+      path.join(__dirname, '..', 'scripts', 'automated-crawl.js'),
+      path.join(__dirname, '..', 'scripts', 'health-check.js')
     ];
     
-    deploymentConfigs.forEach(configPath => {
-      expect(fs.existsSync(configPath)).toBe(true);
+    coreFiles.forEach(filePath => {
+      expect(fs.existsSync(filePath)).toBe(true);
     });
   });
 

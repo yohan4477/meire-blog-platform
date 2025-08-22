@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     default: '요르의 투자 블로그',
     template: '%s | 요르의 투자 블로그'
   },
-  description: '니가 뭘 알어. 니가 뭘 아냐고.\n요르가 전하는 날카로운 투자 인사이트와 포트폴리오 분석',
+  description: '니가 뭘 알아. 니가 뭘 아냐고.\n요르가 전하는 날카로운 투자 인사이트와 포트폴리오 분석',
   keywords: ['요르', '투자', '주식', '포트폴리오', '투자 철학', '경제 분석', '투자 인사이트', '금융', '자산관리', 'Scion'],
   authors: [{ name: '요르' }],
   creator: '요르',

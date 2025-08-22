@@ -14,17 +14,77 @@ interface TodayQuote {
   readTime: string;
 }
 
+interface TodayQuotesResponse {
+  quotes: TodayQuote[];
+  isToday: boolean;
+}
+
+// 종목명과 티커를 강조하는 함수
+const highlightStockNames = (text: string, relatedTickers: string[]) => {
+  if (!text || !relatedTickers.length) return text;
+  
+  // 일반적인 종목명 매핑
+  const stockNameMap: { [key: string]: string } = {
+    'TSLA': '테슬라',
+    'AAPL': '애플',
+    'GOOGL': '구글',
+    'NVDA': '엔비디아',
+    'META': '메타',
+    'MSFT': '마이크로소프트',
+    'AMZN': '아마존',
+    '005930': '삼성전자',
+    '000660': 'SK하이닉스',
+    'TSM': 'TSMC',
+    'INTC': '인텔'
+  };
+  
+  let highlightedText = text;
+  
+  try {
+    // 관련 티커와 해당 종목명을 모두 강조
+    relatedTickers.forEach(ticker => {
+      const stockName = stockNameMap[ticker];
+      
+      // 안전한 정규식 이스케이프 함수
+      const escapeRegex = (string: string) => {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      };
+      
+      // 티커 강조 (예: TSLA, 005930)
+      const escapedTicker = escapeRegex(ticker);
+      const tickerRegex = new RegExp(`\\b${escapedTicker}\\b`, 'gi');
+      highlightedText = highlightedText.replace(tickerRegex, 
+        `<span class="text-primary font-bold bg-primary/10 px-1.5 py-0.5 rounded-md">${ticker}</span>`
+      );
+      
+      // 종목명 강조 (예: 테슬라)
+      if (stockName) {
+        const escapedStockName = escapeRegex(stockName);
+        const nameRegex = new RegExp(`\\b${escapedStockName}\\b`, 'gi');
+        highlightedText = highlightedText.replace(nameRegex, 
+          `<span class="text-primary font-bold bg-primary/10 px-1.5 py-0.5 rounded-md">${stockName}</span>`
+        );
+      }
+    });
+  } catch (error) {
+    console.warn('Highlight error:', error);
+    return text; // Fallback to original text
+  }
+  
+  return highlightedText;
+};
+
 export function TodayMerryQuote() {
-  const [todayQuote, setTodayQuote] = useState<TodayQuote | null>(null);
+  const [quotesData, setQuotesData] = useState<TodayQuotesResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchTodayQuote() {
+    async function fetchTodayQuotes() {
       try {
         const response = await fetch('/api/today-merry-quote');
         if (response.ok) {
           const data = await response.json();
-          setTodayQuote(data);
+          setQuotesData(data);
         }
       } catch (error) {
         console.error('오늘의 메르님 말씀 로딩 실패:', error);
@@ -33,7 +93,7 @@ export function TodayMerryQuote() {
       }
     }
 
-    fetchTodayQuote();
+    fetchTodayQuotes();
   }, []);
 
   if (loading) {
@@ -54,7 +114,7 @@ export function TodayMerryQuote() {
     );
   }
 
-  if (!todayQuote) {
+  if (!quotesData || !quotesData.quotes.length) {
     return (
       <div className="bg-card rounded-2xl p-8 border">
         <div className="flex items-center gap-2 mb-4">
@@ -65,6 +125,8 @@ export function TodayMerryQuote() {
       </div>
     );
   }
+
+  const todayQuote = quotesData.quotes[0];
 
   return (
     <div className="bg-card rounded-2xl p-4 sm:p-6 lg:p-8 border shadow-lg hover:shadow-xl transition-all duration-300">
@@ -107,9 +169,12 @@ export function TodayMerryQuote() {
               <span>💡</span>
               <span>핵심 한줄 요약</span>
             </h3>
-            <p className="text-sm sm:text-base lg:text-lg leading-relaxed text-foreground font-medium break-keep">
-              "{todayQuote.quote}"
-            </p>
+            <p 
+              className="text-sm sm:text-base lg:text-lg leading-relaxed text-foreground font-medium break-keep"
+              dangerouslySetInnerHTML={{ 
+                __html: `"${highlightStockNames(todayQuote.quote, todayQuote.relatedTickers)}"` 
+              }}
+            />
           </div>
         </div>
 
@@ -119,9 +184,12 @@ export function TodayMerryQuote() {
             <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
             <span>🎯 투자 인사이트</span>
           </h3>
-          <p className="text-sm sm:text-base text-foreground leading-relaxed break-keep">
-            {todayQuote.insight}
-          </p>
+          <p 
+            className="text-sm sm:text-base text-foreground leading-relaxed break-keep"
+            dangerouslySetInnerHTML={{ 
+              __html: highlightStockNames(todayQuote.insight, todayQuote.relatedTickers) 
+            }}
+          />
         </div>
 
         {/* 관련 종목 - 모바일 최적화 */}

@@ -255,8 +255,8 @@ export default function Home() {
               요르의 투자 플랫폼
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-6 sm:mb-8 px-4 break-keep">
-              니가 뭘 알어. 니가 뭘 아냐고.<br />
-              요르가 말아주는 주식 분석 플랫폼
+              니가 뭘 알아. 니가 뭘 아냐고.<br />
+              요르가 전하는 날카로운 투자 인사이트
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center max-w-4xl mx-auto px-2">
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-1">
@@ -267,13 +267,13 @@ export default function Home() {
               </Button>
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-1">
                 <Link href="/merry/stocks" className="flex items-center justify-center">
-                  <span className="truncate">📊 종목 분석</span>
+                  <span className="truncate">📊 종목 리스트</span>
                   <TrendingUp className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-2">
                 <Link href="/merry/weekly-report" className="flex items-center justify-center">
-                  <span className="truncate">📊 메르 주간보고</span>
+                  <span className="truncate">📊 주간 보고</span>
                   <BarChart3 className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>

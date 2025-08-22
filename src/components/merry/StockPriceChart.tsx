@@ -200,12 +200,13 @@ export default memo(function StockPriceChart({
           fetch(`/api/merry/stocks/${ticker}/sentiments?period=${standardPeriod}`).then(r => r.json()),
           fetch(`/api/merry/stocks/${ticker}/posts?limit=100&offset=0&period=${standardPeriod}`).then(r => r.json())
         ]);
-        console.log(`⚡ 2단계 완료: 병렬 로딩 - Sentiments: ${!!sentimentResult.sentimentByDate}, Posts: ${postsResult.success}`);
+        console.log(`⚡ 2단계 완료: 병렬 로딩 - Sentiments: ${!!sentimentResult.success}, Posts: ${postsResult.success}`);
         
-        // 감정 분석 통계 설정
+        // 감정 분석 통계 설정 (새로운 API 구조 반영)
+        const sentimentData = sentimentResult.success ? sentimentResult.data : sentimentResult;
         setSentimentStats({
-          totalMentions: sentimentResult.totalMentions || 0,
-          analyzedMentions: sentimentResult.analyzedMentions || 0
+          totalMentions: sentimentData?.totalMentions || 0,
+          analyzedMentions: sentimentData?.summary?.total || 0
         });
         
         // 🎨 3단계: 마커와 툴팁 정보 점진적 추가
@@ -229,7 +230,7 @@ export default memo(function StockPriceChart({
         console.log('🚨 데이터 통합 시작:', {
           pricePoints: basicPriceData.length,
           postsByDateKeys: Object.keys(postsByDate),
-          sentimentKeys: Object.keys(sentimentResult.sentimentByDate || {})
+          sentimentKeys: Object.keys(sentimentData?.sentimentByDate || {})
         });
         
         const enrichedData = basicPriceData.map((point: any) => {
@@ -239,11 +240,11 @@ export default memo(function StockPriceChart({
           // 1. merry_mentioned_stocks 데이터 (마커 표시용)
           const postsData = postsByDate[normalizedDate] || [];
           
-          // 2. sentiments 데이터 (색상 변경용)
-          const sentimentData = sentimentResult.sentimentByDate?.[normalizedDate];
-          const sentiments = sentimentData?.postSentimentPairs?.map((pair: any) => ({
-            ...pair.sentiment,
-            postTitle: pair.post?.title || ''
+          // 2. sentiments 데이터 (색상 변경용) - 새로운 API 구조 반영
+          const daysentimentData = sentimentData?.sentimentByDate?.[normalizedDate];
+          const sentiments = daysentimentData?.sentiments?.map((sentiment: any) => ({
+            ...sentiment,
+            postTitle: daysentimentData?.posts?.[0]?.title || ''
           })) || [];
           
           const hasAnyData = postsData.length > 0 || sentiments.length > 0;
@@ -253,6 +254,8 @@ export default memo(function StockPriceChart({
           
           return {
             ...point,
+            hasMention: postsData.length > 0, // 🔥 중요: hasMention 필드 추가
+            postTitles: postsData.map((post: any) => post.title).filter(Boolean),
             sentiments: sentiments
           };
         });
@@ -1009,12 +1012,35 @@ export default memo(function StockPriceChart({
             <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
               <div className="text-center space-y-3">
                 <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
-                <p className="text-sm text-gray-500">차트 데이터 로딩 중...</p>
+                <p className="text-sm text-gray-500">아직 정보가 업데이트 되지 않았습니다. 요르님에게 문의하세요.</p>
               </div>
             </div>
           )}
         </div>
 
+        {/* 📊 차트 범례 (stock-page-requirements.md 요구사항) */}
+        <div className="px-4 sm:px-6 py-3 border-t border-gray-100">
+          <div className="flex justify-center">
+            <div className="flex items-center gap-4 sm:gap-6 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full border-2 border-green-500" style={{ borderColor: tossColors.sentiment.positive }}></div>
+                <span className="text-gray-600">긍정</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full border-2 border-red-500" style={{ borderColor: tossColors.sentiment.negative }}></div>
+                <span className="text-gray-600">부정</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full border-2 border-gray-500" style={{ borderColor: tossColors.sentiment.neutral }}></div>
+                <span className="text-gray-600">중립</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full border-2 border-blue-500" style={{ borderColor: '#2563eb' }}></div>
+                <span className="text-gray-600">메르 언급</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* 토스 스타일 기간 선택 (모바일 최적화) */}
         <div className="px-4 sm:px-6 pb-4 sm:pb-6">

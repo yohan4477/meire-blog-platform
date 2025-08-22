@@ -159,7 +159,7 @@ export default function Header() {
             </div>
             <div className="flex flex-col min-w-0 max-w-[160px] sm:max-w-none">
               <span className="font-bold text-xs sm:text-sm lg:text-base leading-none whitespace-nowrap truncate">요르의 투자 플랫폼</span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap truncate">니가 뭘 알아. 니가 뭘 아냐고</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap truncate">니가 뭘 알아. 니가 뭘 아냐고.</span>
             </div>
           </Link>
 
@@ -400,7 +400,7 @@ export default function Header() {
                     </div>
                     <div className="flex flex-col text-left">
                       <SheetTitle className="text-sm sm:text-base whitespace-nowrap">요르의 투자 플랫폼</SheetTitle>
-                      <SheetDescription className="text-xs whitespace-nowrap">니가 뭘 알아. 니가 뭘 아냐고</SheetDescription>
+                      <SheetDescription className="text-xs whitespace-nowrap">니가 뭘 알아. 니가 뭘 아냐고.</SheetDescription>
                     </div>
                   </div>
                 </SheetHeader>

@@ -6,12 +6,8 @@
  * Multi-deployment automated scheduling system for Meire blog platform.
  * Runs every 3 hours at specific times with comprehensive error handling.
  * 
- * Deployment Options:
- * 1. Standalone Node.js server
- * 2. PM2 managed process
- * 3. Docker container
- * 4. Vercel serverless functions
- * 5. Windows Task Scheduler integration
+ * Execution Method:
+ * Standalone Node.js server with process monitoring
  * 
  * Schedule: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 KST
  * 
@@ -19,7 +15,7 @@
  *   node scripts/node-scheduler.js [options]
  * 
  * Options:
- *   --mode=standalone|pm2|docker|vercel|windows
+ *   --mode=standalone
  *   --immediate                Run immediately for testing
  *   --single-run              Run once and exit
  *   --log-level=info|debug|error

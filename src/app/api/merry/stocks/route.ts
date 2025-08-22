@@ -160,14 +160,19 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
     console.log('🚀 Using stocks table for optimized stock data');
     
     // stocks 테이블에서 직접 데이터 조회 - 최신 언급일 순, 같은 날짜면 언급 적은 순
+    // 감정 분석 데이터도 함께 조회
     const stocksQuery = `
       SELECT 
-        ticker, company_name, market, 
-        mention_count, last_mentioned_date as last_mentioned_at,
-        first_mentioned_date, last_mentioned_date,
-        sector, industry, description, tags
-      FROM stocks 
-      ORDER BY last_mentioned_date DESC, mention_count ASC
+        s.ticker, s.company_name, s.market, 
+        s.mention_count, s.last_mentioned_date as last_mentioned_at,
+        s.first_mentioned_date, s.last_mentioned_date,
+        s.sector, s.industry, s.description, s.tags,
+        COUNT(pss.id) as analyzed_count
+      FROM stocks s
+      LEFT JOIN post_stock_sentiments pss ON s.ticker = pss.ticker
+      WHERE s.is_merry_mentioned = 1 AND s.mention_count > 0
+      GROUP BY s.ticker
+      ORDER BY s.last_mentioned_date DESC, s.mention_count ASC
       LIMIT 20
     `;
     
@@ -190,7 +195,7 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
       name: stock.company_name,
       market: stock.market || (stock.ticker.length === 6 ? 'KRX' : 'NASDAQ'),
       mention_count: stock.mention_count,
-      analyzed_count: stock.mention_count, // mention_count를 분석 완료 개수로 사용
+      analyzed_count: stock.analyzed_count, // 실제 감정 분석 완료 개수
       last_mentioned_at: stock.last_mentioned_at,
       first_mentioned_date: stock.first_mentioned_date,
       last_mentioned_date: stock.last_mentioned_date,

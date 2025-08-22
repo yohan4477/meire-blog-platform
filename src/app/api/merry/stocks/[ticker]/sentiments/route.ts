@@ -15,7 +15,7 @@ export async function GET(
     console.log(`📊 Fetching sentiment data for ${ticker} (${period})`);
     
     // 🚨 stock-page-requirements.md 준수: 허용된 4개 테이블만 사용
-    // 허용 테이블: stocks, stock_prices, blog_posts, post_stock_analysis
+    // 허용 테이블: stocks, stock_prices, blog_posts, post_stock_sentiments
     
     // Period to days mapping
     const periodDays = 
@@ -26,19 +26,22 @@ export async function GET(
     startDate.setDate(startDate.getDate() - periodDays);
     const startDateString = startDate.toISOString().replace('T', ' ').replace('Z', '');
     
-    // 🔥 post_stock_analysis 테이블에서 감정 분석 데이터 조회
+    // 🔥 post_stock_sentiments 테이블에서 감정 분석 데이터 조회 (sentiments 테이블에서 복사됨)
     const query = `
       SELECT 
-        psa.sentiment,
-        psa.reasoning as key_reasoning,
-        psa.analyzed_at as created_date,
-        psa.post_id,
-        bp.title as post_title
-      FROM post_stock_analysis psa
-      LEFT JOIN blog_posts bp ON psa.post_id = bp.id
-      WHERE psa.ticker = ? AND psa.analyzed_at >= ?
-      ORDER BY psa.analyzed_at DESC
-      LIMIT 50
+        pss.sentiment,
+        pss.reasoning as key_reasoning,
+        pss.analyzed_at as created_date,
+        pss.post_id,
+        pss.confidence,
+        bp.title as post_title,
+        bp.published_date,
+        DATE(bp.published_date) as date_key
+      FROM post_stock_sentiments pss
+      LEFT JOIN blog_posts bp ON pss.post_id = bp.id
+      WHERE pss.ticker = ? AND pss.analyzed_at >= ?
+      ORDER BY bp.published_date DESC
+      LIMIT 100
     `;
     
     const cacheKey = `sentiments-${ticker}-${period}-v4`;
@@ -53,15 +56,15 @@ export async function GET(
       );
       console.log(`⚡ Found ${sentimentData.length} sentiment records for ${ticker}`);
     } catch (error) {
-      console.error('💥 post_stock_analysis 테이블 조회 실패:', error);
+      console.error('💥 post_stock_sentiments 테이블 조회 실패:', error);
       
       // 🚨 명확한 문제 표시 - stock-page-requirements.md 위반 상황
       if (error instanceof Error && error.message.includes('no such table')) {
-        console.error('🚨 CRITICAL: post_stock_analysis 테이블이 존재하지 않음 - stock-page-requirements.md 위반');
+        console.error('🚨 CRITICAL: post_stock_sentiments 테이블이 존재하지 않음 - stock-page-requirements.md 위반');
         return NextResponse.json({
-          error: 'post_stock_analysis 테이블이 존재하지 않음',
+          error: 'post_stock_sentiments 테이블이 존재하지 않음',
           code: 'TABLE_NOT_FOUND', 
-          message: 'stock-page-requirements.md에서 요구하는 post_stock_analysis 테이블이 데이터베이스에 없습니다.'
+          message: 'stock-page-requirements.md에서 요구하는 post_stock_sentiments 테이블이 데이터베이스에 없습니다.'
         }, { status: 500 });
       }
       
@@ -75,59 +78,78 @@ export async function GET(
     
     // 🚨 데이터 없음을 명확히 표시 - stock-page-requirements.md 위반 상황
     if (sentimentData.length === 0) {
-      console.error(`🚨 WARNING: ${ticker}에 대한 감정 분석 데이터 없음 - post_stock_analysis 테이블 비어있음`);
+      console.warn(`📊 INFO: ${ticker}에 대한 감정 분석 데이터 없음 - post_stock_sentiments 테이블에서 해당 종목 데이터 없음`);
       return NextResponse.json({
         ticker,
         period,
         sentimentByDate: {},
         summary: { positive: 0, negative: 0, neutral: 0, total: 0 },
         totalMentions: 0,
-        warning: 'post_stock_analysis 테이블에 감정 분석 데이터가 없습니다',
-        message: 'stock-page-requirements.md 요구사항을 충족하려면 감정 분석 데이터가 필요합니다'
+        averageConfidence: 0,
+        success: true
       });
     }
     
-    // 간단한 데이터 그룹핑
-    const sentimentByDate: any = {};
-    const sentimentSummary = { positive: 0, negative: 0, neutral: 0, total: 0 };
+    // 📊 날짜별 감정 분석 데이터 그룹화 (stock-page-requirements.md 요구사항)
+    const sentimentByDate: { [date: string]: any } = {};
+    const summary = { positive: 0, negative: 0, neutral: 0, total: 0 };
     
     sentimentData.forEach(record => {
-      const dateStr = record.created_date || record.analyzed_at;
-      const date = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
+      const dateKey = record.date_key; // DATE(bp.published_date) 사용
       
-      if (!sentimentByDate[date]) {
-        sentimentByDate[date] = {
-          date,
-          postSentimentPairs: []
+      if (!sentimentByDate[dateKey]) {
+        sentimentByDate[dateKey] = {
+          date: dateKey,
+          sentiments: [],
+          posts: []
         };
       }
       
-      sentimentByDate[date].postSentimentPairs.push({
-        post: { 
-          id: record.post_id,
-          title: record.post_title || ''
-        },
-        sentiment: {
-          sentiment: record.sentiment,
-          reasoning: record.key_reasoning || ''
+      // 감정 분석 데이터 추가 (요구사항 구조)
+      sentimentByDate[dateKey].sentiments.push({
+        sentiment: record.sentiment,
+        score: 0, // sentiment_score가 없으므로 기본값
+        confidence: parseFloat(record.confidence || '0.8'),
+        reasoning: record.key_reasoning || '',
+        keywords: {
+          positive: [],
+          negative: [],
+          neutral: []
         }
       });
       
-      // 집계
-      if (record.sentiment === 'positive') sentimentSummary.positive++;
-      else if (record.sentiment === 'negative') sentimentSummary.negative++;
-      else if (record.sentiment === 'neutral') sentimentSummary.neutral++;
-      sentimentSummary.total++;
+      // 포스트 정보 추가
+      sentimentByDate[dateKey].posts.push({
+        id: record.post_id,
+        title: record.post_title || '',
+        date: record.published_date || record.created_date
+      });
+      
+      // 요약 통계 집계
+      if (record.sentiment === 'positive') summary.positive++;
+      else if (record.sentiment === 'negative') summary.negative++;
+      else if (record.sentiment === 'neutral') summary.neutral++;
+      summary.total++;
     });
     
-    console.log(`📈 Found ${sentimentData.length} sentiment records for ${ticker} (${period})`);
+    // 평균 신뢰도 계산
+    const avgConfidence = sentimentData.length > 0 
+      ? sentimentData.reduce((sum, item) => sum + parseFloat(item.confidence || '0.8'), 0) / sentimentData.length
+      : 0;
+    
+    console.log(`✅ Processed ${sentimentData.length} sentiment records for ${ticker} (${period})`);
+    console.log(`📈 Summary: positive=${summary.positive}, negative=${summary.negative}, neutral=${summary.neutral}`);
     
     return NextResponse.json({
-      ticker,
-      period,
-      sentimentByDate,
-      summary: sentimentSummary,
-      totalMentions: sentimentSummary.total
+      success: true,
+      data: {
+        ticker,
+        period,
+        sentimentByDate,
+        summary,
+        totalMentions: summary.total,
+        averageConfidence: Math.round(avgConfidence * 100) / 100
+      }
     });
     
   } catch (error) {

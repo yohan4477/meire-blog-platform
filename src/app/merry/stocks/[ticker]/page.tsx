@@ -5,24 +5,20 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+// 실제 사용되는 필수 아이콘만 import (모듈 최소화)
 import { 
   TrendingUp, 
   TrendingDown, 
   Minus, 
   ChevronLeft, 
   Calendar,
-  Hash,
-  BarChart3,
-  ExternalLink,
-  Clock,
   FileText
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { StockTags } from '@/components/ui/StockTags';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
-// 동적 import로 차트 컴포넌트 최적화
+// 동적 import로 주요 컴포넌트들 최적화 (컴파일 시간 단축)
 const StockPriceChart = dynamic(
   () => import('@/components/merry/StockPriceChart').then(mod => ({ default: mod.default })),
   { 
@@ -30,6 +26,9 @@ const StockPriceChart = dynamic(
     ssr: false 
   }
 );
+
+// StockTags는 일반 import로 복원 (동적 import 오류 수정)
+import { StockTags } from '@/components/ui/StockTags';
 
 interface Stock {
   ticker: string;

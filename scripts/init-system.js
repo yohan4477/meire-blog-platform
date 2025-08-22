@@ -403,12 +403,8 @@ async function main() {
     
     console.log('\n🚀 Next Steps:');
     console.log('  1. Configure environment variables (copy .env.example to .env)');
-    console.log('  2. Choose deployment method:');
-    console.log('     • GitHub Actions: Push to repository');
+    console.log('  2. Start crawler scheduler:');
     console.log('     • Node.js: node scripts/node-scheduler.js --mode=standalone');
-    console.log('     • PM2: pm2 start deployment/pm2.config.js');
-    console.log('     • Docker: docker-compose -f deployment/docker/docker-compose.yml up -d');
-    console.log('     • Windows: PowerShell deployment/windows/setup-task-scheduler.ps1');
     console.log('  3. Run health check: node scripts/health-check.js --detailed');
     console.log('  4. Test individual components:');
     console.log('     • node scripts/update-stock-mentions.js --date=2025-08-21');

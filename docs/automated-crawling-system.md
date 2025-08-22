@@ -32,24 +32,9 @@ A comprehensive automated crawling and update system for the Meire blog platform
 - **Context7 MCP** - Documentation patterns and best practices
 - **Magic MCP** - UI component generation and optimization
 
-### Deployment Options
+### Execution Method
 
-#### 1. GitHub Actions (Recommended)
-```yaml
-# Automated execution every 3 hours
-# File: .github/workflows/automated-crawling.yml
-schedule:
-  - cron: '0 15,18,21,0,3,6,9,12 * * *'  # UTC times for KST
-```
-
-**Features:**
-- Cloud-based execution
-- Built-in logging and notifications
-- Automatic retry on failure
-- Environment variable management
-- Database backup and artifact storage
-
-#### 2. Node.js Scheduler
+#### Node.js Scheduler
 ```bash
 # Start standalone scheduler
 node scripts/node-scheduler.js --mode=standalone
@@ -64,55 +49,6 @@ node scripts/node-scheduler.js --immediate --single-run
 - Advanced error handling
 - Resource usage monitoring
 - Custom notification webhooks
-
-#### 3. PM2 Process Manager
-```bash
-# Install PM2 globally
-npm install -g pm2
-
-# Start with PM2
-pm2 start deployment/pm2.config.js
-
-# Monitor processes
-pm2 status
-pm2 logs meire-crawler
-```
-
-**Features:**
-- Production-ready process management
-- Automatic restart on failure
-- Log rotation and monitoring
-- CPU and memory usage tracking
-- Cluster mode support
-
-#### 4. Docker Container
-```bash
-# Build image
-docker build -t meire-crawler -f deployment/docker/Dockerfile .
-
-# Run with Docker Compose
-docker-compose -f deployment/docker/docker-compose.yml up -d
-```
-
-**Features:**
-- Containerized execution
-- Environment isolation
-- Resource limits and monitoring
-- Persistent data storage
-- Health checks and recovery
-
-#### 5. Windows Task Scheduler
-```powershell
-# Run as Administrator
-PowerShell -ExecutionPolicy Bypass -File deployment\windows\setup-task-scheduler.ps1
-```
-
-**Features:**
-- Native Windows integration
-- System-level scheduling
-- User account management
-- Email notifications on failure
-- Event log integration
 
 ## 🗄️ Database Schema
 
@@ -391,59 +327,36 @@ db.close();
 "
 ```
 
-## 🚀 Deployment Guide
+## 🚀 실행 가이드
 
-### Quick Setup
-1. **Clone and Install**
-   ```bash
-   git clone <repository>
-   cd meire-blog-platform
-   npm install
-   ```
-
-2. **Environment Setup**
+### 기본 설정
+1. **환경 설정**
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
-3. **Database Migration**
+2. **데이터베이스 마이그레이션**
    ```bash
    node scripts/migrate-database.js
    ```
 
-4. **Choose Deployment Method**
+3. **스케줄러 실행**
    ```bash
-   # Option 1: GitHub Actions (recommended)
-   git push origin main
-
-   # Option 2: Node.js Scheduler
+   # Node.js 스케줄러 실행
    node scripts/node-scheduler.js --mode=standalone
-
-   # Option 3: PM2
-   pm2 start deployment/pm2.config.js
-
-   # Option 4: Docker
-   docker-compose -f deployment/docker/docker-compose.yml up -d
-
-   # Option 5: Windows Task Scheduler (Windows only)
-   PowerShell -ExecutionPolicy Bypass -File deployment\windows\setup-task-scheduler.ps1
    ```
 
-5. **Verify Operation**
+4. **동작 확인**
    ```bash
    node scripts/health-check.js --detailed
    ```
 
-### Production Checklist
-- [ ] Environment variables configured
-- [ ] Database backup strategy implemented
-- [ ] Monitoring and alerting configured
-- [ ] Log rotation configured
-- [ ] Resource limits set
-- [ ] Security hardening applied
-- [ ] Performance baselines established
-- [ ] Disaster recovery plan documented
+### 확인 사항
+- [ ] 환경 변수 설정 완료
+- [ ] 데이터베이스 연결 확인
+- [ ] 로그 파일 생성 확인
+- [ ] 성능 기준 확인
 
 ## 📞 Support
 
