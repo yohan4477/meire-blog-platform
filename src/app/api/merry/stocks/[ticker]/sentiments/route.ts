@@ -3,12 +3,25 @@ import { NextRequest, NextResponse } from 'next/server';
 const { getStockDB } = require('@/lib/stock-db-sqlite3');
 import { performantDb } from '@/lib/db-performance';
 
+// 티커 매핑 테이블 - 잘못된 티커를 올바른 티커로 수정
+const TICKER_MAPPING: Record<string, string> = {
+  'OCLR': 'OKLO', // Oklo Inc - 잘못된 티커 OCLR을 올바른 OKLO로 매핑
+};
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ ticker: string }> }
 ) {
   try {
-    const { ticker } = await context.params;
+    const { ticker: rawTicker } = await context.params;
+    let ticker = rawTicker.toUpperCase();
+    
+    // 티커 매핑 확인 및 변경
+    const originalTicker = ticker;
+    if (TICKER_MAPPING[ticker]) {
+      ticker = TICKER_MAPPING[ticker];
+      console.log(`🔄 Sentiments API Ticker mapping: ${originalTicker} → ${ticker}`);
+    }
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '6mo';
     
@@ -26,21 +39,22 @@ export async function GET(
     startDate.setDate(startDate.getDate() - periodDays);
     const startDateString = startDate.toISOString().replace('T', ' ').replace('Z', '');
     
-    // 🔥 post_stock_sentiments 테이블에서 감정 분석 데이터 조회 (sentiments 테이블에서 복사됨)
+    // 🔥 post_stock_analysis 테이블에서 감정 분석 데이터 조회 (stock-page-requirements.md 준수)
     const query = `
       SELECT 
-        pss.sentiment,
-        pss.reasoning as key_reasoning,
-        pss.analyzed_at as created_date,
-        pss.post_id,
-        pss.confidence,
+        psa.sentiment,
+        psa.sentiment_score,
+        psa.reasoning as key_reasoning,
+        psa.analyzed_at,
+        psa.log_no,
+        psa.confidence,
         bp.title as post_title,
-        bp.published_date,
-        DATE(bp.published_date) as date_key
-      FROM post_stock_sentiments pss
-      LEFT JOIN blog_posts bp ON pss.post_id = bp.id
-      WHERE pss.ticker = ? AND pss.analyzed_at >= ?
-      ORDER BY bp.published_date DESC
+        bp.created_date,
+        DATE(bp.created_date) as date_key
+      FROM post_stock_analysis psa
+      LEFT JOIN blog_posts bp ON psa.log_no = bp.log_no
+      WHERE psa.ticker = ? AND psa.analyzed_at >= ?
+      ORDER BY bp.created_date DESC
       LIMIT 100
     `;
     
@@ -56,15 +70,15 @@ export async function GET(
       );
       console.log(`⚡ Found ${sentimentData.length} sentiment records for ${ticker}`);
     } catch (error) {
-      console.error('💥 post_stock_sentiments 테이블 조회 실패:', error);
+      console.error('💥 post_stock_analysis 테이블 조회 실패:', error);
       
       // 🚨 명확한 문제 표시 - stock-page-requirements.md 위반 상황
       if (error instanceof Error && error.message.includes('no such table')) {
-        console.error('🚨 CRITICAL: post_stock_sentiments 테이블이 존재하지 않음 - stock-page-requirements.md 위반');
+        console.error('🚨 CRITICAL: post_stock_analysis 테이블이 존재하지 않음 - stock-page-requirements.md 위반');
         return NextResponse.json({
-          error: 'post_stock_sentiments 테이블이 존재하지 않음',
+          error: 'post_stock_analysis 테이블이 존재하지 않음',
           code: 'TABLE_NOT_FOUND', 
-          message: 'stock-page-requirements.md에서 요구하는 post_stock_sentiments 테이블이 데이터베이스에 없습니다.'
+          message: 'stock-page-requirements.md에서 요구하는 post_stock_analysis 테이블이 데이터베이스에 없습니다.'
         }, { status: 500 });
       }
       
@@ -78,7 +92,7 @@ export async function GET(
     
     // 🚨 데이터 없음을 명확히 표시 - stock-page-requirements.md 위반 상황
     if (sentimentData.length === 0) {
-      console.warn(`📊 INFO: ${ticker}에 대한 감정 분석 데이터 없음 - post_stock_sentiments 테이블에서 해당 종목 데이터 없음`);
+      console.warn(`📊 INFO: ${ticker}에 대한 감정 분석 데이터 없음 - post_stock_analysis 테이블에서 해당 종목 데이터 없음`);
       return NextResponse.json({
         ticker,
         period,
@@ -108,7 +122,7 @@ export async function GET(
       // 감정 분석 데이터 추가 (요구사항 구조)
       sentimentByDate[dateKey].sentiments.push({
         sentiment: record.sentiment,
-        score: 0, // sentiment_score가 없으므로 기본값
+        score: parseFloat(record.sentiment_score || '0'),
         confidence: parseFloat(record.confidence || '0.8'),
         reasoning: record.key_reasoning || '',
         keywords: {
@@ -120,9 +134,9 @@ export async function GET(
       
       // 포스트 정보 추가
       sentimentByDate[dateKey].posts.push({
-        id: record.post_id,
+        id: record.log_no,
         title: record.post_title || '',
-        date: record.published_date || record.created_date
+        date: record.created_date
       });
       
       // 요약 통계 집계

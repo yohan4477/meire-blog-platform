@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('🎯 실제 사용자 상호작용 테스트 - 3초씩 상호작용', () => {
   test('메인 페이지 → TSLA 차트 페이지 상호작용 테스트', async ({ page }) => {

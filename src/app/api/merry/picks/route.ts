@@ -172,16 +172,54 @@ const TICKER_NAME_MAP: Record<string, string[]> = {
   'UNH': ['유나이티드헬스', '유나이티드헬스그룹', 'UnitedHealth']
 };
 
+// Helper function to get sentiment analysis count for each ticker
+async function getAnalyzedCounts(): Promise<Record<string, number>> {
+  const query = `
+    SELECT ticker, COUNT(*) as analyzed_count 
+    FROM post_stock_analysis 
+    GROUP BY ticker
+  `;
+  
+  try {
+    const rows = await new Promise<any[]>((resolve, reject) => {
+      const StockDB = require('../../../../lib/stock-db-sqlite3');
+      const stockDB = new StockDB();
+      stockDB.connect().then(() => {
+        stockDB.db.all(query, [], (err: any, rows: any) => {
+          stockDB.close();
+          if (err) reject(err);
+          else resolve(rows || []);
+        });
+      });
+    });
+    
+    const analyzedCounts: Record<string, number> = {};
+    
+    rows.forEach(row => {
+      analyzedCounts[row.ticker] = row.analyzed_count;
+    });
+    
+    console.log(`📊 Loaded analyzed counts for ${Object.keys(analyzedCounts).length} tickers`);
+    return analyzedCounts;
+  } catch (error) {
+    console.error('Failed to get analyzed counts:', error);
+    return {};
+  }
+}
+
 async function getMerryPicksFromDB(limit: number): Promise<any[]> {
   try {
     const startTime = Date.now();
     console.log(`⭐ Fetching Merry's picks with performance optimization (limit: ${limit})`);
     
+    // Get analyzed counts for sentiment analysis
+    const analyzedCounts = await getAnalyzedCounts();
+    
     // Use high-performance database helper
     const recentPosts = await getRecentPosts(90); // 90 days
     console.log(`📊 Found ${recentPosts.length} recent posts (${Date.now() - startTime}ms)`);
 
-    // 각 종목별 최신 언급일과 언급 횟수 계산 (병렬 처리)
+    // 각 종목별 최신 언급일과 고유 포스트 수 계산 (중복 제거)
     const stockMentions: Record<string, any> = {};
 
     // Optimize content matching with pre-compiled regex
@@ -199,16 +237,21 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
             stockMentions[ticker] = {
               ticker,
               mentions: [],
+              uniquePostIds: new Set(), // 🔧 중복 제거를 위한 Set 추가
               count: 0
             };
           }
           
-          stockMentions[ticker].mentions.push({
-            post_id: post.id,
-            title: post.title,
-            created_date: post.created_date
-          });
-          stockMentions[ticker].count++;
+          // 🔧 이미 추가된 포스트인지 확인 (중복 방지)
+          if (!stockMentions[ticker].uniquePostIds.has(post.id)) {
+            stockMentions[ticker].mentions.push({
+              log_no: post.id,
+              title: post.title,
+              created_date: post.created_date
+            });
+            stockMentions[ticker].uniquePostIds.add(post.id);
+            stockMentions[ticker].count++; // 🔧 고유 포스트만 카운트
+          }
         }
       }
     };
@@ -246,7 +289,8 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
           current_price: null,
           price_change: null,
           sentiment: 'neutral',
-          description: stockInfo.description
+          description: stockInfo.description,
+          analyzed_count: analyzedCounts[stock.ticker] || 0 // Actual sentiment analysis count
         };
       })
       .sort((a: any, b: any) => {

@@ -428,6 +428,12 @@ export class BlogCrawler {
       content = content.replace(/© CoolPublicDomains,?\s*출처\s*OGQ/g, '');
       content = content.replace(/© CoolPublicDomains/g, '');
       
+      // 네이버블로그 관련 표기 제거
+      content = content.replace(/:\s*네이버블로그/gi, '');
+      content = content.replace(/네이버블로그\s*/gi, '');
+      content = content.replace(/\(\s*\.\.\s*:\s*네이버블로그/gi, '');
+      content = content.replace(/\d+\s*\(\s*\.\.\s*:\s*네이버블로그/gi, '');
+      
       // 연속된 빈 줄 정리
       content = content.replace(/\n\s*\n/g, '\n').trim();
       

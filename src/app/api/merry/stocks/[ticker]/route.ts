@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 const StockDB = require('../../../../../lib/stock-db-sqlite3.js');
 
+// 티커 매핑 테이블 - 잘못된 티커를 올바른 티커로 수정
+const TICKER_MAPPING: Record<string, string> = {
+  'OCLR': 'OKLO', // Oklo Inc - 잘못된 티커 OCLR을 올바른 OKLO로 매핑
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ ticker: string }> }
 ) {
   try {
     const { ticker: rawTicker } = await params;
-    const ticker = rawTicker.toUpperCase();
+    let ticker = rawTicker.toUpperCase();
+    
+    // 티커 매핑 확인 및 변경
+    const originalTicker = ticker;
+    if (TICKER_MAPPING[ticker]) {
+      ticker = TICKER_MAPPING[ticker];
+      console.log(`🔄 Ticker mapping: ${originalTicker} → ${ticker}`);
+    }
+    
     console.log(`📊 Fetching stock data for: ${ticker}`);
     
     const stockDB = new StockDB();
@@ -41,6 +54,25 @@ export async function GET(
       relatedPosts = await stockDB.getRelatedPosts(ticker, 10, 0);
     } catch (error) {
       console.log('관련 포스트 조회 실패, 빈 배열 사용');
+    }
+    
+    // 감정 분석 개수 가져오기 (post_stock_analysis 테이블)
+    let analyzedCount = 0;
+    try {
+      const analyzedResult = await new Promise<any>((resolve, reject) => {
+        stockDB.db.get(
+          'SELECT COUNT(*) as count FROM post_stock_analysis WHERE ticker = ?',
+          [ticker],
+          (err: any, row: any) => {
+            if (err) reject(err);
+            else resolve(row);
+          }
+        );
+      });
+      analyzedCount = analyzedResult?.count || 0;
+      console.log(`📊 Found ${analyzedCount} analyzed posts for ${ticker}`);
+    } catch (error) {
+      console.log('감정 분석 개수 조회 실패:', error);
     }
     
     // 실시간 가격 정보 가져오기
@@ -117,7 +149,7 @@ export async function GET(
         // 메르 언급 정보
         mentions: mentions.map((m: any) => ({
           date: m.mentioned_date?.split(' ')[0] || m.mentioned_date,
-          postId: m.post_id,
+          postId: m.log_no,
           sentiment: m.mention_type || 'neutral',
           context: m.context
         })),
@@ -130,7 +162,7 @@ export async function GET(
           totalMentions: basicInfo.mention_count || mentions.length,
           firstMention: basicInfo.first_mentioned_date,
           lastMention: basicInfo.last_mentioned_date || basicInfo.last_mentioned_at,
-          totalPosts: relatedPosts.total
+          totalPosts: analyzedCount
         }
       }
     };

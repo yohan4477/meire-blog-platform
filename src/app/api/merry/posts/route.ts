@@ -24,19 +24,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return new Promise((resolve) => {
       let query = `
         SELECT 
-          id, 
-          log_no,
-          title, 
-          content, 
-          excerpt, 
-          category, 
-          author,
-          created_date as createdAt,
-          views,
-          likes,
-          comments_count as comments,
-          featured
-        FROM blog_posts 
+          bp.id, 
+          bp.log_no,
+          bp.title, 
+          bp.content, 
+          bp.excerpt, 
+          bp.category, 
+          bp.author,
+          bp.created_date as createdAt,
+          bp.views,
+          bp.likes,
+          bp.comments_count as comments,
+          bp.featured,
+          bp.mentioned_stocks,
+          bp.investment_theme,
+          bp.sentiment_tone,
+          pa.summary as claudeSummary
+        FROM blog_posts bp
+        LEFT JOIN post_analysis pa ON bp.log_no = pa.log_no
       `;
       
       const params: any[] = [];
@@ -109,7 +114,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // 특정 종목 필터링 (merry_mentioned_stocks 테이블 활용)
       if (tickerFilter) {
         conditions.push(`id IN (
-          SELECT DISTINCT post_id 
+          SELECT DISTINCT log_no 
           FROM merry_mentioned_stocks 
           WHERE ticker = ?
         )`);
@@ -150,13 +155,37 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             return;
           }
           
+          // 단일 포스트에도 새로운 컬럼 적용
+          const mentionedStocks = post.mentioned_stocks ? post.mentioned_stocks.split(',') : [];
+          const investmentTheme = post.investment_theme || '';
+          const sentimentTone = post.sentiment_tone || '';
+          
+          const dynamicTags = [];
+          if (mentionedStocks.length > 0) {
+            dynamicTags.push(...mentionedStocks.slice(0, 2));
+          }
+          if (investmentTheme) {
+            dynamicTags.push(investmentTheme);
+          }
+          if (sentimentTone) {
+            const sentimentEmoji = sentimentTone === '긍정적' ? '😊' : 
+                                 sentimentTone === '부정적' ? '😰' : 
+                                 sentimentTone === '중립적' ? '😐' : '';
+            if (sentimentEmoji) dynamicTags.push(`${sentimentEmoji}${sentimentTone}`);
+          }
+          
+          const finalTags = dynamicTags.length > 0 ? dynamicTags : ['투자', '분석'];
+
           db.close();
           resolve(NextResponse.json({
             success: true,
             data: {
               ...post,
-              tags: ['투자', '분석', '주식'],
-              excerpt: post.excerpt || post.content?.substring(0, 200) + '...'
+              tags: finalTags,
+              excerpt: post.excerpt || post.content?.substring(0, 200) + '...',
+              mentionedStocks,
+              investmentTheme,
+              sentimentTone
             }
           }));
           return;
@@ -191,20 +220,49 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           const total = countResult?.total || 0;
           
           // 실제 크롤링 데이터 그대로 사용
-          const enrichedPosts = rows.map(post => ({
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            excerpt: post.excerpt || post.content?.substring(0, 200) + '...',
-            category: post.category || '일반',
-            author: post.author || '메르',
-            createdAt: post.createdAt,
-            views: post.views || 0,
-            likes: post.likes || 0,
-            comments: post.comments || 0,
-            tags: ['투자', '분석', '주식'],
-            featured: post.featured === 1
-          }));
+          const enrichedPosts = rows.map(post => {
+            // 새로운 컬럼 데이터 활용
+            const mentionedStocks = post.mentioned_stocks ? post.mentioned_stocks.split(',') : [];
+            const investmentTheme = post.investment_theme || '';
+            const sentimentTone = post.sentiment_tone || '';
+            
+            // 동적 태그 생성 (하드코딩 제거)
+            const dynamicTags = [];
+            if (mentionedStocks.length > 0) {
+              dynamicTags.push(...mentionedStocks.slice(0, 2)); // 최대 2개 종목
+            }
+            if (investmentTheme) {
+              dynamicTags.push(investmentTheme);
+            }
+            if (sentimentTone) {
+              const sentimentEmoji = sentimentTone === '긍정적' ? '😊' : 
+                                   sentimentTone === '부정적' ? '😰' : 
+                                   sentimentTone === '중립적' ? '😐' : '';
+              if (sentimentEmoji) dynamicTags.push(`${sentimentEmoji}${sentimentTone}`);
+            }
+            
+            // 태그가 없으면 기본 태그 사용
+            const finalTags = dynamicTags.length > 0 ? dynamicTags : ['투자', '분석'];
+
+            return {
+              id: post.id,
+              title: post.title,
+              content: post.content,
+              excerpt: post.excerpt || post.content?.substring(0, 200) + '...',
+              category: post.category || '일반',
+              author: post.author || '메르',
+              createdAt: post.createdAt,
+              views: post.views || 0,
+              likes: post.likes || 0,
+              comments: post.comments || 0,
+              tags: finalTags,
+              featured: post.featured === 1,
+              // 새로운 필드들 추가
+              mentionedStocks,
+              investmentTheme,
+              sentimentTone
+            };
+          });
 
           console.log(`✅ Loaded ${enrichedPosts.length} posts from database`);
 

@@ -340,7 +340,13 @@ export default function MerryStockPicks() {
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Hash className="w-3 h-3 flex-shrink-0" />
                     <span className="truncate">
-                      {stock.mention_count}개 포스트 중 {stock.analyzed_count}개 분석 완료
+                      언급 {stock.mention_count}개 · 분석 {stock.analyzed_count}개
+                      {/* 실제 언급 수 정보 표시 (개발 환경에서만) */}
+                      {process.env.NODE_ENV === 'development' && stock.actual_mention_count !== undefined && (
+                        <span className="ml-1 text-gray-400 text-xs" title={`실제 블로그 포스트에서 언급된 횟수: ${stock.actual_mention_count}`}>
+                          (실제: {stock.actual_mention_count})
+                        </span>
+                      )}
                     </span>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test('TSLA 차트 간단 검증', async ({ page }) => {
   console.log('🚀 TSLA 간단 차트 테스트 시작...');

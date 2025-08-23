@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
+
+// 환경 변수에서 포트 가져오기 (기본값: 3004)
+const DEV_PORT = process.env.DEV_PORT || '3004';
+const BASE_URL = `http://localhost:${DEV_PORT}`;
 
 // CLAUDE.md 요구사항: 기본 페이지 접근성 테스트 - API 문제 우회
 test.describe('기본 페이지 접근성 테스트', () => {
@@ -7,7 +12,7 @@ test.describe('기본 페이지 접근성 테스트', () => {
     console.log('🏠 메인 페이지 기본 로딩 테스트');
     
     const startTime = Date.now();
-    await page.goto('http://localhost:3004');
+    await page.goto(BASE_URL);
     const loadTime = Date.now() - startTime;
     
     console.log(`⏱️ 메인 페이지 로딩 시간: ${loadTime}ms`);
@@ -50,7 +55,7 @@ test.describe('기본 페이지 접근성 테스트', () => {
       console.log(`📺 ${viewport.name} 테스트`);
       
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await page.goto('http://localhost:3004');
+      await page.goto(BASE_URL);
       
       // 기본 요소들이 화면에 맞게 표시되는지 확인
       const body = await page.locator('body').boundingBox();
@@ -72,7 +77,7 @@ test.describe('기본 페이지 접근성 테스트', () => {
     
     for (let i = 0; i < 3; i++) {
       const startTime = Date.now();
-      await page.goto('http://localhost:3004');
+      await page.goto(BASE_URL);
       await page.waitForLoadState('networkidle');
       const loadTime = Date.now() - startTime;
       
@@ -100,7 +105,7 @@ test.describe('기본 페이지 접근성 테스트', () => {
   test('메르\'s Pick 섹션 존재 확인 (API 독립적)', async ({ page }) => {
     console.log('🎯 메르\'s Pick 섹션 구조 확인');
     
-    await page.goto('http://localhost:3004');
+    await page.goto(BASE_URL);
     
     // 메르's Pick 제목 존재 확인
     const pickTitle = page.locator('text=메르\'s Pick');

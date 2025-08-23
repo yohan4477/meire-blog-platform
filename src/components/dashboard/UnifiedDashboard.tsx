@@ -21,8 +21,7 @@ import {
   Clock,
   DollarSign,
   PieChart,
-  Activity,
-  Zap
+  Activity
 } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -115,56 +114,12 @@ export default function UnifiedDashboard() {
         description: '최신 AI 분석 결과 및 추천사항',
         icon: <Brain className="h-5 w-5" />,
         href: '/financial-curation'
-      },
-      {
-        id: 'run-workflow',
-        title: '워크플로우 실행',
-        description: 'AI 에이전트 분석 워크플로우 수동 실행',
-        icon: <Zap className="h-5 w-5" />,
-        action: () => executeWorkflow(),
-        loading: false
       }
+      // Agent workflow quick action removed as per user request
     ]);
   };
 
-  const executeWorkflow = async () => {
-    // 워크플로우 액션의 로딩 상태 업데이트
-    setQuickActions(prev => 
-      prev.map(action => 
-        action.id === 'run-workflow' 
-          ? { ...action, loading: true }
-          : action
-      )
-    );
-
-    try {
-      const response = await fetch('/api/agent-workflows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'demo-workflow' })
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        alert('워크플로우가 성공적으로 실행되었습니다!');
-        await initializeDashboard(); // 대시보드 새로고침
-      } else {
-        alert(`워크플로우 실행 실패: ${result.error}`);
-      }
-    } catch (error) {
-      alert('워크플로우 실행 중 오류가 발생했습니다.');
-    } finally {
-      // 로딩 상태 해제
-      setQuickActions(prev => 
-        prev.map(action => 
-          action.id === 'run-workflow' 
-            ? { ...action, loading: false }
-            : action
-        )
-      );
-    }
-  };
+  // Agent workflow function removed as per user request
 
   const refreshDashboard = async () => {
     await initializeDashboard();
@@ -457,24 +412,7 @@ export default function UnifiedDashboard() {
           </div>
         </Card>
 
-        <Card className="p-6">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <Activity className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">에이전트 워크플로우</h3>
-                <p className="text-sm text-gray-500">AI 에이전트 상태 및 작업 관리</p>
-              </div>
-            </div>
-            <Button asChild className="w-full" variant="outline">
-              <Link href="/agent-workflows">
-                워크플로우 보기
-              </Link>
-            </Button>
-          </div>
-        </Card>
+        {/* Agent workflow card removed as per user request */}
       </div>
     </div>
   );

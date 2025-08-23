@@ -21,6 +21,12 @@ interface MerryPost {
   comments: number;
   tags: string[];
   featured: boolean;
+  // 새로운 필드들 추가
+  mentionedStocks?: string[];
+  investmentTheme?: string;
+  sentimentTone?: string;
+  // Claude 분석 결과
+  claudeSummary?: string;
 }
 
 export default function MerryPage() {
@@ -28,16 +34,15 @@ export default function MerryPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [totalPosts, setTotalPosts] = useState<number>(0);
   const [dateFilter, setDateFilter] = useState<string>('all');
-  const [stockFilter, setStockFilter] = useState<boolean>(false);
-  const [macroFilter, setMacroFilter] = useState<boolean>(false);
   const [tickerFilter, setTickerFilter] = useState<string>('all');
   const [availableStocks, setAvailableStocks] = useState<Array<{ticker: string, name: string, count: number}>>([]);
 
   // 필터 변경시 포스트 다시 로드
   useEffect(() => {
     loadPosts(true);
-  }, [dateFilter, stockFilter, macroFilter, tickerFilter]);
+  }, [dateFilter, tickerFilter]);
 
   // 초기 로드 및 종목 목록 로드
   useEffect(() => {
@@ -50,9 +55,9 @@ export default function MerryPage() {
       const response = await fetch('/api/merry/stocks');
       const result = await response.json();
       
-      if (result.success && result.data) {
+      if (result.success && result.data?.stocks) {
         // 언급 횟수가 있는 종목만 필터링하고 정렬
-        const stocksWithMentions = result.data
+        const stocksWithMentions = result.data.stocks
           .filter((stock: any) => stock.mention_count > 0)
           .map((stock: any) => ({
             ticker: stock.ticker,
@@ -87,8 +92,6 @@ export default function MerryPage() {
       });
       
       if (dateFilter && dateFilter !== 'all') params.append('date', dateFilter);
-      if (stockFilter) params.append('stocks', '1');
-      if (macroFilter) params.append('macro', '1');
       if (tickerFilter && tickerFilter !== 'all') params.append('ticker', tickerFilter);
 
       const response = await fetch(`/api/merry/posts?${params.toString()}`);
@@ -108,7 +111,8 @@ export default function MerryPage() {
           likes: post.likes || 0,
           comments: post.comments || 0,
           tags: post.tags || [],
-          featured: post.featured || false
+          featured: post.featured || false,
+          claudeSummary: post.claudeSummary || post.excerpt || post.content?.substring(0, 150) + '...'
         }));
         
         if (resetPosts) {
@@ -119,6 +123,11 @@ export default function MerryPage() {
         
         // 더 보기 버튼 표시 여부 결정
         setHasMore(result.meta?.hasNext || false);
+        
+        // 총 포스트 수 업데이트
+        if (result.meta?.total !== undefined) {
+          setTotalPosts(result.meta.total);
+        }
       } else {
         console.error('포스트 로드 실패:', result.error);
       }
@@ -161,10 +170,10 @@ export default function MerryPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <h1 className="text-4xl font-bold text-foreground mb-4">
           🎭 우리형 메르
         </h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           일상, 투자, 독서, 그리고 삶의 다양한 이야기들을 나누는 공간입니다. 
           메르만의 독특한 시각으로 세상을 바라본 이야기들을 만나보세요.
         </p>
@@ -174,9 +183,9 @@ export default function MerryPage() {
 
       {/* 필터 섹션 */}
       <div className="mb-8">
-        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-          <Filter size={20} className="text-gray-600" />
-          <span className="text-sm font-medium text-gray-700">필터:</span>
+        <div className="flex items-center gap-4 p-4 bg-muted/50 border rounded-lg">
+          <Filter size={20} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">필터:</span>
           
           <Select value={dateFilter} onValueChange={setDateFilter}>
             <SelectTrigger className="w-40">
@@ -191,21 +200,6 @@ export default function MerryPage() {
             </SelectContent>
           </Select>
 
-          <Button 
-            variant={stockFilter ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStockFilter(!stockFilter)}
-          >
-            📈 종목
-          </Button>
-
-          <Button 
-            variant={macroFilter ? "default" : "outline"}
-            size="sm"
-            onClick={() => setMacroFilter(!macroFilter)}
-          >
-            🌐 매크로
-          </Button>
 
           <Select value={tickerFilter} onValueChange={setTickerFilter}>
             <SelectTrigger className="w-48">
@@ -215,20 +209,18 @@ export default function MerryPage() {
               <SelectItem value="all">모든 종목</SelectItem>
               {availableStocks.map((stock) => (
                 <SelectItem key={stock.ticker} value={stock.ticker}>
-                  {stock.name} ({stock.ticker}) - {stock.count}개
+                  {stock.name} ({stock.ticker}) - {stock.count}개 언급
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          {(dateFilter !== 'all' || stockFilter || macroFilter || tickerFilter !== 'all') && (
+          {(dateFilter !== 'all' || tickerFilter !== 'all') && (
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => {
                 setDateFilter('all');
-                setStockFilter(false);
-                setMacroFilter(false);
                 setTickerFilter('all');
               }}
             >
@@ -240,11 +232,11 @@ export default function MerryPage() {
 
       {/* All Posts */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        <h2 className="text-2xl font-bold text-foreground mb-6">
           📝 모든 포스트 
-          {posts.length > 0 && (
-            <span className="text-base font-normal text-gray-500 ml-2">
-              ({posts.length}개)
+          {totalPosts > 0 && (
+            <span className="text-base font-normal text-muted-foreground ml-2">
+              (총 {totalPosts}개)
             </span>
           )}
         </h2>
@@ -254,13 +246,13 @@ export default function MerryPage() {
             <Card key={post.id} className="group hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="group-hover:text-blue-600 transition-colors">
-                  <Link href={`/merry/${post.id}`}>
+                  <Link href={`/merry/posts/${post.id}`}>
                     {post.title}
                   </Link>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
+                <p className="text-gray-600 mb-4 line-clamp-3">{post.claudeSummary || post.excerpt}</p>
                 
                 <div className="flex flex-wrap gap-1 mb-4">
                   {(() => {
@@ -377,7 +369,7 @@ export default function MerryPage() {
           <div className="text-center py-12">
             <div className="text-gray-400 text-lg mb-4">📝</div>
             <p className="text-gray-600">
-              {dateFilter !== 'all' || stockFilter || macroFilter || tickerFilter !== 'all'
+              {dateFilter !== 'all' || tickerFilter !== 'all'
                 ? '선택한 필터에 해당하는 포스트가 없습니다.'
                 : '아직 포스트가 없습니다.'
               }

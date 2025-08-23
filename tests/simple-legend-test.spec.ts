@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test('범례 표시 간단 확인', async ({ page }) => {
   console.log('🧪 간단한 범례 테스트 시작');

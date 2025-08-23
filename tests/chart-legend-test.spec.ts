@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test('차트 범례 항상 중앙 표시 확인', async ({ page }) => {
   console.log('🧪 차트 범례 테스트 시작');

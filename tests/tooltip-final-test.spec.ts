@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('Final Tooltip Update Test', () => {
   test('should verify final tooltip content after removing sections', async ({ page }) => {

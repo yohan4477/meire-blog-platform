@@ -18,14 +18,8 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
-// 동적 import로 주요 컴포넌트들 최적화 (컴파일 시간 단축)
-const StockPriceChart = dynamic(
-  () => import('@/components/merry/StockPriceChart').then(mod => ({ default: mod.default })),
-  { 
-    loading: () => <div className="h-80 bg-gray-100 rounded-lg animate-pulse" />,
-    ssr: false 
-  }
-);
+// 직접 import로 성능 개선 (동적 import 제거)
+import StockPriceChart from '@/components/merry/StockPriceChart';
 
 // StockTags는 일반 import로 복원 (동적 import 오류 수정)
 import { StockTags } from '@/components/ui/StockTags';

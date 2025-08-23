@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 // 주요 페이지 섹션오류 절대 금지 테스트
 test.describe('Critical Sections - Zero Tolerance for Section Errors', () => {

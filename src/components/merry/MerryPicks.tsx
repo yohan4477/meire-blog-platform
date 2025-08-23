@@ -48,15 +48,8 @@ export default function MerryPicks({
     try {
       setLoading(true);
       
-      // CLAUDE.md 캐시 무효화 요구사항: 실시간 업데이트 지원
-      const cacheBuster = Date.now();
-      const response = await fetch(`/api/merry/picks?limit=${limit}&t=${cacheBuster}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      });
+      // 메인 페이지 성능 최적화: 30초 캐시 활용
+      const response = await fetch(`/api/merry/picks?limit=${limit}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -275,7 +268,7 @@ export default function MerryPicks({
                         })}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        # {stock.mention_count}개 포스트
+                        # {stock.mention_count}개 포스트 (고유)
                       </div>
                     </div>
                   </div>

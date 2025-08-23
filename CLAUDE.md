@@ -97,6 +97,12 @@
 - **결과 및 효과**: 어떤 결과를 얻었는지
 - **Claude Code 보조 도구**: 어떤 기본 도구를 보완적으로 사용했는지
 
+**🚨 날짜/타임스탬프 처리 원칙 (필수):**
+- **Unix timestamp는 밀리초 단위**: JavaScript Date.now() 형식 (1755879515528)
+- **2025년 8월 날짜는 정상**: 1755879515528 = 2025-08-23 01:18:35 (한국시간)
+- **created_date는 올바른 형식**: 밀리초 타임스탬프로 저장됨
+- **날짜 검증 금지**: 타임스탬프가 미래 날짜라고 오해하지 말 것
+
 ### 2. 🔗 대표적인 MCP 활용 (필수)
 
 프로젝트에서 다음 대표적인 MCP들을 적극 활용하고 사용 시 명시해야 합니다:
@@ -155,7 +161,71 @@
 - post_stock_sentiments (감정 분석 결과)
 ```
 
-### 4. 🧪 Playwright 테스트로 모든 테스트 완료 (필수)
+### 4. 🤖 Claude 직접 업데이트 시스템 (중요)
+
+**Claude가 직접 F12 네트워크 분석을 통해 자동으로 업데이트를 수행합니다:**
+
+#### Claude 직접 업데이트 원칙:
+- **크롤링 스크립트 금지**: 별도 스크립트 사용 안함 (automated-crawl.js, node-scheduler.js, claude-automated-scheduler.js 삭제됨)
+- **Claude 직접 수행**: F12 네트워크 탭 방식으로 Claude가 직접 데이터 수집
+- **자동 트리거**: 시스템이 자동으로 Claude에게 업데이트 요청
+- **핵심 문서**: `@docs/update-requirements.md` - Claude가 이 문서를 참조하여 업데이트 수행
+
+#### Claude 업데이트 프로세스 (`update-requirements.md` 기준):
+1. **포스트 크롤링**: Claude가 F12 네트워크 방식으로 메르 블로그 직접 분석
+2. **종목 추출**: Claude가 포스트 내용에서 언급된 종목 직접 분석
+3. **메르's Pick 갱신**: Claude가 최근 언급 종목 자동 업데이트
+4. **종가 데이터 수집**: Claude가 메르가 언급한 종목의 주가 데이터 수집
+5. **감정 분석**: Claude가 포스트 내용을 직접 분석하여 감정 판단
+
+#### CLAUDE.md 철학 준수:
+- **✅ 허용**: Claude 직접 분석, F12 네트워크 방식, 사용자 요청 및 자동 트리거 기반 작업
+- **❌ 금지**: 별도 크롤링 스크립트, 외부 AI API, 키워드 기반 자동 분석
+
+#### 자동 트리거 방식:
+- **스케줄**: 3시간 20분마다 Claude가 업데이트 수행 (00:20, 03:20, 06:20, 09:20, 12:20, 15:20, 18:20, 21:20 KST)
+- **업데이트 방향**: 
+  1. 📊 **종목 종가 업데이트** - 15:20(국내장), 06:20(국외장)
+  2. 📝 **포스트 업데이트** - 3시간 20분마다
+- **모니터링**: Claude가 직접 데이터베이스 상태 확인 및 품질 검증
+
+### 5. 🚨 데이터 정합성 검증 (필수)
+
+**언급/분석 개수 불일치 방지를 위한 핵심 원칙:**
+
+#### 🔍 **문제 진단 및 방지**
+- **문제**: `post_stock_analysis` 테이블 분석 개수 > 실제 `blog_posts` 언급 개수
+- **원인**: 중복 분석 데이터 또는 실제 언급 없는 분석 데이터 생성
+- **해결**: 실제 blog_posts 기반 정확한 언급 수 계산 필수
+
+#### ✅ **필수 SQL 패턴 (절대 준수)**
+```sql
+-- ❌ 잘못된 방식 (중복 허용)
+COUNT(psa.id) as analyzed_count
+
+-- ✅ 올바른 방식 (DISTINCT 사용)  
+COUNT(DISTINCT psa.post_id) as analyzed_count,
+(SELECT COUNT(DISTINCT bp.id) FROM blog_posts bp 
+ WHERE bp.title LIKE '%' || s.ticker || '%' OR bp.content LIKE '%' || s.ticker || '%') as actual_mention_count
+```
+
+#### 🔧 **로직 규칙 (절대 준수)**
+```typescript
+// ✅ 정합성 보장 계산
+mention_count: Math.max(stock.actual_mention_count, stock.analyzed_count)
+
+// ❌ 금지: 기존 값 그대로 사용 (부정확)
+mention_count: stock.mention_count
+```
+
+#### 📋 **개발 시 필수 체크리스트**
+1. **DISTINCT 사용**: 모든 COUNT 쿼리에서 중복 제거
+2. **실제 언급 수 확인**: blog_posts에서 직접 조회
+3. **논리적 일관성**: `mention_count >= analyzed_count` 항상 보장
+4. **중복 방지**: 같은 post_id + ticker 조합 중복 금지
+5. **테스트 검증**: API 응답에서 데이터 정합성 확인
+
+### 6. 🧪 Playwright 테스트로 모든 테스트 완료 (필수)
 
 **모든 테스트는 반드시 Playwright를 활용하여 끝내야 합니다:**
 
@@ -178,7 +248,34 @@
 - 모바일 반응형 (Pixel 5, iPhone 12)
 - 핵심 사용자 플로우
 
-### 5. 🚨 실제 사용자 문제 근본 해결 원칙 (필수)
+#### 🧹 **테스트 페이지 정리 요구사항 (필수)**
+**테스트를 위해 열어버린 사이트는 테스트를 끝내고 다 닫는다!**
+
+```javascript
+test.describe('테스트 그룹', () => {
+  let openedPages = []; // 테스트 중 열린 페이지들 추적
+
+  test.afterEach(async ({ page }) => {
+    // 🧹 테스트 중 열린 모든 페이지 정리
+    for (const openedPage of openedPages) {
+      try {
+        if (!openedPage.isClosed()) {
+          await openedPage.close();
+          console.log('✅ 테스트 페이지 정리 완료');
+        }
+      } catch (error) {
+        console.log('⚠️ 페이지 정리 중 오류:', error.message);
+      }
+    }
+    openedPages = []; // 배열 초기화
+  });
+});
+```
+
+**정리 대상**: 외부 링크, 팝업, 모달, iframe, 임시 페이지 등 모든 열린 페이지
+**참조 문서**: `@docs/testing-requirements.md` (테스트 정리 섹션 참조)
+
+### 7. 🚨 실제 사용자 문제 근본 해결 원칙 (필수)
 
 **실제 운영 환경에서 발생하는 사용자 문제를 완전히 근절하기 위한 핵심 원칙:**
 
@@ -215,47 +312,75 @@
 
 **각 영역을 개발하거나 수정할 때는 반드시 해당 문서를 먼저 확인하세요:**
 
-### 🎯 **메르's Pick 개발 시**
-- **참조 문서**: `@docs/merry-pick-requirements.md`
-- **담당 컴포넌트**: `src/components/merry/MerryPickSection.tsx`
-- **관련 API**: `/api/merry/stocks`
-- **핵심 요약**: 최근 언급일 순 정렬, 5-10개 종목 표시, 실시간 가격 연동
+### 📋 **메르 블로그 개발 시** (`/merry`)
+- **참조 문서**: `@docs/post-list-page-requirements.md`
+- **담당 컴포넌트**: `src/app/merry/page.tsx`
+- **관련 API**: `/api/merry/posts`, `/api/merry/stocks`
+- **핵심 기능**: 포스트 필터링, 검색, 다크모드, 페이지네이션
 
-### 📊 **종목 페이지 개발 시**
+#### 🎨 **UI/UX 핵심 요구사항**
+- **제목**: "🎭 우리형 메르" (text-foreground)
+- **부제목**: "일상, 투자, 독서, 그리고 삶의 다양한 이야기들..." (text-muted-foreground)
+- **필터 섹션**: 기간/종목/매크로/특정종목 필터 (bg-muted/50 border)
+- **포스트 카드**: 그리드 레이아웃 (md:grid-cols-2 lg:grid-cols-3)
+- **페이지네이션**: 10개씩 "더보기" 버튼
+
+#### 🌈 **다크 모드 필수 지원**
+```css
+/* ✅ 다크 모드 호환 색상 */
+text-foreground        /* 주요 텍스트 */
+text-muted-foreground  /* 보조 텍스트 */
+bg-muted/50           /* 필터 배경 */
+bg-card               /* 카드 배경 */
+border                /* 테두리 */
+
+/* ❌ 사용 금지 색상 */
+text-gray-900         /* 하드코딩된 회색 */
+bg-gray-50           /* 하드코딩된 배경 */
+```
+
+#### 🏷️ **동적 태그 시스템**
+- **🚨 가짜 태그 생성 절대 금지**: 포스트에 실제로 없는 내용으로 태그 생성 금지
+- **데이터 기반**: mentioned_stocks, investment_theme, sentiment_tone 필드 활용
+- **우선순위**: 언급 종목 (최대 2개) → 투자 테마 → 감정 톤
+- **Fallback**: 모든 필드 비어있을 경우 기본 태그 ['투자', '분석'] 사용
+
+#### ⚡ **성능 요구사항**
+- **초기 로딩**: < 3초 (CLAUDE.md 핵심 원칙)
+- **API 응답**: < 500ms
+- **필터 적용**: < 800ms
+- **실제 총 개수**: `result.meta.total`로 DB 기반 정확한 포스트 수 표시
+
+### 📄 **개별 포스트 개발 시** (`/merry/[id]`)
+- **참조 문서**: `@docs/post-page-requirements.md`
+- **담당 컴포넌트**: `src/app/merry/[id]/page.tsx`
+- **관련 API**: `/api/merry/[id]`
+
+### 🎯 **메르's Pick 개발 시**
+- **참조 문서**: `@docs/merry-picks-requirements.md`
+- **담당 컴포넌트**: `src/components/merry/MerryPicks.tsx`
+- **관련 API**: `/api/merry/picks`
+
+### 📊 **종목 페이지 개발 시** (`/merry/stocks/[ticker]`)
 - **참조 문서**: `@docs/stock-page-requirements.md` (필수 참조)
 - **담당 컴포넌트**: `src/app/merry/stocks/[ticker]/page.tsx`, `src/components/merry/StockPriceChart.tsx`
 - **관련 API**: `/api/merry/stocks/[ticker]`, `/api/merry/stocks/[ticker]/sentiments`
-- **핵심 구조**: 종목 헤더(stocks + Finance API) | 차트(stock-page-requirements.md 차트 섹션) | 관련 포스트(blog_posts)
-- **핵심 요약**: 3개 섹션 독립 렌더링, 허용 테이블 4개만 사용, 3초 로딩 제한, 실시간 가격 연동
 
 ### 📊 **종목 차트 개발 시**  
 - **참조 문서**: `@docs/stock-page-requirements.md` 차트 섹션 (필수 참조)
 - **담당 컴포넌트**: `src/components/merry/StockPriceChart.tsx`
 - **관련 API**: `/api/stock-price`, `/api/merry/stocks/[ticker]/posts`, `/api/merry/stocks/[ticker]/sentiments`
-- **핵심 요약**: 6개월치 데이터, 메르 언급일 마커 표시, **감정 분석 통합**, 3초 이내 로딩, 관련 포스트 5개 + 더보기 기능
-- **감정 분석 색상**: 🟢 긍정 `#16a34a`, 🔴 부정 `#dc2626`, 🔵 중립 `#6b7280`
-- **분석 원칙**: Claude 직접 분석, 논리적 근거 필수, 키워드/패턴/글자수 분석 금지
-- **근거 예시**: "AI 칩 시장 급성장으로 TSMC 파운드리 사업 강화 전망" (긍정), "트럼프 인텔 CEO 사임 요구로 반도체 업계 정치적 리스크" (부정)
 
 ### 🎯 **감정 분석 시스템 개발 시**
 - **참조 문서**: `@docs/stock-page-requirements.md` 감정 분석 섹션 (필수)
 - **담당 컴포넌트**: Claude 직접 분석 로직, `src/components/merry/StockPriceChart.tsx`
 - **관련 API**: `/api/merry/stocks/[ticker]/sentiments`
-- **핵심 철학**: **외부 API 없이 Claude가 직접 분석**, 근거만 봐도 감정 판단이 논리적으로 납득 가능
-- **금지 사항**: 키워드 분석, 패턴 매칭, 자동화된 로직, 글자수 기준, 감정 분석 API, 규칙 기반 시스템 절대 금지
-- **품질 기준**: 구체적 사실, 인과관계 명확, 투자 관점, 간결성, 명사 종결 (예: 충분합니다 → 충분)
-- **🔥 글자수 요구사항**: **100자 이상 200자 이하 근거 제공** (기존 50자의 2-4배, 적절한 상한선)
-- **🔥 분석 깊이**: 단순 감정이 아닌 **투자 임팩트와 시장 영향도까지 포함한 종합적 분석**
-- **🔥 데이터 테이블**: `post_stock_analysis` 테이블 사용 (stock-page-requirements.md 규격)
 
 ### 📈 **메르 주간보고 개발 시**
 - **참조 문서**: `@docs/weekly-report-requirements.md` (필수 참조)
 - **담당 컴포넌트**: `src/app/merry/weekly-report/page.tsx`
 - **관련 API**: `/api/merry/weekly-reports`
-- **분석 엔진**: `src/lib/claude-weekly-analyzer.ts` (Claude 직접 분석)
-- **핵심 요약**: Claude가 직접 포스트를 읽고 투자 인사이트 도출
-- **금지 사항**: 키워드 매칭, 외부 API 사용, 더미 데이터, 랜덤 값
-- **품질 기준**: 임원진이 읽을 수 있는 전문적 보고서 수준
+- **분석 엔진**: `src/lib/claude-weekly-analyzer.ts`
 
 ### ⚡ **성능 최적화 작업 시**
 - **참조 문서**: `@docs/performance-requirements.md`
@@ -268,7 +393,7 @@
 - **핵심 요구사항**: Dummy 데이터 금지 검증, 3초 로딩 제한, 섹션 오류 방지
 
 ### 🔄 **포스트 갱신 작업 시**
-- **참조 문서**: `@docs/post-update-workflow.md`
+- **참조 문서**: `@docs/update-requirements.md`
 - **핵심 워크플로우**: 자동 갱신 → 수동 갱신 → 페이지 검증
 - **필수 확인사항**: 메르's Pick, 논리체인 분석, 감정 분석, 차트 마커
 
@@ -292,6 +417,34 @@ start http://localhost:[자동설정포트]
 - UI/UX 일관성
 - 반응형 디자인
 - 접근성 (a11y)
+
+---
+
+## 🔄 최근 업데이트 내역 (2025-08-23)
+
+### ✅ Today Merry Quote 기능 개선 완료
+- **가짜 `/posts` 페이지 삭제**: 더미 데이터를 사용하는 가짜 페이지 완전 제거
+- **실제 포스트 연결**: 각 한줄 코멘트 클릭 시 해당 메르 포스트(`/merry/posts/{id}`)로 이동
+- **상호작용 개선**: 카드 전체가 클릭 가능하며 호버 효과 추가
+- **링크 수정**: "전체 포스트 보기" → "메르님 포스트 모아보기" (`/merry` 경로)
+
+### 🗄️ 데이터베이스 현황 (2025-08-23 확인)
+- **블로그 포스트**: 520개 (정상)
+- **감정 분석**: 269개 (주요 종목별 완료)
+- **종목 언급**: 14개 (동기화 완료)
+- **종가 데이터**: 2,290개 (최신 2025-08-22까지)
+- **메르's Pick**: 10개 종목 (API 정상 동작)
+
+### 📊 API 검증 완료
+- **Today Merry Quote API**: 정상 동작 (최신 포스트 반영)
+- **메르's Pick API**: 10개 종목 정상 반환
+- **감정 분석 API**: TSLA 기준 24개 언급 정상 처리
+- **종가 API**: 주요 종목 최신 데이터 유지
+
+### 🔧 테스트 환경 개선
+- **동적 포트 설정**: `DEV_PORT` 환경변수 기반 테스트
+- **하드코딩 제거**: 모든 테스트 파일에서 포트 동적 설정
+- **테스트 성공률**: 주요 기능 테스트 통과
 
 ---
 
@@ -350,6 +503,14 @@ src/
 - **성능 기준**: 초기 로딩 < 2초, LCP < 1.5s
 - **주요 텍스트**: "니가 뭘 알아. 니가 뭘 아냐고." (마침표 필수), "요르가 전하는 날카로운 투자 인사이트"
 
+### 💬 **오늘의 메르님 말씀 개발 시**
+- **참조 문서**: `@docs/today-merry-quote-requirements.md` (필수 참조)
+- **담당 컴포넌트**: `src/components/home/TodayMerryQuote.tsx`
+- **관련 API**: `/api/today-merry-quote`
+- **핵심 원칙**: Claude 직접 수동 분석, "글이 없으면 분석하지 말라"
+- **금지 사항**: 외부 AI API, 키워드 매칭, 패턴 분석, 하드코딩 절대 금지
+- **성능 기준**: Claude 분석 < 3초, API 응답 < 5초
+
 ---
 
 ## 📄 영역별 상세 요구사항 
@@ -360,10 +521,7 @@ src/
 - **참조 문서**: `@docs/weekly-report-requirements.md` (필수 참조)
 - **담당 컴포넌트**: `src/app/merry/weekly-report/page.tsx`
 - **관련 API**: `/api/merry/weekly-reports`
-- **분석 엔진**: `src/lib/claude-weekly-analyzer.ts` (Claude 직접 분석)
-- **핵심 요약**: Claude가 직접 포스트를 읽고 투자 인사이트 도출
-- **금지 사항**: 키워드 매칭, 외부 API 사용, 더미 데이터, 랜덤 값
-- **품질 기준**: 임원진이 읽을 수 있는 전문적 보고서 수준
+- **분석 엔진**: `src/lib/claude-weekly-analyzer.ts`
 
 ### 📊 종목 분석 화면 (`/merry/stocks/[ticker]`)
 **파일**: `src/app/merry/stocks/[ticker]/page.tsx`
@@ -777,7 +935,7 @@ return NextResponse.json(
 ## 📚 핵심 참고 문서
 
 ### 📋 **필수 워크플로우 문서**
-- **`@docs/post-update-workflow.md`**: 새 포스트 추가 시 갱신 프로세스 완전 가이드
+- **`@docs/update-requirements.md`**: 새 포스트 추가 시 갱신 프로세스 완전 가이드
 - **`@docs/service-dependencies.md`**: 서비스 간 의존성 관계 및 데이터 흐름 매핑
 
 ### 🔄 **포스트 갱신 시 필수 확인**
@@ -950,7 +1108,7 @@ CREATE TABLE post_stock_analysis (
     sentiment TEXT NOT NULL CHECK (sentiment IN ('positive', 'negative', 'neutral')),
     sentiment_score DECIMAL(4,3) NOT NULL,
     confidence DECIMAL(4,3) NOT NULL,
-    reasoning TEXT NOT NULL, -- 핵심 근거 (필수)
+    reasoning TEXT NOT NULL, -- 핵심 근거 (필수) - 포스트별로 독립적이어야 함
     context_snippet TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
@@ -964,6 +1122,14 @@ CREATE TABLE post_stock_analysis (
 - ❌ **AI API 호출 금지**: OpenAI, Anthropic, Claude API 등 모든 AI API 사용 금지
 - ❌ **규칙 기반 시스템 금지**: if-else 규칙이나 알고리즘 기반 분석 금지
 - ✅ **유일한 허용 방식**: Claude가 포스트 내용을 읽고 수동으로 직접 분석
+
+#### 🎯 **데이터 품질 규칙 (필수)**
+- **📝 Reasoning 독립성**: 각 포스트의 `reasoning` 필드는 해당 포스트만의 고유한 분석 근거를 포함해야 함
+  - ❌ **금지**: 다른 포스트와 동일하거나 유사한 reasoning 사용
+  - ❌ **금지**: 일반적이고 포괄적인 reasoning ("메모리 반도체는 중요하다" 등)
+  - ✅ **필수**: 해당 포스트의 구체적인 내용과 맥락을 반영한 독립적 reasoning
+  - ✅ **예시**: "트럼프의 반도체 관세 정책으로 삼성전자가 애플 수주에서 유리한 위치"
+- **🔗 Post-Log 매칭**: `post_id`는 `blog_posts.log_no`와 매칭되어야 함 (ID 기반이 아닌 log_no 기반)
 
 ### 📈 **차트 통합 표시**
 

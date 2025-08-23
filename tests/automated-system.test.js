@@ -19,6 +19,7 @@
  */
 
 const { test, expect } = require('@playwright/test');
+require('./setup/test-cleanup');
 const { spawn } = require('child_process');
 const sqlite3 = require('better-sqlite3');
 const fs = require('fs');

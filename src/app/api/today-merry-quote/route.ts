@@ -5,10 +5,10 @@ import path from 'path';
 const dbPath = path.join(process.cwd(), 'database.db');
 
 interface BlogPost {
-  id: number;
+  log_no: number;
   title: string;
   content: string;
-  created_date: string;
+  created_date: number;  // Unix timestamp (밀리초)
 }
 
 function getTodayKoreaDate(): string {
@@ -49,39 +49,58 @@ function extractTickersFromContent(content: string): string[] {
   return tickers;
 }
 
-function createTodayQuoteFromPost(post: BlogPost) {
-  const { id, title, content, created_date } = post;
+async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
+  const { log_no, title, content, created_date } = post;
   
-  // 오늘의 포스트 기준으로 메르님 말씀 생성
-  let quote = "";
-  let insight = "";
-  
-  if (title.includes("SMR") || title.includes("원자로")) {
-    quote = "기존 원전, SMR, MMR은 각각 장단점이 있으니 상황에 따라 활용될 것이며, 재활용 기술이 도입되면 방사능 폐기물이 재사용 가능한 핵연료로 바뀔 수 있음";
-    insight = "오클로(Oklo)는 사용후 핵연료를 재활용하는 MMR(마이크로 모듈 원자로) 기술로 주목받고 있으며, 트럼프 정부의 원전 정책 지원으로 2027년 상업 운영이 성공할지가 관건임. 다만 기술의 어려움과 아직 상용화되지 않은 점은 리스크 요소로 고려해야 함";
-  } else if (title.includes("포트폴리오")) {
-    quote = "주식은 비정상적으로 사람들의 심리가 한쪽으로 쏠리면서, 현실보다 과하게 시장이 반응할 때 투자기회가 생김";
-    insight = "조선업의 노란봉투법 영향, 은 투자의 44% 수익률, 그리고 국장 개별주 단타 성공 사례를 통해 다양한 투자 전략의 중요성을 보여줌. 특히 남들이 공포로 도망칠 때 차별화된 수익을 얻을 수 있는 것이 주식 투자의 매력";
-  } else if (title.includes("미장") && title.includes("로쉬 하샤나")) {
-    quote = "70% 확률로 적중하는 'Sell on Rosh Hashanah, buy on Yom Kippur' 전략은 미장 투자에서 고려할 만한 계절성 패턴";
-    insight = "유대인의 신년 명절인 로쉬 하샤나(9월 22-24일) 전후로 미장에서 매도 압력이 나타나고, 욤 키푸르(10월 1-2일) 이후 반등하는 패턴이 통계적으로 유의미함. 2000년 이후 24년간 70% 확률로 이 패턴이 나타났으며, 올해도 주목해볼 만함";
-  } else {
-    // 기본 메시지
-    quote = "투자는 근본적 분석과 시장 심리를 동시에 고려하여 신중하게 접근해야 함";
-    insight = "오늘도 메르님의 깊이 있는 투자 인사이트를 통해 시장을 이해하고 현명한 투자 결정을 내리는 데 도움이 됨";
-  }
-  
+  // ✅ CLAUDE.md 준수: DB에서 Claude 직접 분석 결과 조회 (post_analysis 테이블)
   const relatedTickers = extractTickersFromContent(content);
   
-  return {
-    id: id.toString(),
-    title,
-    quote,
-    insight,
-    relatedTickers,
-    date: created_date,
-    readTime: "3분 읽기"
-  };
+  return new Promise((resolve) => {
+    // post_analysis 테이블에서 Claude 분석 결과를 조회
+    db.get(
+      'SELECT summary, investment_insight FROM post_analysis WHERE log_no = ?',
+      [log_no],
+      (err: any, analysis: any) => {
+        if (err) {
+          console.error('분석 결과 조회 오류:', err);
+          resolve({
+            id: log_no.toString(),
+            title,
+            quote: "분석 결과 조회 중 오류 발생",
+            insight: "DB 연결 문제로 분석 결과를 가져올 수 없음",
+            relatedTickers,
+            date: new Date(created_date).toISOString(),
+            readTime: "3분 읽기"
+          });
+          return;
+        }
+        
+        if (analysis && analysis.summary && analysis.investment_insight) {
+          // DB에 Claude 분석 결과가 있는 경우
+          resolve({
+            id: log_no.toString(),
+            title,
+            quote: analysis.summary,  // 한줄 정리
+            insight: analysis.investment_insight,  // 투자 인사이트
+            relatedTickers,
+            date: new Date(created_date).toISOString(),
+            readTime: "3분 읽기"
+          });
+        } else {
+          // DB에 분석 결과가 없는 경우
+          resolve({
+            id: log_no.toString(),
+            title,
+            quote: "Claude 직접 분석 결과 대기 중",
+            insight: `"${title}" 포스트에 대한 Claude 분석이 아직 완료되지 않음`,
+            relatedTickers,
+            date: new Date(created_date).toISOString(),
+            readTime: "3분 읽기"
+          });
+        }
+      }
+    );
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -98,11 +117,11 @@ export async function GET(request: NextRequest) {
 
       const today = getTodayKoreaDate();
       
-      // 오늘 날짜의 모든 포스트 찾기
+      // 오늘 날짜의 모든 포스트 찾기 (log_no 사용, created_date는 밀리초 타임스탬프)
       db.all(
-        `SELECT id, title, content, created_date 
+        `SELECT log_no, title, content, created_date 
          FROM blog_posts 
-         WHERE DATE(created_date) = ? 
+         WHERE DATE(datetime(created_date/1000, 'unixepoch')) = ? 
          ORDER BY created_date DESC`,
         [today],
         (err, todayPosts: BlogPost[]) => {
@@ -117,20 +136,30 @@ export async function GET(request: NextRequest) {
           }
 
           if (todayPosts && todayPosts.length > 0) {
-            // 오늘 모든 포스트로 말씀 생성
-            const todayQuotes = todayPosts.map(post => createTodayQuoteFromPost(post));
-            db.close();
-            resolve(NextResponse.json({ quotes: todayQuotes, isToday: true }, {
-              headers: {
-                'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1시간 캐시
-              },
-            }));
+            // 오늘 모든 포스트로 말씀 생성 (async 처리)
+            Promise.all(todayPosts.map(post => createTodayQuoteFromPost(post, db)))
+              .then(todayQuotes => {
+                db.close();
+                resolve(NextResponse.json({ quotes: todayQuotes, isToday: true }, {
+                  headers: {
+                    'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1시간 캐시
+                  },
+                }));
+              })
+              .catch(error => {
+                console.error('포스트 분석 처리 오류:', error);
+                db.close();
+                resolve(NextResponse.json(
+                  { error: '포스트 분석 처리 실패' },
+                  { status: 500 }
+                ));
+              });
             return;
           }
 
           // 오늘 포스트가 없으면 가장 최근 포스트 사용
           db.get(
-            `SELECT id, title, content, created_date 
+            `SELECT log_no, title, content, created_date 
              FROM blog_posts 
              ORDER BY created_date DESC 
              LIMIT 1`,
@@ -155,12 +184,21 @@ export async function GET(request: NextRequest) {
                 return;
               }
 
-              const todayQuote = createTodayQuoteFromPost(latestPost);
-              resolve(NextResponse.json({ quotes: [todayQuote], isToday: false }, {
-                headers: {
-                  'Cache-Control': 'public, max-age=1800, s-maxage=1800', // 30분 캐시 (최신 포스트용)
-                },
-              }));
+              createTodayQuoteFromPost(latestPost, db)
+                .then(todayQuote => {
+                  resolve(NextResponse.json({ quotes: [todayQuote], isToday: false }, {
+                    headers: {
+                      'Cache-Control': 'public, max-age=1800, s-maxage=1800', // 30분 캐시 (최신 포스트용)
+                    },
+                  }));
+                })
+                .catch(error => {
+                  console.error('최신 포스트 분석 오류:', error);
+                  resolve(NextResponse.json(
+                    { error: '최신 포스트 분석 실패' },
+                    { status: 500 }
+                  ));
+                });
             }
           );
         }

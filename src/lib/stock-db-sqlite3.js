@@ -229,7 +229,8 @@ class StockDB {
         'GOOGL': '구글',
         'MSFT': '마이크로소프트',
         'META': '메타',
-        'AMD': 'AMD'
+        'AMD': 'AMD',
+        'OKLO': '오클로'
       };
       
       const stockName = tickerToNameMap[ticker] || ticker;
@@ -237,7 +238,7 @@ class StockDB {
       // blog_posts에서 직접 검색
       this.db.all(`
         SELECT 
-          id as post_id,
+          id as log_no,
           created_date as mentioned_date,
           'neutral' as mention_type,
           0 as sentiment_score,
@@ -250,7 +251,7 @@ class StockDB {
           console.log(`📊 Blog posts direct search failed for ${ticker}, trying stock_mentions_unified`);
           // Fallback to stock_mentions_unified
           this.db.all(`
-            SELECT mentioned_date, mention_type, sentiment_score, post_id, context
+            SELECT mentioned_date, mention_type, sentiment_score, log_no, context
             FROM stock_mentions_unified
             WHERE ticker = ? AND mentioned_date IS NOT NULL
             ORDER BY mentioned_date DESC
@@ -523,7 +524,8 @@ class StockDB {
         'GOOGL': '구글',
         'MSFT': '마이크로소프트',
         'META': '메타',
-        'AMD': 'AMD'
+        'AMD': 'AMD',
+        'OKLO': '오클로'
       };
       
       const stockName = tickerToNameMap[ticker] || ticker;

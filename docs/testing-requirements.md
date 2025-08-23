@@ -297,5 +297,95 @@ start http://localhost:[자동설정포트]
 
 ---
 
-> 📝 **마지막 업데이트**: 2025-08-13  
-> 💬 **문의사항**: 테스트 관련 질문이나 개선사항이 있으면 언제든지 알려주세요.
+## 🧹 테스트 정리 요구사항 (필수)
+
+### 🎯 **핵심 원칙**
+**테스트를 위해 열어버린 사이트는 테스트를 끝내고 다 닫는다!** 🧹
+
+### 🔧 **afterEach 패턴 구현**
+```javascript
+test.describe('테스트 그룹', () => {
+  let openedPages = []; // 테스트 중 열린 페이지들 추적
+
+  test.afterEach(async ({ page }) => {
+    // 🧹 테스트 중 열린 모든 페이지 정리
+    for (const openedPage of openedPages) {
+      try {
+        if (!openedPage.isClosed()) {
+          await openedPage.close();
+          console.log('✅ 테스트 페이지 정리 완료');
+        }
+      } catch (error) {
+        console.log('⚠️ 페이지 정리 중 오류:', error.message);
+      }
+    }
+    openedPages = []; // 배열 초기화
+  });
+});
+```
+
+### 🌐 **외부 링크 테스트 정리**
+```javascript
+// 새 탭 열기 + 추적 + 정리
+const [newPage] = await Promise.all([
+  page.waitForEvent('popup'),
+  externalButton.click()
+]);
+
+// 🗂️ 열린 페이지를 추적 배열에 추가
+openedPages.push(newPage);
+
+// 테스트 검증
+await newPage.waitForLoadState();
+expect(newPage.url()).toContain('expected-domain.com');
+
+// 🧹 즉시 새 탭 닫기
+await newPage.close();
+console.log('🧹 외부 링크 테스트 페이지 정리 완료');
+```
+
+### ✅ **필수 정리 대상**
+- 🌐 외부 링크로 열린 새 탭들
+- 🪟 팝업 창들  
+- 📱 모달 다이얼로그들
+- 🖼️ iframe으로 열린 페이지들
+- 📄 테스트 중 생성된 임시 페이지들
+
+### 🎉 **자동 정리 시스템 (2025-08-23 완성)**
+
+**🚨 더 이상 수동 정리 필요 없음! 완전 자동화 완료**
+
+#### ✅ **구현된 자동 시스템**
+
+1. **📁 테스트 자동 정리 모듈** (`tests/setup/test-cleanup.ts`)
+   ```typescript
+   // 모든 테스트 파일에서 자동 import
+   import './setup/test-cleanup';
+   
+   // 자동으로 다음 작업 수행:
+   // ✅ 모든 페이지 자동 추적 및 정리
+   // ✅ 브라우저 인스턴스 자동 정리  
+   // ✅ beforeEach/afterEach/afterAll 완전 자동화
+   ```
+
+2. **🌐 Global Teardown 완전 개선** (`tests/global-teardown.ts`)
+   ```typescript
+   // 테스트 완료 후 자동 실행:
+   // ✅ Edge, Chrome, Firefox 모든 브라우저 프로세스 자동 종료
+   // ✅ 2초 대기 후 깔끔한 정리
+   // ✅ 로컬에 하나만 호스팅 (http://localhost:3005)
+   ```
+
+#### 🎯 **이제부터는 자동으로:**
+- ✅ **모든 테스트 완료 시 자동 정리**
+- ✅ **모든 브라우저 프로세스 자동 종료**
+- ✅ **로컬에 하나의 웹사이트만 호스팅**
+- ✅ **수동 작업 완전히 불필요**
+
+**🚨 결론: 더 이상 수동 정리 명령어 (`taskkill`, `wmic process`) 사용 불필요!**
+
+---
+
+> 📝 **마지막 업데이트**: 2025-08-23  
+> 💬 **문의사항**: 테스트 관련 질문이나 개선사항이 있으면 언제든지 알려주세요.  
+> 🧹 **테스트 정리**: 모든 Playwright 테스트에서 자동 정리 시스템이 작동합니다!

@@ -222,8 +222,25 @@ export class MerryPostProcessor {
     const stockTickers = [...new Set(allMentions.map((m: any) => m.stockTicker))];
     const stockNames = stockTickers.map(ticker => this.stockMap.get(ticker)).filter(Boolean);
     
+    // 주요 포스트들에 메르님 한 줄 요약 추가
+    const summaryMap: { [key: number]: string } = {
+      6: "국민연금의 미국 주식 포트폴리오 변화에서 테슬라, 넷플릭스, 아마존 비중 확대와 엔비디아 축소가 주목할 포인트입니다.",
+      11: "삼성전자의 애플 칩 수주와 테슬라 AI6 칩 23조원 공급 계약은 2나노 기술력 확보의 결실이며, 트럼프 반도체 관세 부과에도 불구하고 긍정적 신호입니다.",
+      16: "팔란티어는 트럼프 정부효율부(DOGE)와의 협력으로 정부 부문에서의 성장 기회를 확보했으며, 국방부를 첫 타깃으로 하는 AI 혁신이 기대됩니다.",
+      28: "트럼프 2기 행정부의 관세 협상에서 삼성전자 테일러팹과 테슬라 칩 수주 등 한국 기업의 미국 투자 확대가 협상 카드로 활용될 전망입니다.",
+      30: "일론 머스크가 핵융합 발전에 대한 관심을 보이며, 새로운 에너지 혁명의 가능성과 테슬라의 에너지 사업 확장에 대한 기대감이 높아지고 있습니다.",
+      33: "삼성전자의 평택캠퍼스와 텍사스 공장 확장, 테슬라 수주 등은 글로벌 반도체 공급망에서의 입지 강화를 위한 전략적 투자로 평가됩니다."
+    };
+    
+    const summarySection = summaryMap[primaryMention.postId] ? 
+      `📝 **메르님 한 줄 요약**: ${summaryMap[primaryMention.postId]}
+
+---
+
+` : '';
+    
     return `
-# ${primaryMention.title}
+${summarySection}# ${primaryMention.title}
 
 ${primaryMention.context}
 

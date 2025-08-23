@@ -104,10 +104,9 @@ export class PerformantDatabase {
       'CREATE INDEX IF NOT EXISTS idx_blog_posts_content_ticker ON blog_posts(content) WHERE content LIKE "%ticker%";',
       'CREATE INDEX IF NOT EXISTS idx_blog_posts_title_ticker ON blog_posts(title) WHERE title LIKE "%ticker%";',
       'CREATE INDEX IF NOT EXISTS idx_blog_posts_date_type ON blog_posts(created_date DESC, blog_type);',
-      'CREATE INDEX IF NOT EXISTS idx_sentiments_ticker_analyzed ON sentiments(ticker, analysis_date DESC);',
+      'CREATE INDEX IF NOT EXISTS idx_post_stock_analysis_ticker_analyzed ON post_stock_analysis(ticker, analyzed_at DESC);',
       
       // Supporting indexes
-      'CREATE INDEX IF NOT EXISTS idx_sentiments_post_id ON sentiments(post_id);',
       'CREATE INDEX IF NOT EXISTS idx_merry_stocks_mention_count ON merry_mentioned_stocks(mention_count DESC);',
       
       // FTS index for content search (if needed)
@@ -317,8 +316,8 @@ export async function getStockMentions(limit: number = 10): Promise<any[]> {
     LEFT JOIN (
       SELECT 
         ticker, 
-        COUNT(DISTINCT post_id) as analyzed_count
-      FROM sentiments 
+        COUNT(DISTINCT log_no) as analyzed_count
+      FROM post_stock_analysis 
       GROUP BY ticker
     ) sentiment_count ON m.ticker = sentiment_count.ticker
     WHERE m.mention_count > 0 
@@ -355,9 +354,9 @@ export async function getStockSentiments(ticker: string): Promise<any[]> {
   const cacheKey = `sentiments-${ticker}`;
   
   const query = `
-    SELECT * FROM sentiments 
+    SELECT * FROM post_stock_analysis 
     WHERE ticker = ? 
-    ORDER BY analysis_date DESC
+    ORDER BY analyzed_at DESC
   `;
   
   return performantDb.query(query, [ticker], cacheKey, 300000); // 5min cache

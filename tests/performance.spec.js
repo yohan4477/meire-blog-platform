@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+require('./setup/test-cleanup');
 
 test.describe('Meire Blog Platform Performance Tests', () => {
   const BASE_URL = 'http://localhost:3009';

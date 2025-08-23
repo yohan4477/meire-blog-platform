@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('섹션 오류 검출 테스트', () => {
   

@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+require('./setup/test-cleanup');
 
 test.describe('MerryStockPicks Section Error Validation', () => {
   let page;

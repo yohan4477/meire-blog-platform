@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 // CLAUDE.md 요구사항: 종목 상세 페이지 테스트
 test.describe('종목 상세 페이지 테스트', () => {

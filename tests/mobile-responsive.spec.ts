@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('모바일 반응형 테스트', () => {
   // 모바일 디바이스 설정

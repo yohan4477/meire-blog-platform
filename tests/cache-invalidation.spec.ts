@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 // CLAUDE.md 요구사항: 캐시 무효화 테스트 - 실시간 업데이트 검증
 test.describe('메르\'s Pick 캐시 무효화', () => {

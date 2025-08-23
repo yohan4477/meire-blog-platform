@@ -13,6 +13,7 @@
  */
 
 import { test, expect, Browser, Page } from '@playwright/test';
+import './setup/test-cleanup';
 
 // 3초 로딩 시간 제한 (CLAUDE.md 핵심 요구사항)
 const LOADING_TIMEOUT = 3000;

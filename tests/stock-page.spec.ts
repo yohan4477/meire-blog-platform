@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 /**
  * 종목 페이지 요구사항 상세 테스트

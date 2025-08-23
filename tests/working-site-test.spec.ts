@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 // CLAUDE.md 요구사항: 포트 3006에서 전체 사이트 테스트
 test.describe('메르 블로그 플랫폼 - 포트 3006 작동 테스트', () => {

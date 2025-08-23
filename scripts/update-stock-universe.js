@@ -1,12 +1,12 @@
 /**
- * 🔄 Stock Universe 자동 업데이트 시스템
- * 종목 데이터 변경시 자동으로 유니버스 통계를 갱신
+ * 🔄 종목 리스트 자동 업데이트 시스템
+ * 종목 데이터 변경시 자동으로 리스트 통계를 갱신
  */
 
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-class StockUniverseUpdater {
+class StockListUpdater {
   constructor() {
     const dbPath = path.join(process.cwd(), 'database.db');
     this.db = new sqlite3.Database(dbPath);
@@ -17,15 +17,15 @@ class StockUniverseUpdater {
    * 🚀 빠른 통계 업데이트 (주요 지표만)
    */
   async quickUpdate() {
-    console.log('⚡ Stock Universe 빠른 업데이트 시작...');
+    console.log('⚡ 종목 리스트 빠른 업데이트 시작...');
     const startTime = Date.now();
 
     try {
-      // stock_universe 테이블이 존재하는지 확인
-      const tableExists = await this.checkTableExists('stock_universe');
+      // stock_list 테이블이 존재하는지 확인
+      const tableExists = await this.checkTableExists('stock_list');
       
       if (!tableExists) {
-        console.log('📊 stock_universe 테이블이 없어서 생성합니다...');
+        console.log('📊 stock_list 테이블이 없어서 생성합니다...');
         await this.createUniverseTable();
       }
 
@@ -62,7 +62,7 @@ class StockUniverseUpdater {
         data_source: 'auto_update_system'
       });
 
-      console.log('✅ Stock Universe 업데이트 완료:');
+      console.log('✅ 종목 리스트 업데이트 완료:');
       console.log(`   📊 총 종목: ${totalStats.total}개`);
       console.log(`   🌏 국내/미국: ${marketStats.domestic}/${marketStats.us}개`);
       console.log(`   📝 포스트: ${postStats.analyzed}/${postStats.total}개 분석완료`);
@@ -106,7 +106,7 @@ class StockUniverseUpdater {
   async createUniverseTable() {
     return new Promise((resolve, reject) => {
       this.db.run(`
-        CREATE TABLE IF NOT EXISTS stock_universe (
+        CREATE TABLE IF NOT EXISTS stock_list (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           total_stocks INTEGER NOT NULL DEFAULT 0,
           total_posts INTEGER NOT NULL DEFAULT 0,
@@ -127,7 +127,7 @@ class StockUniverseUpdater {
       `, (err) => {
         if (err) reject(err);
         else {
-          console.log('📊 stock_universe 테이블 생성 완료');
+          console.log('📊 stock_list 테이블 생성 완료');
           resolve(true);
         }
       });
@@ -188,12 +188,12 @@ class StockUniverseUpdater {
 
   async upsertUniverseStats(stats) {
     // 기존 레코드가 있는지 확인
-    const existingRecord = await this.queryGet('SELECT id FROM stock_universe WHERE id = 1');
+    const existingRecord = await this.queryGet('SELECT id FROM stock_list WHERE id = 1');
 
     if (existingRecord) {
       // 업데이트
       return this.queryRun(`
-        UPDATE stock_universe SET
+        UPDATE stock_list SET
           total_stocks = ?,
           domestic_stocks = ?,
           us_stocks = ?,
@@ -230,7 +230,7 @@ class StockUniverseUpdater {
     } else {
       // 생성
       return this.queryRun(`
-        INSERT INTO stock_universe (
+        INSERT INTO stock_list (
           id, total_stocks, domestic_stocks, us_stocks,
           kospi_stocks, kosdaq_stocks, krx_stocks,
           nasdaq_stocks, nyse_stocks, total_posts, analyzed_posts,
@@ -289,4 +289,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = StockUniverseUpdater;
+module.exports = StockListUpdater;

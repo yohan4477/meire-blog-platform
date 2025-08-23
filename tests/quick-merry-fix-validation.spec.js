@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+require('./setup/test-cleanup');
 
 test.describe('Quick MerryStockPicks Fix Validation', () => {
   test('Critical Fix Validation - No slice() or undefined errors', async ({ page }) => {

@@ -191,7 +191,7 @@ export async function getRealStockMentions(limit: number = 10): Promise<any[]> {
       SELECT 
         ticker, 
         COUNT(DISTINCT post_id) as analyzed_count
-      FROM sentiments 
+      FROM post_stock_analysis 
       GROUP BY ticker
     ) sentiment_count ON sm.ticker = sentiment_count.ticker
     WHERE sm.mention_count > 0

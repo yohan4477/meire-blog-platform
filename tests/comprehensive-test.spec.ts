@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('🏠 메인 페이지 전체 테스트', () => {
   test('메인 페이지 모든 섹션 검증', async ({ page }) => {

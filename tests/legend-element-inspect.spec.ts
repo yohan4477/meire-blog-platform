@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test('범례 요소 직접 검사 및 위치 분석', async ({ page }) => {
   console.log('🔍 범례 요소 직접 검사 시작');

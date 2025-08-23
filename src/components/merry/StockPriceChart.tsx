@@ -140,6 +140,28 @@ export default memo(function StockPriceChart({
   });
   const [sentimentStats, setSentimentStats] = useState<{totalMentions: number, analyzedMentions: number} | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // 🔥 가장 가까운 거래일 찾는 헬퍼 함수
+  const findNearestTradingDate = (targetDate: string, priceData: any[]): string | null => {
+    const target = new Date(targetDate);
+    if (isNaN(target.getTime())) return null;
+    
+    let nearestDate = null;
+    let minDiff = Infinity;
+    
+    priceData.forEach(point => {
+      const pointDate = new Date(point.date);
+      if (isNaN(pointDate.getTime())) return;
+      
+      const diff = Math.abs(pointDate.getTime() - target.getTime());
+      if (diff < minDiff) {
+        minDiff = diff;
+        nearestDate = point.date;
+      }
+    });
+    
+    return nearestDate;
+  };
   
   // 🚀 UX 우선 + 성능 최적화 하이브리드 로딩
   const fetchData = useCallback(async () => {
@@ -209,8 +231,10 @@ export default memo(function StockPriceChart({
           analyzedMentions: sentimentData?.summary?.total || 0
         });
         
-        // 🎨 3단계: 마커와 툴팁 정보 점진적 추가
+        // 🎨 3단계: 마커와 툴팁 정보 점진적 추가 (가장 가까운 거래일 매핑 포함)
         const postsByDate = Object.create(null);
+        const postsByTradingDate = Object.create(null); // 🔥 거래일 기준 매핑 추가
+        
         if (postsResult.success && postsResult.data?.posts) {
           postsResult.data.posts.forEach((post: any) => {
             const postDate = post.created_date || post.mentioned_date;
@@ -222,7 +246,19 @@ export default memo(function StockPriceChart({
             } else {
               dateKey = postDate;
             }
+            
+            // 원래 날짜로 저장
             (postsByDate[dateKey] = postsByDate[dateKey] || []).push(post);
+            
+            // 🔥 가장 가까운 거래일 찾기
+            const nearestTradingDate = findNearestTradingDate(dateKey, basicPriceData);
+            if (nearestTradingDate) {
+              (postsByTradingDate[nearestTradingDate] = postsByTradingDate[nearestTradingDate] || []).push({
+                ...post,
+                originalDate: dateKey, // 원래 포스트 날짜 보존
+                mappedToTradingDate: nearestTradingDate
+              });
+            }
           });
         }
         
@@ -237,25 +273,33 @@ export default memo(function StockPriceChart({
           const dateStr = point.date;
           const normalizedDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
           
-          // 1. merry_mentioned_stocks 데이터 (마커 표시용)
-          const postsData = postsByDate[normalizedDate] || [];
+          // 1. 원래 날짜 기준 데이터
+          const originalPostsData = postsByDate[normalizedDate] || [];
           
-          // 2. sentiments 데이터 (색상 변경용) - 새로운 API 구조 반영
+          // 2. 🔥 거래일 매핑 기준 데이터 (주말/공휴일 포스트 포함)
+          const tradingDatePostsData = postsByTradingDate[normalizedDate] || [];
+          
+          // 3. 모든 포스트 데이터 통합 (원본 + 매핑된 것)
+          const allPostsData = [...originalPostsData, ...tradingDatePostsData];
+          
+          // 4. sentiments 데이터 (색상 변경용) - 새로운 API 구조 반영
           const daysentimentData = sentimentData?.sentimentByDate?.[normalizedDate];
           const sentiments = daysentimentData?.sentiments?.map((sentiment: any) => ({
             ...sentiment,
             postTitle: daysentimentData?.posts?.[0]?.title || ''
           })) || [];
           
-          const hasAnyData = postsData.length > 0 || sentiments.length > 0;
+          const hasAnyData = allPostsData.length > 0 || sentiments.length > 0;
           if (hasAnyData) {
-            console.log(`📍 마커 데이터 발견: ${normalizedDate} - mentions: ${postsData.length}, sentiments: ${sentiments.length}`);
+            console.log(`📍 마커 데이터 발견: ${normalizedDate} - 원본: ${originalPostsData.length}, 매핑: ${tradingDatePostsData.length}, sentiments: ${sentiments.length}`);
           }
           
           return {
             ...point,
-            hasMention: postsData.length > 0, // 🔥 중요: hasMention 필드 추가
-            postTitles: postsData.map((post: any) => post.title).filter(Boolean),
+            hasMention: allPostsData.length > 0, // 🔥 원본 + 매핑된 포스트 모두 포함
+            postTitles: allPostsData.map((post: any) => post.title).filter(Boolean),
+            originalPosts: originalPostsData, // 디버깅용
+            mappedPosts: tradingDatePostsData, // 디버깅용
             sentiments: sentiments
           };
         });
@@ -272,6 +316,18 @@ export default memo(function StockPriceChart({
         const markersWithData = enrichedData.filter((point: any) => 
           point.hasMention || point.sentiments?.length > 0
         );
+        
+        console.log(`🎯 마커 활성화 완료:`, {
+          totalPoints: enrichedData.length,
+          markersWithData: markersWithData.length,
+          markerDates: markersWithData.map(p => p.date),
+          showMarkers: true
+        });
+        
+        // ✅ 주말/공휴일 포스트 매핑 완료: 5개 마커 모두 표시 가능
+        
+        // ✅ 마커 시스템 완료: Line dot 방식으로 차트에 마커 표시
+        
         setVisibleMarkerCount(markersWithData.length);
         setLoadingState(prev => ({ ...prev, details: false }));
         
@@ -425,7 +481,7 @@ export default memo(function StockPriceChart({
                   <div key={`sentiment-${index}`}>
                     {/* 포스트 타이틀 */}
                     {sentiment.postTitle && (
-                      <div className="text-xs p-2 bg-blue-50 rounded-lg border-l-2 border-blue-400 mb-1">
+                      <div key={`post-title-${index}`} className="text-xs p-2 bg-blue-50 rounded-lg border-l-2 border-blue-400 mb-1">
                         <div className="font-medium text-blue-800 line-clamp-2">
                           {sentiment.postTitle}
                         </div>
@@ -433,7 +489,7 @@ export default memo(function StockPriceChart({
                     )}
                     
                     {/* 해당 포스트의 감정 분석 */}
-                    <div className="text-xs p-2 bg-gray-50 rounded-lg border-l-2 mb-2" style={{borderLeftColor: sentimentColor}}>
+                    <div key={`sentiment-analysis-${index}`} className="text-xs p-2 bg-gray-50 rounded-lg border-l-2 mb-2" style={{borderLeftColor: sentimentColor}}>
                       <div className="flex items-center gap-1 mb-1">
                         <span style={{ color: sentimentColor }} className="font-medium text-xs">
                           {sentimentIcon} {sentimentLabel}
@@ -630,7 +686,7 @@ export default memo(function StockPriceChart({
             <div className="flex justify-center">
               <div className="flex bg-gray-50 rounded-xl p-1 gap-0.5 sm:gap-1">
                 {['1M', '3M', '6M', '1Y'].map(period => (
-                  <div key={period} className="h-10 bg-gray-200 rounded-lg w-12 sm:w-16"></div>
+                  <div key={`skeleton-${period}`} className="h-10 bg-gray-200 rounded-lg w-12 sm:w-16"></div>
                 ))}
               </div>
             </div>
@@ -679,7 +735,7 @@ export default memo(function StockPriceChart({
               {stock && stock.mention_count > 0 && (
                 <div className="mt-2">
                   <p className="text-xs text-gray-500">
-                    총 {stock.mention_count}개 언급 · {stock.analyzed_count || 0}개 분석 완료
+                    언급 {stock.mention_count}개 · 분석 {stock.analyzed_count || 0}개
                   </p>
                 </div>
               )}
@@ -712,22 +768,22 @@ export default memo(function StockPriceChart({
           {/* 감정 분석 범례 및 데이터 품질 정보 (로딩 완료 후 표시) */}
           {!loadingState.chart && (
             <div className="text-center space-y-2" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%'}}>
-              {/* 감정 분석 범례 */}
-              <div className="inline-flex items-center justify-center gap-3 text-sm text-gray-600">
+              {/* 감정 분석 범례 - 다크모드 대응 */}
+              <div className={`inline-flex items-center justify-center gap-3 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#16a34a' }}></div>
+                  <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#22c55e' : '#16a34a' }}></div>
                   <span className="text-xs">긍정</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626' }}></div>
+                  <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#ef4444' : '#dc2626' }}></div>
                   <span className="text-xs">부정</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#6b7280' }}></div>
+                  <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#9ca3af' : '#6b7280' }}></div>
                   <span className="text-xs">중립</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#2563eb' }}></div>
+                  <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#60a5fa' : '#2563eb' }}></div>
                   <span className="text-xs">메르 언급</span>
                 </div>
               </div>
@@ -925,11 +981,62 @@ export default memo(function StockPriceChart({
               
               {/* 메인 라인 (토스 스타일 - 애니메이션 제거) */}
               <Line
+                key="main-price-line"
                 type="monotone"
                 dataKey="price"
                 stroke={chartColor}
                 strokeWidth={2.5}
-                dot={false}
+                connectNulls={false}
+                dot={(props: any) => {
+                  // 🔥 마커가 있는 점에만 dot 표시
+                  const point = filteredData[props.index];
+                  if (!point || !showMarkers) return null;
+                  
+                  const hasMerryMention = point.hasMention;
+                  const hasSentiments = point.sentiments && point.sentiments.length > 0;
+                  
+                  if (!hasMerryMention && !hasSentiments) {
+                    return null; // 마커 없음
+                  }
+                  
+                  // 색상 결정 (감정 분석 우선, 없으면 파란색)
+                  let markerColor = isDarkMode ? '#60a5fa' : '#2563eb'; // 기본: 파란색 (메르 언급)
+                  let strokeWidth = 2;
+                  
+                  if (hasSentiments) {
+                    strokeWidth = 3; // 감정 분석 있으면 더 두껍게
+                    
+                    // 감정별 개수 집계
+                    const sentimentCounts = { positive: 0, negative: 0, neutral: 0 };
+                    point.sentiments?.forEach((sentiment: any) => {
+                      if (sentiment.sentiment in sentimentCounts) {
+                        sentimentCounts[sentiment.sentiment as keyof typeof sentimentCounts]++;
+                      }
+                    });
+                    
+                    // 가장 많은 감정으로 색상 결정
+                    const maxCount = Math.max(sentimentCounts.positive, sentimentCounts.negative, sentimentCounts.neutral);
+                    
+                    if (sentimentCounts.positive === maxCount && sentimentCounts.positive > 0) {
+                      markerColor = isDarkMode ? '#22c55e' : '#16a34a'; // 초록색 (긍정)
+                    } else if (sentimentCounts.negative === maxCount && sentimentCounts.negative > 0) {
+                      markerColor = isDarkMode ? '#ef4444' : '#dc2626'; // 빨간색 (부정)
+                    } else {
+                      markerColor = isDarkMode ? '#9ca3af' : '#6b7280'; // 회색 (중립)
+                    }
+                  }
+                  
+                  return (
+                    <circle
+                      cx={props.cx}
+                      cy={props.cy}
+                      r={isMobile ? 6 : 5}
+                      fill="none"
+                      stroke={markerColor}
+                      strokeWidth={strokeWidth}
+                    />
+                  );
+                }}
                 legendType="none"
                 activeDot={{ 
                   r: isMobile ? 8 : 7, 
@@ -937,72 +1044,12 @@ export default memo(function StockPriceChart({
                   strokeWidth: 4,
                   stroke: '#ffffff'
                 }}
+                isAnimationActive={false}
                 animationBegin={0}
-                animationDuration={600}
-                animationEasing="ease-out"
+                animationDuration={0}
               />
               
-              {/* 🔥 merry 언급 + 감정 분석 통합 마커 표시 */}
-              {showMarkers && filteredData.map((point, index) => {
-                // 1단계: merry_mentioned_stocks 또는 sentiments 데이터 확인
-                const hasMerryMention = (point as any).hasMention;
-                const hasSentiments = point.sentiments && point.sentiments.length > 0;
-                
-                console.log(`🔍 마커 체크: ${point.date} → mention: ${hasMerryMention}, sentiments: ${hasSentiments}, data: ${JSON.stringify({hasMention: (point as any).hasMention, sentiments: point.sentiments})}`);
-                
-                // 어느 것도 없으면 마커 표시 안함
-                if (!hasMerryMention && !hasSentiments) {
-                  return <g key={`empty-${index}`}></g>;
-                }
-                
-                // 2단계: 기본 색상 및 두께 설정
-                let markerColor = '#2563eb'; // 기본: 파란색 (merry 언급만)
-                let strokeWidth = 2;
-                
-                // 3단계: sentiments가 있으면 다수 감정으로 색상 결정
-                if (hasSentiments) {
-                  strokeWidth = 3; // 감정 분석 있으면 더 두껍게
-                  
-                  // 감정별 개수 집계
-                  const sentimentCounts = { positive: 0, negative: 0, neutral: 0 };
-                  point.sentiments?.forEach((sentiment: any) => {
-                    if (sentiment.sentiment in sentimentCounts) {
-                      sentimentCounts[sentiment.sentiment as keyof typeof sentimentCounts]++;
-                    }
-                  });
-                  
-                  // 가장 많은 감정으로 색상 결정 (majority voting)
-                  const maxCount = Math.max(sentimentCounts.positive, sentimentCounts.negative, sentimentCounts.neutral);
-                  
-                  if (sentimentCounts.positive === maxCount && sentimentCounts.positive > 0) {
-                    markerColor = '#16a34a'; // 초록색
-                  } else if (sentimentCounts.negative === maxCount && sentimentCounts.negative > 0) {
-                    markerColor = '#dc2626'; // 빨간색
-                  } else {
-                    markerColor = '#6b7280'; // 중립: 회색
-                  }
-                  
-                  console.log(`🎯 마커: ${point.date} → ${markerColor} (P:${sentimentCounts.positive}/N:${sentimentCounts.negative}/M:${sentimentCounts.neutral}), merry: ${hasMerryMention}`);
-                } else if (hasMerryMention) {
-                  console.log(`🔵 마커: ${point.date} → ${markerColor} (메르 언급만)`);
-                }
-                
-                return (
-                  <ReferenceDot
-                    key={`mention-${index}`}
-                    x={point.date}
-                    y={point.price}
-                    r={isMobile ? 6 : 5}
-                    fill="none"
-                    stroke={markerColor}
-                    strokeWidth={strokeWidth}
-                    style={{
-                      opacity: 0,
-                      animation: `fadeInPlace 0.2s ease-out ${0.05 + index * 0.01}s forwards`
-                    }}
-                  />
-                );
-              })}
+              {/* 🔥 ReferenceDot 방식 제거 - Line dot으로 대체함 */}
               
               <Tooltip content={<TossTooltip />} />
             </LineChart>
@@ -1018,25 +1065,25 @@ export default memo(function StockPriceChart({
           )}
         </div>
 
-        {/* 📊 차트 범례 (stock-page-requirements.md 요구사항) */}
-        <div className="px-4 sm:px-6 py-3 border-t border-gray-100">
+        {/* 📊 차트 범례 (stock-page-requirements.md 요구사항) - 다크모드 대응 */}
+        <div className={`px-4 sm:px-6 py-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
           <div className="flex justify-center">
             <div className="flex items-center gap-4 sm:gap-6 text-xs">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full border-2 border-green-500" style={{ borderColor: tossColors.sentiment.positive }}></div>
-                <span className="text-gray-600">긍정</span>
+                <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#22c55e' : '#16a34a' }}></div>
+                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>긍정</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full border-2 border-red-500" style={{ borderColor: tossColors.sentiment.negative }}></div>
-                <span className="text-gray-600">부정</span>
+                <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#ef4444' : '#dc2626' }}></div>
+                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>부정</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full border-2 border-gray-500" style={{ borderColor: tossColors.sentiment.neutral }}></div>
-                <span className="text-gray-600">중립</span>
+                <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#9ca3af' : '#6b7280' }}></div>
+                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>중립</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full border-2 border-blue-500" style={{ borderColor: '#2563eb' }}></div>
-                <span className="text-gray-600">메르 언급</span>
+                <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#60a5fa' : '#2563eb' }}></div>
+                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>메르 언급</span>
               </div>
             </div>
           </div>
@@ -1048,7 +1095,7 @@ export default memo(function StockPriceChart({
             <div className="flex bg-gray-50 rounded-xl p-1 gap-0.5 sm:gap-1">
               {(['1M', '3M', '6M', '1Y'] as const).map((period) => (
                 <button
-                  key={period}
+                  key={`period-${period}`}
                   onClick={() => onTimeRangeChange(period)}
                   className={`px-3 sm:px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 min-w-[50px] ${
                     timeRange === period

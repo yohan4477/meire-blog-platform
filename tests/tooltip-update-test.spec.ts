@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('Chart Tooltip Update Test', () => {
   test('should verify removal of investment perspective and mery mention sections from tooltip', async ({ page }) => {

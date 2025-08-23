@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test('종목 페이지 구성별 로딩 타임 분석', async ({ page }) => {
   console.log('📊 종목 페이지 성능 분석 시작...');

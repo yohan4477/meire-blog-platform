@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 // CLAUDE.md 종목 화면 요구사항 검증 테스트
 test.describe('Merry Stock Screen Requirements', () => {

@@ -1,0 +1,43 @@
+{"timestamp":"2025-08-22T16:03:14.085Z","level":"INFO","message":"🤖 Initializing Claude Direct Analysis Scheduler..."}
+{"timestamp":"2025-08-22T16:03:14.086Z","level":"INFO","message":"📋 Following CLAUDE.md requirements:"}
+{"timestamp":"2025-08-22T16:03:14.087Z","level":"INFO","message":"   ❌ NO API calls for analysis"}
+{"timestamp":"2025-08-22T16:03:14.087Z","level":"INFO","message":"   ❌ NO automated scripts for sentiment analysis"}
+{"timestamp":"2025-08-22T16:03:14.088Z","level":"INFO","message":"   ✅ Claude direct manual analysis only"}
+{"timestamp":"2025-08-22T16:03:14.089Z","level":"INFO","message":"   ⏰ Data readiness updates every 3h20m"}
+{"timestamp":"2025-08-22T16:03:14.090Z","level":"INFO","message":"🌏 Timezone: Asia/Seoul"}
+{"timestamp":"2025-08-22T16:03:14.090Z","level":"INFO","message":"⏱️ Schedule: Every 3h20m at 00:20, 03:20, 06:20, 09:20, 12:20, 15:20, 18:20, 21:20"}
+{"timestamp":"2025-08-22T16:03:14.091Z","level":"INFO","message":"✅ Claude Direct Analysis Scheduler initialized successfully"}
+{"timestamp":"2025-08-22T16:03:14.092Z","level":"INFO","message":"🏃 Running immediate execution..."}
+{"timestamp":"2025-08-22T16:03:14.093Z","level":"INFO","message":"🚀 Executing Claude Direct Analysis task (attempt 1/3)"}
+{"timestamp":"2025-08-22T16:03:14.093Z","level":"INFO","message":"📋 CLAUDE.md Compliance: Data update only, NO automated analysis"}
+{"timestamp":"2025-08-22T16:03:14.094Z","level":"INFO","message":"🤖 Starting Claude Direct Analysis (following CLAUDE.md)","executionId":"claude-analysis-1755878594094"}
+{"timestamp":"2025-08-22T16:03:14.094Z","level":"INFO","message":"📊 Step 1: Checking database and system readiness..."}
+{"timestamp":"2025-08-22T16:03:14.095Z","level":"INFO","message":"✅ Database system ready for updates"}
+{"timestamp":"2025-08-22T16:03:14.095Z","level":"INFO","message":"🔄 Step 2: Clearing application caches for fresh data..."}
+{"timestamp":"2025-08-22T16:03:14.096Z","level":"INFO","message":"✅ Application caches cleared successfully"}
+{"timestamp":"2025-08-22T16:03:14.096Z","level":"INFO","message":"📈 Step 3: Updating system data availability status..."}
+{"timestamp":"2025-08-22T16:03:14.097Z","level":"INFO","message":"✅ System data status updated (3 items)"}
+{"timestamp":"2025-08-22T16:03:14.097Z","level":"INFO","message":"📋 Step 4: CLAUDE.md Compliance Status"}
+{"timestamp":"2025-08-22T16:03:14.097Z","level":"INFO","message":"🤖 感情 분석: Claude 수동 분석 방식 (API 없음, 스크립트 없음)"}
+{"timestamp":"2025-08-22T16:03:14.098Z","level":"INFO","message":"🎯 종목 분석: Claude 직접 분석 방식 (자동화 금지)"}
+{"timestamp":"2025-08-22T16:03:14.098Z","level":"INFO","message":"⚡ 자동 업데이트: 데이터 수집만, 분석은 사용자 요청시 Claude 직접"}
+{"timestamp":"2025-08-22T16:03:14.099Z","level":"INFO","message":"✅ Automated data update completed successfully"}
+{"timestamp":"2025-08-22T16:03:14.099Z","level":"INFO","message":"✅ Claude Direct Analysis completed","executionId":"claude-analysis-1755878594094","executionTime":0,"result":{"dataUpdates":3,"cacheClears":1,"systemChecks":1,"errors":[]}}
+{"timestamp":"2025-08-22T16:03:14.100Z","level":"INFO","message":"✅ Claude Direct Analysis task completed successfully","success":true,"executionTime":0,"result":{"dataUpdates":3,"cacheClears":1,"systemChecks":1,"errors":[]}}
+{"timestamp":"2025-08-22T16:03:14.100Z","level":"INFO","message":"🤖 System ready for Claude manual analysis requests"}
+{"timestamp":"2025-08-22T16:03:14.101Z","level":"INFO","message":"📊 Data updated - awaiting user request for Claude direct analysis"}
+{"timestamp":"2025-08-22T16:03:14.101Z","level":"INFO","message":"🔚 Single run completed, exiting..."}
+{"timestamp":"2025-08-22T16:03:22.688Z","level":"INFO","message":"🤖 Initializing Claude Direct Analysis Scheduler..."}
+{"timestamp":"2025-08-22T16:03:22.689Z","level":"INFO","message":"📋 Following CLAUDE.md requirements:"}
+{"timestamp":"2025-08-22T16:03:22.689Z","level":"INFO","message":"   ❌ NO API calls for analysis"}
+{"timestamp":"2025-08-22T16:03:22.690Z","level":"INFO","message":"   ❌ NO automated scripts for sentiment analysis"}
+{"timestamp":"2025-08-22T16:03:22.690Z","level":"INFO","message":"   ✅ Claude direct manual analysis only"}
+{"timestamp":"2025-08-22T16:03:22.691Z","level":"INFO","message":"   ⏰ Data readiness updates every 3h20m"}
+{"timestamp":"2025-08-22T16:03:22.692Z","level":"INFO","message":"🌏 Timezone: Asia/Seoul"}
+{"timestamp":"2025-08-22T16:03:22.692Z","level":"INFO","message":"⏱️ Schedule: Every 3h20m at 00:20, 03:20, 06:20, 09:20, 12:20, 15:20, 18:20, 21:20"}
+{"timestamp":"2025-08-22T16:03:22.692Z","level":"INFO","message":"✅ Claude Direct Analysis Scheduler initialized successfully"}
+{"timestamp":"2025-08-22T16:03:22.693Z","level":"INFO","message":"📅 Starting cron scheduler..."}
+{"timestamp":"2025-08-22T16:03:22.694Z","level":"INFO","message":"⏱️ Cron pattern: 20 0,3,6,9,12,15,18,21 * * *"}
+{"timestamp":"2025-08-22T16:03:22.724Z","level":"INFO","message":"🏥 Health check monitoring started"}
+{"timestamp":"2025-08-22T16:03:22.725Z","level":"INFO","message":"✅ Claude Direct Analysis Scheduler is running!"}
+{"timestamp":"2025-08-22T16:03:22.727Z","level":"INFO","message":"🕐 Next execution: 2025. 8. 23. 오전 3:20:00"}

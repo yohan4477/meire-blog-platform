@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('📊 차트 클릭 상호작용 테스트 - 3초간 테스트', () => {
   test('차트 마커 클릭 및 상호작용 테스트', async ({ page }) => {

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('📱 모바일 터치 스와이핑 테스트', () => {
   test('모바일 차트 터치 스와이핑 상호작용', async ({ page }) => {

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test('Multiple Stocks Chart Marker Debug Test', async ({ page }) => {
   const stocks = ['TSLA', '005930', 'AAPL', 'NVDA'];

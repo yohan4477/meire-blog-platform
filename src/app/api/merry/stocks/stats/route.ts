@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
           });
         }),
         new Promise((resolve, reject) => {
-          stockDB.db.get('SELECT COUNT(DISTINCT post_id) as count FROM sentiments', (err: any, row: any) => {
+          stockDB.db.get('SELECT COUNT(DISTINCT post_id) as count FROM post_stock_analysis', (err: any, row: any) => {
             if (err) reject(err);
             else resolve(row);
           });

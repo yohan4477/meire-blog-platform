@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 // CLAUDE.md 요구사항: 전체 사이트 Playwright 테스트 - 3초 로딩 제한 엄격 준수
 test.describe('메르 블로그 플랫폼 전체 사이트 테스트', () => {

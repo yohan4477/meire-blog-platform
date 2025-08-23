@@ -37,10 +37,10 @@ export function StockTags({ tags, className = '', maxTags = 6, size = 'md' }: St
     lg: 'text-base px-3 py-1.5'
   };
 
-  // 태그 색상 매핑 (회색 통일)
+  // 태그 색상 매핑 (다크모드 대응)
   const getTagColor = (tag: string): string => {
-    // 모든 태그를 회색으로 통일
-    return 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200';
+    // 다크모드 대응 회색 태그
+    return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700';
   };
 
   return (
@@ -64,7 +64,7 @@ export function StockTags({ tags, className = '', maxTags = 6, size = 'md' }: St
         <span
           className={`
             inline-flex items-center rounded-full border font-medium
-            bg-gray-50 text-gray-500 border-gray-300
+            bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600
             ${sizeClasses[size]}
           `}
           title={`${remainingCount}개 태그 더 있음`}

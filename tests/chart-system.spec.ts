@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('메르 차트 시스템 검증', () => {
   test.beforeEach(async ({ page }) => {

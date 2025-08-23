@@ -1,5 +1,6 @@
 // 차트 애니메이션 시퀀스 검증 - 모든 브라우저 테스트
 import { test, expect, devices } from '@playwright/test';
+import './setup/test-cleanup';
 
 // 브라우저별 테스트 설정
 const browsers = [

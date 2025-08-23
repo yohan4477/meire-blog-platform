@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test('TSLA 메르 언급 확인', async ({ page }) => {
   console.log('🔍 TSLA 메르 언급 테스트 시작...');

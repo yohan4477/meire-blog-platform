@@ -7,6 +7,9 @@ const nextConfig = {
     optimizePackageImports: ['recharts', 'lucide-react'],
   },
   
+  // Fast Refresh 설정
+  reactStrictMode: true,
+  
   // SQLite 클라이언트 측 호환성 (필수)
   webpack: (config, { isServer }) => {
     if (!isServer) {

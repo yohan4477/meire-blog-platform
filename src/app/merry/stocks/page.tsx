@@ -25,6 +25,7 @@ interface Stock {
   name?: string;
   company_name: string;
   market?: string;
+  sector?: string; // 섹터 정보 추가
   mentions?: number;
   mention_count: number;
   analyzed_count: number;
@@ -42,10 +43,29 @@ interface Stock {
 
 export default function MerryStocksPage() {
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [allStocks, setAllStocks] = useState<Stock[]>([]); // 전체 종목 데이터 (통계용)
   const [loading, setLoading] = useState(true);
   const [pricesLoading, setPricesLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [marketFilter, setMarketFilter] = useState('all');
+  const [majorSectorFilter, setMajorSectorFilter] = useState('all'); // 대분류 섹터 필터
+  const [subSectorFilter, setSubSectorFilter] = useState('all'); // 소분류 섹터 필터
+  
+  // 섹터 분류 체계 (중복 제거 및 체계화)
+  const sectorCategories = {
+    '기술/IT': ['Technology', '기술', '반도체', '전자상거래', 'IT'],
+    '에너지/원자력': ['에너지', '원자력', '우라늄', 'Energy'],
+    '산업/제조': ['철강', '조선', '소재', '화학', '제조업'],
+    '운송/모빌리티': ['전기차', '자동차', '운송'],
+    '소비재/서비스': ['엔터테인먼트', '소비재', '서비스'],
+    '금융': ['금융', '은행', '보험', 'Finance'],
+    '헬스케어': ['제약', '바이오', '의료', 'Healthcare'],
+    '신소재/배터리': ['배터리', '희토류', '신소재']
+  };
+  
+  // 대분류에서 소분류 목록 가져오기
+  const getSubSectors = (majorSector: string) => {
+    return majorSector === 'all' ? [] : sectorCategories[majorSector] || [];
+  };
   const [sentimentFilter, setSentimentFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -54,10 +74,25 @@ export default function MerryStocksPage() {
   useEffect(() => {
     if (page === 1) {
       fetchStocksSequential();
+      fetchAllStocksForStats(); // 전체 데이터 로드 (통계용)
     } else {
       fetchStocks(); // 페이지네이션은 기존 방식 유지
     }
   }, [page]);
+  
+  // 통계 카드용 전체 데이터 로드
+  const fetchAllStocksForStats = async () => {
+    try {
+      const response = await fetch(`/api/merry/stocks?limit=100&pricesOnly=false`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setAllStocks(data.data.stocks);
+      }
+    } catch (err) {
+      console.error('전체 종목 데이터 로딩 오류:', err);
+    }
+  };
 
   // 🚀 순차적 API 호출: 기본 정보 먼저 → 가격 정보 나중에
   const fetchStocksSequential = async () => {
@@ -160,13 +195,50 @@ export default function MerryStocksPage() {
     }
   };
 
+  // 페이지에 표시될 종목 필터링 (페이지네이션된 데이터)
   const filteredStocks = stocks.filter(stock => {
     const matchesSearch = (stock.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
                           (stock.ticker?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-    const matchesMarket = marketFilter === 'all' || stock.market === marketFilter;
+    
+    // 대분류 필터링
+    let matchesMajorSector = true;
+    if (majorSectorFilter !== 'all') {
+      const majorSectorList = sectorCategories[majorSectorFilter] || [];
+      matchesMajorSector = majorSectorList.includes(stock.sector || '');
+    }
+    
+    // 소분류 필터링
+    let matchesSubSector = true;
+    if (subSectorFilter !== 'all') {
+      matchesSubSector = stock.sector === subSectorFilter;
+    }
+    
     const matchesSentiment = sentimentFilter === 'all' || stock.sentiment === sentimentFilter;
     
-    return matchesSearch && matchesMarket && matchesSentiment;
+    return matchesSearch && matchesMajorSector && matchesSubSector && matchesSentiment;
+  });
+  
+  // 전체 데이터 필터링 (통계 카드용)
+  const filteredAllStocks = allStocks.filter(stock => {
+    const matchesSearch = (stock.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+                          (stock.ticker?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+    
+    // 대분류 필터링
+    let matchesMajorSector = true;
+    if (majorSectorFilter !== 'all') {
+      const majorSectorList = sectorCategories[majorSectorFilter] || [];
+      matchesMajorSector = majorSectorList.includes(stock.sector || '');
+    }
+    
+    // 소분류 필터링
+    let matchesSubSector = true;
+    if (subSectorFilter !== 'all') {
+      matchesSubSector = stock.sector === subSectorFilter;
+    }
+    
+    const matchesSentiment = sentimentFilter === 'all' || stock.sentiment === sentimentFilter;
+    
+    return matchesSearch && matchesMajorSector && matchesSubSector && matchesSentiment;
   });
 
   return (
@@ -181,7 +253,7 @@ export default function MerryStocksPage() {
         
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
           <BarChart3 className="w-8 h-8 text-primary" />
-          메르's Stock Universe
+          메르 종목 리스트
         </h1>
         <p className="text-muted-foreground">
           메르가 블로그에서 언급한 모든 종목들을 한눈에 확인하세요 (최신 언급일 순, 같은 날짜는 언급 적은 순)
@@ -204,38 +276,57 @@ export default function MerryStocksPage() {
               </div>
             </div>
             
-            <Select value={marketFilter} onValueChange={setMarketFilter}>
+            {/* 대분류 섹터 선택 */}
+            <Select value={majorSectorFilter} onValueChange={(value) => {
+              setMajorSectorFilter(value);
+              setSubSectorFilter('all'); // 대분류 변경시 소분류 초기화
+            }}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="시장 선택" />
+                <SelectValue placeholder="대분류" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체 시장</SelectItem>
-                <SelectItem value="KOSPI">KOSPI</SelectItem>
-                <SelectItem value="NASDAQ">NASDAQ</SelectItem>
-                <SelectItem value="NYSE">NYSE</SelectItem>
-                <SelectItem value="TSE">TSE</SelectItem>
+                <SelectItem value="all">전체 대분류</SelectItem>
+                {Object.keys(sectorCategories).map(category => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            
+            {/* 소분류 섹터 선택 (대분류 선택시에만 활성화) */}
+            {majorSectorFilter !== 'all' && (
+              <Select value={subSectorFilter} onValueChange={setSubSectorFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="소분류" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 소분류</SelectItem>
+                  {getSubSectors(majorSectorFilter).map(subSector => (
+                    <SelectItem key={subSector} value={subSector}>{subSector}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <Select value={sentimentFilter} onValueChange={setSentimentFilter}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="관점 선택" />
+                <SelectValue placeholder="종목 판단" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="positive">긍정적</SelectItem>
-                <SelectItem value="neutral">중립적</SelectItem>
-                <SelectItem value="negative">부정적</SelectItem>
+                <SelectItem value="all">전체 판단</SelectItem>
+                <SelectItem value="positive">긍정</SelectItem>
+                <SelectItem value="neutral">중립</SelectItem>
+                <SelectItem value="negative">부정</SelectItem>
               </SelectContent>
             </Select>
 
             {/* 현재 필터 상태 표시 */}
-            {(marketFilter !== 'all' || sentimentFilter !== 'all' || searchTerm) && (
+            {(majorSectorFilter !== 'all' || subSectorFilter !== 'all' || sentimentFilter !== 'all' || searchTerm) && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  setMarketFilter('all');
+                  setMajorSectorFilter('all');
+                  setSubSectorFilter('all');
                   setSentimentFilter('all');
                   setSearchTerm('');
                 }}
@@ -248,21 +339,26 @@ export default function MerryStocksPage() {
           </div>
           
           {/* 활성 필터 표시 */}
-          {(marketFilter !== 'all' || sentimentFilter !== 'all' || searchTerm) && (
+          {(majorSectorFilter !== 'all' || subSectorFilter !== 'all' || sentimentFilter !== 'all' || searchTerm) && (
             <div className="mt-3 flex flex-wrap gap-2">
               {searchTerm && (
                 <Badge variant="secondary" className="text-xs">
                   검색: "{searchTerm}"
                 </Badge>
               )}
-              {marketFilter !== 'all' && (
+              {majorSectorFilter !== 'all' && (
                 <Badge variant="secondary" className="text-xs">
-                  시장: {marketFilter}
+                  대분류: {majorSectorFilter}
+                </Badge>
+              )}
+              {subSectorFilter !== 'all' && (
+                <Badge variant="secondary" className="text-xs">
+                  세부섹터: {subSectorFilter}
                 </Badge>
               )}
               {sentimentFilter !== 'all' && (
                 <Badge variant="secondary" className="text-xs">
-                  관점: {sentimentFilter === 'positive' ? '긍정적' : sentimentFilter === 'negative' ? '부정적' : '중립적'}
+                  종목판단: {sentimentFilter === 'positive' ? '긍정' : sentimentFilter === 'negative' ? '부정' : '중립'}
                 </Badge>
               )}
             </div>
@@ -270,52 +366,33 @@ export default function MerryStocksPage() {
         </CardContent>
       </Card>
 
-      {/* 통계 카드 - 다크 모드 호환 + 클릭 필터 기능 */}
+      {/* 통계 카드 - 섹터 필터에 따른 동적 변경 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card 
-          className={`bg-card dark:bg-card cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${marketFilter === 'all' ? 'ring-2 ring-primary' : ''}`}
+          className={`bg-card dark:bg-card cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${majorSectorFilter === 'all' && subSectorFilter === 'all' ? 'ring-2 ring-primary' : ''}`}
           onClick={() => {
-            setMarketFilter('all');
+            setMajorSectorFilter('all');
+            setSubSectorFilter('all');
             setSentimentFilter('all');
           }}
         >
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-foreground">{stocks.length}</div>
+            <div className="text-2xl font-bold text-foreground">{filteredAllStocks.length}</div>
             <div className="text-sm text-muted-foreground">총 종목 수</div>
           </CardContent>
         </Card>
-        <Card 
-          className={`bg-card dark:bg-card cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${marketFilter === 'KOSPI' ? 'ring-2 ring-primary' : ''}`}
-          onClick={() => {
-            setMarketFilter('KOSPI');
-            setSentimentFilter('all');
-          }}
-        >
+        <Card className="bg-card dark:bg-card">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">
-              {stocks.filter(s => (s.market || 'NASDAQ') === 'KOSPI').length}
+              {filteredAllStocks.filter(s => (s.market || 'NASDAQ') === 'KOSPI').length}
             </div>
-            <div className="text-sm text-muted-foreground">국내 종목</div>
+            <div className="text-sm text-muted-foreground">한국 종목</div>
           </CardContent>
         </Card>
-        <Card 
-          className={`bg-card dark:bg-card cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${['NASDAQ', 'NYSE'].includes(marketFilter) ? 'ring-2 ring-primary' : ''}`}
-          onClick={() => {
-            // 미국 종목이 더 많은 시장을 자동 선택
-            const nasdaqCount = stocks.filter(s => (s.market || 'NASDAQ') === 'NASDAQ').length;
-            const nyseCount = stocks.filter(s => (s.market || 'NASDAQ') === 'NYSE').length;
-            
-            if (nasdaqCount >= nyseCount) {
-              setMarketFilter('NASDAQ');
-            } else {
-              setMarketFilter('NYSE');
-            }
-            setSentimentFilter('all');
-          }}
-        >
+        <Card className="bg-card dark:bg-card">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">
-              {stocks.filter(s => ['NASDAQ', 'NYSE'].includes(s.market || 'NASDAQ')).length}
+              {filteredAllStocks.filter(s => ['NASDAQ', 'NYSE'].includes(s.market || 'NASDAQ')).length}
             </div>
             <div className="text-sm text-muted-foreground">미국 종목</div>
           </CardContent>
@@ -323,9 +400,9 @@ export default function MerryStocksPage() {
         <Card className="bg-card dark:bg-card">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">
-              {stocks.reduce((sum, s) => sum + (s.postCount || s.mentions || s.mention_count || 0), 0)}
+              {filteredAllStocks.reduce((sum, s) => sum + (s.postCount || s.mentions || s.mention_count || 0), 0)}
             </div>
-            <div className="text-sm text-muted-foreground">총 포스트 수</div>
+            <div className="text-sm text-muted-foreground">전체 포스트 수</div>
           </CardContent>
         </Card>
       </div>
@@ -369,7 +446,7 @@ export default function MerryStocksPage() {
                     </div>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Hash className="w-3 h-3" />
-                      {stock.mention_count}개 포스트 중 {stock.analyzed_count}개 분석 완료
+                      언급 {stock.mention_count}개 · 분석 {stock.analyzed_count}개
                     </div>
                   </div>
                 </div>

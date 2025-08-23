@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('차트 6개월 및 축 좌표 검증', () => {
   test('TSLA 차트 6개월 범위 및 축 설정 확인', async ({ page }) => {

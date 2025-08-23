@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test('해당 문구가 있는 요소의 정렬 확인', async ({ page }) => {
   console.log('🔍 특정 문구 요소 검사 시작');

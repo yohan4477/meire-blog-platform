@@ -3,13 +3,25 @@ import fs from 'fs';
 import path from 'path';
 import { performantDb } from '@/lib/db-performance';
 
+// 티커 매핑 테이블 - 잘못된 티커를 올바른 티커로 수정
+const TICKER_MAPPING: Record<string, string> = {
+  'OCLR': 'OKLO', // Oklo Inc - 잘못된 티커 OCLR을 올바른 OKLO로 매핑
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ ticker: string }> }
 ) {
   try {
     const resolvedParams = await params;
-    const ticker = resolvedParams.ticker;
+    let ticker = resolvedParams.ticker.toUpperCase();
+    
+    // 티커 매핑 확인 및 변경
+    const originalTicker = ticker;
+    if (TICKER_MAPPING[ticker]) {
+      ticker = TICKER_MAPPING[ticker];
+      console.log(`🔄 Posts API Ticker mapping: ${originalTicker} → ${ticker}`);
+    }
     
     // URL 파라미터에서 페이지네이션 및 기간 정보 추출
     const { searchParams } = new URL(request.url);
@@ -70,32 +82,50 @@ async function findPostsByTickerFromDB(ticker: string, limit: number, offset: nu
     
     console.log(`📅 Posts date range filter: ${startDateStr} ~ ${endDateStr} (period: ${period})`);
     
-    // 개수 조회
+    // 🔥 수정: 감정 분석 여부와 관계없이 모든 언급된 포스트를 가져오기
+    // ticker와 회사명으로 blog_posts에서 직접 검색
+    const tickerNameMap: Record<string, string[]> = {
+      'OKLO': ['오클로', 'OKLO', 'Oklo'],
+      '005930': ['삼성전자', '삼성', 'Samsung'],
+      'TSLA': ['테슬라', 'Tesla'],
+      // 필요시 추가
+    };
+    
+    const searchTerms = tickerNameMap[ticker] || [ticker];
+    const likeConditions = searchTerms.map(() => 
+      '(bp.title LIKE ? OR bp.content LIKE ? OR bp.excerpt LIKE ?)'
+    ).join(' OR ');
+    
+    const searchParams: any[] = [];
+    searchTerms.forEach(term => {
+      searchParams.push(`%${term}%`, `%${term}%`, `%${term}%`);
+    });
+    
+    // 개수 조회 - blog_posts에서 직접
     const countQuery = `
       SELECT COUNT(*) as total 
-      FROM post_stock_analysis psa
-      JOIN blog_posts bp ON psa.post_id = bp.id
-      WHERE psa.ticker = ?
+      FROM blog_posts bp
+      WHERE (${likeConditions})
         AND bp.created_date >= ?
         AND bp.created_date <= ?
     `;
     
     let total = 0;
     try {
-      const countResult = await performantDb.query(countQuery, [ticker, startDateStr, endDateStr]);
+      const countResult = await performantDb.query(
+        countQuery, 
+        [...searchParams, startDateStr, endDateStr]
+      );
       total = countResult[0]?.total || 0;
     } catch (error) {
-      console.error('💥 post_stock_analysis 테이블 조회 실패:', error);
-      if (error instanceof Error && error.message.includes('no such table')) {
-        console.error('🚨 CRITICAL: post_stock_analysis 테이블이 존재하지 않음 - stock-page-requirements.md 위반');
-      }
+      console.error('💥 blog_posts 조회 실패:', error);
       throw error;
     }
     
-    // 메인 쿼리
+    // 메인 쿼리 - LEFT JOIN으로 감정 분석 데이터는 있으면 가져오고 없어도 포스트는 표시
     const optimizedQuery = `
       SELECT 
-        bp.id as post_id,
+        bp.log_no,
         bp.title,
         bp.excerpt,
         bp.views,
@@ -104,9 +134,11 @@ async function findPostsByTickerFromDB(ticker: string, limit: number, offset: nu
         psa.sentiment,
         psa.reasoning as key_reasoning,
         psa.confidence
-      FROM post_stock_analysis psa
-      JOIN blog_posts bp ON psa.post_id = bp.id
-      WHERE psa.ticker = ?
+      FROM blog_posts bp
+      LEFT JOIN post_stock_analysis psa 
+        ON bp.log_no = psa.log_no 
+        AND psa.ticker = ?
+      WHERE (${likeConditions})
         AND bp.created_date >= ?
         AND bp.created_date <= ?
       ORDER BY bp.created_date DESC 
@@ -115,8 +147,8 @@ async function findPostsByTickerFromDB(ticker: string, limit: number, offset: nu
     
     const posts = await performantDb.query(
       optimizedQuery, 
-      [ticker, startDateStr, endDateStr, limit, offset],
-      `posts-analysis-${ticker}-${period}`,
+      [ticker, ...searchParams, startDateStr, endDateStr, limit, offset],
+      `posts-all-${ticker}-${period}`,
       300000
     );
     
@@ -126,7 +158,7 @@ async function findPostsByTickerFromDB(ticker: string, limit: number, offset: nu
     
     return {
       posts: posts.map(row => ({
-        id: row.post_id,
+        id: row.log_no,
         title: row.title,
         excerpt: row.excerpt || `${ticker} 관련 포스트`,
         views: row.views || 0,

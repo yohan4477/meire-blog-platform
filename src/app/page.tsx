@@ -1,18 +1,13 @@
 'use client';
 
-import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { InteractiveButton } from '@/components/ui/interactive-button';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, TrendingUp, BarChart3, User, Bell, Brain } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowRight, TrendingUp, BarChart3, User } from 'lucide-react';
 import { useResponsive } from '@/hooks/useResponsive';
 import { mainPageCache } from '@/lib/performance-cache';
 
-// 🎬 종목 페이지 방식의 애니메이션 시스템
+// 🎬 종목 페이지 방식의 애니메이션 시스템 - Fast Refresh 테스트
 interface SectionStatus {
   hero: 'idle' | 'loading' | 'loaded' | 'error';
   todayQuote: 'idle' | 'loading' | 'loaded' | 'error';
@@ -21,14 +16,14 @@ interface SectionStatus {
   bottomCards: 'idle' | 'loading' | 'loaded' | 'error';
 }
 
-// ⚡ 성능 모니터링 함수 (종목 페이지 방식)
+// ⚡ 성능 모니터링 함수 (1초 로딩 목표)
 function trackSectionPerformance(sectionName: string, loadTime: number) {
   const performanceTargets = {
-    hero: 200,
-    todayQuote: 800,
-    merryPicks: 1000,
-    mainContent: 1200,
-    bottomCards: 1500,
+    hero: 100,      // Hero: 100ms 이내
+    todayQuote: 200, // 오늘의 말씀: 200ms 이내
+    merryPicks: 300, // 메르's Pick: 300ms 이내
+    mainContent: 250, // 메인 콘텐츠: 250ms 이내
+    bottomCards: 400, // 하단 카드: 400ms 이내 (총 1초)
   };
   
   if (loadTime > performanceTargets[sectionName as keyof typeof performanceTargets]) {
@@ -41,29 +36,10 @@ function trackSectionPerformance(sectionName: string, loadTime: number) {
 // 🚀 점진적 로딩 시스템 - 종목 페이지 방식 적용
 // 각 섹션을 독립적으로 로딩하여 성능과 UX 최적화
 
-const MerryStockPicks = dynamic(
-  () => import('@/components/merry/MerryStockPicks'),
-  { 
-    loading: () => <div className="animate-pulse"><Skeleton className="h-96 w-full" /></div>,
-    ssr: true // 메르's Pick은 핵심 기능이므로 SSR 활성화
-  }
-);
-
-const MerryProfileTab = dynamic(
-  () => import('@/components/merry/MerryProfileTab'),
-  { 
-    loading: () => <div className="animate-pulse"><Skeleton className="h-96 w-full" /></div>,
-    ssr: false // 탭 콘텐츠는 상호작용 후 로딩
-  }
-);
-
-const TodayMerryQuote = dynamic(
-  () => import('@/components/home/TodayMerryQuote').then(mod => ({ default: mod.TodayMerryQuote })),
-  { 
-    loading: () => <div className="animate-pulse"><Skeleton className="h-64 w-full rounded-lg" /></div>,
-    ssr: true // SEO 중요하므로 SSR 활성화
-  }
-);
+// ⚡ Dynamic Import 제거 - 직접 import로 번들 최적화
+import MerryStockPicks from '@/components/merry/MerryStockPicks';
+import MerryProfileTab from '@/components/merry/MerryProfileTab';
+import { TodayMerryQuote } from '@/components/home/TodayMerryQuote';
 
 // 🎨 CSS 애니메이션 시스템 (종목 페이지 차트 애니메이션 방식)
 const animationStyles = `
@@ -126,7 +102,6 @@ export default function Home() {
   });
   
   const [merryPosts, setMerryPosts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState(mainPageConfig.mainContent.defaultTab);
   const animationStylesRef = useRef<HTMLStyleElement | null>(null);
   
   // ⚡ 성능 추적을 위한 Ref
@@ -163,56 +138,23 @@ export default function Home() {
     };
   }, []);
   
-  // 🚀 점진적 데이터 로딩 시스템 (기기별 최적화)
+  // 🚀 즉시 로딩 시스템 (인위적 지연 제거)
   useEffect(() => {
-    // 기기별 로딩 시퀀스 조정
-    const getLoadSequence = () => {
-      if (responsive.isMobile) {
-        // 모바일: 빠른 로딩, 필수 콘텐츠 우선
-        return [
-          { name: 'todayQuote', delay: 100 },  // 모바일에서는 즉시
-          { name: 'merryPicks', delay: 400 },  // 빠른 로딩
-          { name: 'mainContent', delay: 200 }, // 모바일에서는 빠르게
-          { name: 'bottomCards', delay: 800 }  // 덜 중요한 하단 콘텐츠
-        ];
-      } else if (responsive.isTablet) {
-        // 태블릿: 균형잡힌 로딩
-        return [
-          { name: 'todayQuote', delay: 200 },
-          { name: 'merryPicks', delay: 500 },
-          { name: 'mainContent', delay: 700 },
-          { name: 'bottomCards', delay: 1000 }
-        ];
-      } else {
-        // 데스크톱: 애니메이션 중심 로딩 (원래 시퀀스)
-        return [
-          { name: 'todayQuote', delay: 300 },
-          { name: 'merryPicks', delay: 600 },
-          { name: 'mainContent', delay: 900 },
-          { name: 'bottomCards', delay: 1200 }
-        ];
-      }
+    // 모든 섹션 즉시 로드 (setTimeout 제거)
+    console.log('⚡ 모든 섹션 즉시 로딩 시작');
+    
+    const loadAllSectionsImmediately = () => {
+      const sections = ['todayQuote', 'merryPicks', 'mainContent', 'bottomCards'];
+      
+      sections.forEach((name) => {
+        startSectionTimer(name);
+        setSectionStatus(prev => ({ ...prev, [name]: 'loaded' })); // 즉시 loaded
+        completeSectionTimer(name);
+      });
     };
 
-    const sectionLoadSequence = getLoadSequence();
-    
-    sectionLoadSequence.forEach(({ name, delay }) => {
-      setTimeout(() => {
-        startSectionTimer(name);
-        setSectionStatus(prev => ({ ...prev, [name]: 'loading' }));
-        
-        // 실제 데이터 로딩 (기기별 타임아웃 조정)
-        const loadingTimeout = responsive.isMobile ? 
-          Math.random() * 200 + 50 :  // 모바일: 50-250ms
-          Math.random() * 300 + 100;  // 데스크톱: 100-400ms
-          
-        setTimeout(() => {
-          setSectionStatus(prev => ({ ...prev, [name]: 'loaded' }));
-          completeSectionTimer(name);
-        }, loadingTimeout);
-      }, delay);
-    });
-  }, [startSectionTimer, completeSectionTimer, responsive.deviceType]);
+    loadAllSectionsImmediately();
+  }, [startSectionTimer, completeSectionTimer]);
   
   // 📈 메르 데이터 캐시 최적화 로딩 (종목 페이지 방식)
   useEffect(() => {
@@ -259,24 +201,33 @@ export default function Home() {
               요르가 전하는 날카로운 투자 인사이트
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center max-w-4xl mx-auto px-2">
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-1">
-                <Link href="/merry" className="flex items-center justify-center">
-                  <span className="truncate">📝 메르 블로그</span>
-                  <User className="ml-2 h-4 w-4 flex-shrink-0" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-1">
-                <Link href="/merry/stocks" className="flex items-center justify-center">
-                  <span className="truncate">📊 종목 리스트</span>
-                  <TrendingUp className="ml-2 h-4 w-4 flex-shrink-0" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-2">
-                <Link href="/merry/weekly-report" className="flex items-center justify-center">
-                  <span className="truncate">📊 주간 보고</span>
-                  <BarChart3 className="ml-2 h-4 w-4 flex-shrink-0" />
-                </Link>
-              </Button>
+              <InteractiveButton 
+                variant="outline" 
+                size="lg" 
+                href="/merry"
+                className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-1"
+              >
+                <span className="truncate">📝 메르 포스트</span>
+                <User className="ml-2 h-4 w-4 flex-shrink-0" />
+              </InteractiveButton>
+              <InteractiveButton 
+                variant="outline" 
+                size="lg" 
+                href="/merry/stocks"
+                className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-1"
+              >
+                <span className="truncate">📊 종목 리스트</span>
+                <TrendingUp className="ml-2 h-4 w-4 flex-shrink-0" />
+              </InteractiveButton>
+              <InteractiveButton 
+                variant="outline" 
+                size="lg" 
+                href="/merry/weekly-report"
+                className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-2"
+              >
+                <span className="truncate">📊 주간 보고</span>
+                <BarChart3 className="ml-2 h-4 w-4 flex-shrink-0" />
+              </InteractiveButton>
             </div>
           </div>
         </div>
@@ -319,31 +270,12 @@ export default function Home() {
         'opacity-0'
       }`}>
         {sectionStatus.mainContent === 'loaded' ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 h-auto">
-              <TabsTrigger value="profile" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
-                <span className="hidden sm:inline">👤 </span>
-                <span className="truncate">메르 소개</span>
-              </TabsTrigger>
-              <TabsTrigger value="insights" className="text-xs sm:text-sm px-1 sm:px-2 py-2 min-w-0">
-                <span className="hidden sm:inline">🤖 </span>
-                <span className="truncate">AI 인사이트</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="insights" className="mt-6 space-y-6">
-              {/* AI 금융 큐레이션 섹션 제거됨 */}
-              <div className="bg-card rounded-lg p-6">
-                <div className="text-center text-muted-foreground">
-                  <p>AI 금융 큐레이션 기능이 제거되었습니다.</p>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="profile" className="mt-6">
+          <div className="w-full">
+            {/* 탭 시스템 제거 - 메르 소개만 표시 */}
+            <div className="mt-6">
               <MerryProfileTab />
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
         ) : sectionStatus.mainContent === 'loading' ? (
           <div className="animate-pulse">
             <Skeleton className="h-12 w-full mb-6" />
@@ -352,55 +284,63 @@ export default function Home() {
         ) : null}
       </div>
 
-      {/* 🏛️ 국민연금 분석 & 에이전트 관리 - 1200ms 후 로딩 */}
+      {/* 🏛️ 국민연금 분석 - 1200ms 후 로딩 */}
       <section className={`bg-card border-t transition-all duration-300 ${
         sectionStatus.bottomCards === 'loaded' ? 'section-bottom-cards' : 
         sectionStatus.bottomCards === 'loading' ? 'animate-pulse' :
         'opacity-0'
-      }`}>
+      }`} data-testid="bottom-cards">
         <div className="container mx-auto px-4 py-6">
           {sectionStatus.bottomCards === 'loaded' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-6 card-stagger-1">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold flex items-center">
-                  <BarChart3 className="mr-2 h-5 w-5" />
-                  국민연금 분석
-                </h3>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/investment">
-                    자세히 보기
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                국민연금공단의 최신 포트폴리오 변화와 투자 전략을 분석합니다
-              </p>
-            </Card>
-            
-              <Card className="p-6 card-stagger-2">
+            <div className="flex justify-center">
+              <Card className="p-6 card-stagger-1 max-w-md w-full">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold flex items-center">
-                    <Brain className="mr-2 h-5 w-5" />
-                    에이전트 관리
+                    <BarChart3 className="mr-2 h-5 w-5" />
+                    국민연금 분석
                   </h3>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/agent-workflows">
-                      자세히 보기
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <InteractiveButton 
+                    variant="ghost" 
+                    size="sm" 
+                    href="/investment"
+                    loadingText="로딩 중..."
+                  >
+                    자세히 보기
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </InteractiveButton>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  AI 에이전트들의 분석 워크플로우를 관리하고 모니터링합니다
+                  국민연금공단의 최신 포트폴리오 변화와 투자 전략을 분석합니다
                 </p>
+                {/* 외부 링크 데모 버튼 추가 */}
+                <div className="mt-4 pt-4 border-t border-muted">
+                  <h4 className="text-sm font-medium mb-2">외부 링크 테스트</h4>
+                  <div className="flex gap-2">
+                    <InteractiveButton 
+                      variant="outline" 
+                      size="sm" 
+                      href="https://www.nps.or.kr"
+                      external={true}
+                      loadingText="연결 중..."
+                    >
+                      국민연금 공식 사이트
+                    </InteractiveButton>
+                    <InteractiveButton 
+                      variant="outline" 
+                      size="sm" 
+                      href="https://finance.naver.com"
+                      external={true}
+                      loadingText="연결 중..."
+                    >
+                      네이버 금융
+                    </InteractiveButton>
+                  </div>
+                </div>
               </Card>
             </div>
           ) : sectionStatus.bottomCards === 'loading' ? (
-            <div className="animate-pulse grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
+            <div className="animate-pulse flex justify-center">
+              <Skeleton className="h-32 w-full max-w-md" />
             </div>
           ) : null}
         </div>

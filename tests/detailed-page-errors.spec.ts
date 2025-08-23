@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 // 상세 페이지 오류 검증 테스트 - 섹션오류 절대 금지
 test.describe('Detailed Page Error Validation', () => {

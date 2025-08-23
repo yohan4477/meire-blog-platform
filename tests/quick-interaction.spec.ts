@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import './setup/test-cleanup';
 
 test.describe('🔥 빠른 상호작용 테스트', () => {
   test('실제 사용자처럼 차트 조작하기', async ({ page }) => {

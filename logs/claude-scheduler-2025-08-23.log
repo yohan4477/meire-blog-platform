@@ -1,0 +1,161 @@
+{"timestamp":"2025-08-23T08:51:38.162Z","level":"INFO","message":"🤖 Initializing Claude Direct Analysis Scheduler..."}
+{"timestamp":"2025-08-23T08:51:38.167Z","level":"INFO","message":"📋 Following CLAUDE.md requirements:"}
+{"timestamp":"2025-08-23T08:51:38.167Z","level":"INFO","message":"   ❌ NO API calls for analysis"}
+{"timestamp":"2025-08-23T08:51:38.169Z","level":"INFO","message":"   ❌ NO automated scripts for sentiment analysis"}
+{"timestamp":"2025-08-23T08:51:38.170Z","level":"INFO","message":"   ✅ Claude direct manual analysis only"}
+{"timestamp":"2025-08-23T08:51:38.170Z","level":"INFO","message":"   ⏰ Data readiness updates every 3h20m"}
+{"timestamp":"2025-08-23T08:51:38.172Z","level":"INFO","message":"🌏 Timezone: Asia/Seoul"}
+{"timestamp":"2025-08-23T08:51:38.172Z","level":"INFO","message":"⏱️ Schedule: Every 3h20m at 00:20, 03:20, 06:20, 09:20, 12:20, 15:20, 18:20, 21:20"}
+{"timestamp":"2025-08-23T08:51:38.207Z","level":"INFO","message":"✅ Claude Direct Analysis Scheduler initialized successfully"}
+{"timestamp":"2025-08-23T08:51:38.208Z","level":"INFO","message":"🏃 Running immediate execution..."}
+{"timestamp":"2025-08-23T08:51:38.209Z","level":"INFO","message":"🚀 크롤링 작업 시작","executionId":"crawl-1755939098209"}
+{"timestamp":"2025-08-23T08:51:38.209Z","level":"INFO","message":"📋 CLAUDE.md 준수 모드: 크롤링만 자동화, 분석은 Claude 직접 수행"}
+{"timestamp":"2025-08-23T08:51:38.214Z","level":"INFO","message":"📥 1단계: 새로운 블로그 포스트 크롤링 중..."}
+{"timestamp":"2025-08-23T08:51:38.404Z","level":"INFO","message":"📊 크롤링 진행","output":"🔄 블로그 포스트 크롤링 시작..."}
+{"timestamp":"2025-08-23T08:51:40.438Z","level":"INFO","message":"📊 크롤링 진행","output":"✅ 크롤링 완료 (시뮬레이션)"}
+{"timestamp":"2025-08-23T08:51:40.486Z","level":"INFO","message":"🔄 2단계: 데이터베이스 동기화 중..."}
+{"timestamp":"2025-08-23T08:51:40.487Z","level":"INFO","message":"🔄 메르's Pick 업데이트 중..."}
+{"timestamp":"2025-08-23T08:51:40.487Z","level":"INFO","message":"📊 종목 통계 업데이트 중..."}
+{"timestamp":"2025-08-23T08:51:41.516Z","level":"INFO","message":"✅ 데이터베이스 동기화 완료"}
+{"timestamp":"2025-08-23T08:51:41.517Z","level":"INFO","message":"🧹 3단계: 애플리케이션 캐시 정리 중..."}
+{"timestamp":"2025-08-23T08:51:41.517Z","level":"INFO","message":"🧹 API 캐시 정리 중..."}
+{"timestamp":"2025-08-23T08:51:42.042Z","level":"INFO","message":"✅ 캐시 정리 완료"}
+{"timestamp":"2025-08-23T08:51:42.050Z","level":"INFO","message":"🤖 4단계: Claude 데이터 정리 요청 준비 중..."}
+{"timestamp":"2025-08-23T08:51:42.052Z","level":"INFO","message":"🎯 Claude 작업 요청 파일 생성 완료","file":"C:\\Users\\y\\meire-blog-platform\\temp\\claude-work-request.json","tasks":5}
+{"timestamp":"2025-08-23T08:51:42.056Z","level":"INFO","message":"✅ 크롤링 작업 완료","executionId":"crawl-1755939098209","nextSteps":"Claude에게 데이터 정리 및 분석 요청 필요"}
+{"timestamp":"2025-08-23T08:51:42.057Z","level":"INFO","message":"🎉 즉시 실행 완료","success":true,"executionId":"crawl-1755939098209"}
+{"timestamp":"2025-08-23T08:51:59.839Z","level":"INFO","message":"🤖 Initializing Claude Direct Analysis Scheduler..."}
+{"timestamp":"2025-08-23T08:51:59.844Z","level":"INFO","message":"📋 Following CLAUDE.md requirements:"}
+{"timestamp":"2025-08-23T08:51:59.847Z","level":"INFO","message":"   ❌ NO API calls for analysis"}
+{"timestamp":"2025-08-23T08:51:59.848Z","level":"INFO","message":"   ❌ NO automated scripts for sentiment analysis"}
+{"timestamp":"2025-08-23T08:51:59.849Z","level":"INFO","message":"   ✅ Claude direct manual analysis only"}
+{"timestamp":"2025-08-23T08:51:59.849Z","level":"INFO","message":"   ⏰ Data readiness updates every 3h20m"}
+{"timestamp":"2025-08-23T08:51:59.849Z","level":"INFO","message":"🌏 Timezone: Asia/Seoul"}
+{"timestamp":"2025-08-23T08:51:59.850Z","level":"INFO","message":"⏱️ Schedule: Every 3h20m at 00:20, 03:20, 06:20, 09:20, 12:20, 15:20, 18:20, 21:20"}
+{"timestamp":"2025-08-23T08:51:59.882Z","level":"INFO","message":"✅ Claude Direct Analysis Scheduler initialized successfully"}
+{"timestamp":"2025-08-23T09:20:00.287Z","level":"INFO","message":"⏰ 스케줄된 크롤링 작업 시작"}
+{"timestamp":"2025-08-23T09:20:00.288Z","level":"INFO","message":"🚀 크롤링 작업 시작","executionId":"crawl-1755940800288"}
+{"timestamp":"2025-08-23T09:20:00.289Z","level":"INFO","message":"📋 CLAUDE.md 준수 모드: 크롤링만 자동화, 분석은 Claude 직접 수행"}
+{"timestamp":"2025-08-23T09:20:00.289Z","level":"INFO","message":"📥 1단계: 새로운 블로그 포스트 크롤링 중..."}
+{"timestamp":"2025-08-23T09:20:00.427Z","level":"INFO","message":"📊 크롤링 진행","output":"🔄 블로그 포스트 크롤링 시작..."}
+{"timestamp":"2025-08-23T09:20:02.468Z","level":"INFO","message":"📊 크롤링 진행","output":"✅ 크롤링 완료 (시뮬레이션)"}
+{"timestamp":"2025-08-23T09:20:02.522Z","level":"INFO","message":"🔄 2단계: 데이터베이스 동기화 중..."}
+{"timestamp":"2025-08-23T09:20:02.522Z","level":"INFO","message":"🔄 메르's Pick 업데이트 중..."}
+{"timestamp":"2025-08-23T09:20:02.523Z","level":"INFO","message":"📊 종목 통계 업데이트 중..."}
+{"timestamp":"2025-08-23T09:20:03.534Z","level":"INFO","message":"✅ 데이터베이스 동기화 완료"}
+{"timestamp":"2025-08-23T09:20:03.534Z","level":"INFO","message":"🧹 3단계: 애플리케이션 캐시 정리 중..."}
+{"timestamp":"2025-08-23T09:20:03.535Z","level":"INFO","message":"🧹 API 캐시 정리 중..."}
+{"timestamp":"2025-08-23T09:20:04.044Z","level":"INFO","message":"✅ 캐시 정리 완료"}
+{"timestamp":"2025-08-23T09:20:04.045Z","level":"INFO","message":"🤖 4단계: Claude 데이터 정리 요청 준비 중..."}
+{"timestamp":"2025-08-23T09:20:04.049Z","level":"INFO","message":"🎯 Claude 작업 요청 파일 생성 완료","file":"C:\\Users\\y\\meire-blog-platform\\temp\\claude-work-request.json","tasks":5}
+{"timestamp":"2025-08-23T09:20:04.050Z","level":"INFO","message":"✅ 크롤링 작업 완료","executionId":"crawl-1755940800288","nextSteps":"Claude에게 데이터 정리 및 분석 요청 필요"}
+{"timestamp":"2025-08-23T09:20:04.051Z","level":"INFO","message":"🎉 스케줄된 작업 성공 완료","success":true,"executionId":"crawl-1755940800288"}
+{"timestamp":"2025-08-23T09:57:17.480Z","level":"INFO","message":"🤖 Initializing Claude Direct Analysis Scheduler..."}
+{"timestamp":"2025-08-23T09:57:17.483Z","level":"INFO","message":"📋 Following CLAUDE.md requirements:"}
+{"timestamp":"2025-08-23T09:57:17.483Z","level":"INFO","message":"   ❌ NO API calls for analysis"}
+{"timestamp":"2025-08-23T09:57:17.484Z","level":"INFO","message":"   ❌ NO automated scripts for sentiment analysis"}
+{"timestamp":"2025-08-23T09:57:17.484Z","level":"INFO","message":"   ✅ Claude direct manual analysis only"}
+{"timestamp":"2025-08-23T09:57:17.485Z","level":"INFO","message":"   ⏰ Data readiness updates every 3h20m"}
+{"timestamp":"2025-08-23T09:57:17.486Z","level":"INFO","message":"🌏 Timezone: Asia/Seoul"}
+{"timestamp":"2025-08-23T09:57:17.488Z","level":"INFO","message":"⏱️ Schedule: Every 3h20m at 00:20, 03:20, 06:20, 09:20, 12:20, 15:20, 18:20, 21:20"}
+{"timestamp":"2025-08-23T09:57:17.520Z","level":"INFO","message":"✅ Claude Direct Analysis Scheduler initialized successfully"}
+{"timestamp":"2025-08-23T09:57:17.522Z","level":"INFO","message":"🏃 Running immediate execution..."}
+{"timestamp":"2025-08-23T09:57:17.523Z","level":"INFO","message":"🚀 크롤링 작업 시작","executionId":"crawl-1755943037523"}
+{"timestamp":"2025-08-23T09:57:17.523Z","level":"INFO","message":"📋 CLAUDE.md 준수 모드: 크롤링만 자동화, 분석은 Claude 직접 수행"}
+{"timestamp":"2025-08-23T09:57:17.524Z","level":"INFO","message":"📥 1단계: 새로운 블로그 포스트 크롤링 중..."}
+{"timestamp":"2025-08-23T09:57:17.657Z","level":"INFO","message":"📊 크롤링 진행","output":"🔄 블로그 포스트 크롤링 시작..."}
+{"timestamp":"2025-08-23T09:57:19.669Z","level":"INFO","message":"📊 크롤링 진행","output":"✅ 크롤링 완료 (시뮬레이션)"}
+{"timestamp":"2025-08-23T09:57:19.704Z","level":"INFO","message":"🔄 2단계: 데이터베이스 동기화 중..."}
+{"timestamp":"2025-08-23T09:57:19.704Z","level":"INFO","message":"🔄 메르's Pick 업데이트 중..."}
+{"timestamp":"2025-08-23T09:57:19.705Z","level":"INFO","message":"📊 종목 통계 업데이트 중..."}
+{"timestamp":"2025-08-23T09:57:20.717Z","level":"INFO","message":"✅ 데이터베이스 동기화 완료"}
+{"timestamp":"2025-08-23T09:57:20.718Z","level":"INFO","message":"🧹 3단계: 애플리케이션 캐시 정리 중..."}
+{"timestamp":"2025-08-23T09:57:20.719Z","level":"INFO","message":"🧹 API 캐시 정리 중..."}
+{"timestamp":"2025-08-23T09:57:21.225Z","level":"INFO","message":"✅ 캐시 정리 완료"}
+{"timestamp":"2025-08-23T09:57:21.226Z","level":"INFO","message":"🤖 4단계: Claude 데이터 정리 요청 준비 중..."}
+{"timestamp":"2025-08-23T09:57:21.231Z","level":"INFO","message":"🎯 Claude 작업 요청 파일 생성 완료","file":"C:\\Users\\y\\meire-blog-platform\\temp\\claude-work-request.json","tasks":5}
+{"timestamp":"2025-08-23T09:57:21.232Z","level":"INFO","message":"✅ 크롤링 작업 완료","executionId":"crawl-1755943037523","nextSteps":"Claude에게 데이터 정리 및 분석 요청 필요"}
+{"timestamp":"2025-08-23T09:57:21.232Z","level":"INFO","message":"🎉 즉시 실행 완료","success":true,"executionId":"crawl-1755943037523"}
+{"timestamp":"2025-08-23T09:57:47.976Z","level":"INFO","message":"🤖 Initializing Claude Direct Analysis Scheduler..."}
+{"timestamp":"2025-08-23T09:57:47.979Z","level":"INFO","message":"📋 Following CLAUDE.md requirements:"}
+{"timestamp":"2025-08-23T09:57:47.979Z","level":"INFO","message":"   ❌ NO API calls for analysis"}
+{"timestamp":"2025-08-23T09:57:47.980Z","level":"INFO","message":"   ❌ NO automated scripts for sentiment analysis"}
+{"timestamp":"2025-08-23T09:57:47.980Z","level":"INFO","message":"   ✅ Claude direct manual analysis only"}
+{"timestamp":"2025-08-23T09:57:47.981Z","level":"INFO","message":"   ⏰ Data readiness updates every 3h20m"}
+{"timestamp":"2025-08-23T09:57:47.981Z","level":"INFO","message":"🌏 Timezone: Asia/Seoul"}
+{"timestamp":"2025-08-23T09:57:47.982Z","level":"INFO","message":"⏱️ Schedule: Every 3h20m at 00:20, 03:20, 06:20, 09:20, 12:20, 15:20, 18:20, 21:20"}
+{"timestamp":"2025-08-23T09:57:48.026Z","level":"INFO","message":"✅ Claude Direct Analysis Scheduler initialized successfully"}
+{"timestamp":"2025-08-23T12:20:00.182Z","level":"INFO","message":"⏰ 스케줄된 크롤링 작업 시작"}
+{"timestamp":"2025-08-23T12:20:00.185Z","level":"INFO","message":"🚀 크롤링 작업 시작","executionId":"crawl-1755951600185"}
+{"timestamp":"2025-08-23T12:20:00.185Z","level":"INFO","message":"📋 CLAUDE.md 준수 모드: 크롤링만 자동화, 분석은 Claude 직접 수행"}
+{"timestamp":"2025-08-23T12:20:00.186Z","level":"INFO","message":"📥 1단계: 새로운 블로그 포스트 크롤링 중..."}
+{"timestamp":"2025-08-23T12:20:00.321Z","level":"INFO","message":"📊 크롤링 진행","output":"🔄 블로그 포스트 크롤링 시작..."}
+{"timestamp":"2025-08-23T12:20:00.862Z","level":"INFO","message":"⏰ 스케줄된 크롤링 작업 시작"}
+{"timestamp":"2025-08-23T12:20:00.863Z","level":"INFO","message":"🚀 크롤링 작업 시작","executionId":"crawl-1755951600863"}
+{"timestamp":"2025-08-23T12:20:00.864Z","level":"INFO","message":"📋 CLAUDE.md 준수 모드: 크롤링만 자동화, 분석은 Claude 직접 수행"}
+{"timestamp":"2025-08-23T12:20:00.864Z","level":"INFO","message":"📥 1단계: 새로운 블로그 포스트 크롤링 중..."}
+{"timestamp":"2025-08-23T12:20:01.025Z","level":"INFO","message":"📊 크롤링 진행","output":"🔄 블로그 포스트 크롤링 시작..."}
+{"timestamp":"2025-08-23T12:20:02.324Z","level":"INFO","message":"📊 크롤링 진행","output":"✅ 크롤링 완료 (시뮬레이션)"}
+{"timestamp":"2025-08-23T12:20:02.338Z","level":"INFO","message":"🔄 2단계: 데이터베이스 동기화 중..."}
+{"timestamp":"2025-08-23T12:20:02.339Z","level":"INFO","message":"🔄 메르's Pick 업데이트 중..."}
+{"timestamp":"2025-08-23T12:20:02.339Z","level":"INFO","message":"📊 종목 통계 업데이트 중..."}
+{"timestamp":"2025-08-23T12:20:03.036Z","level":"INFO","message":"📊 크롤링 진행","output":"✅ 크롤링 완료 (시뮬레이션)"}
+{"timestamp":"2025-08-23T12:20:03.048Z","level":"INFO","message":"🔄 2단계: 데이터베이스 동기화 중..."}
+{"timestamp":"2025-08-23T12:20:03.048Z","level":"INFO","message":"🔄 메르's Pick 업데이트 중..."}
+{"timestamp":"2025-08-23T12:20:03.049Z","level":"INFO","message":"📊 종목 통계 업데이트 중..."}
+{"timestamp":"2025-08-23T12:20:03.352Z","level":"INFO","message":"✅ 데이터베이스 동기화 완료"}
+{"timestamp":"2025-08-23T12:20:03.353Z","level":"INFO","message":"🧹 3단계: 애플리케이션 캐시 정리 중..."}
+{"timestamp":"2025-08-23T12:20:03.353Z","level":"INFO","message":"🧹 API 캐시 정리 중..."}
+{"timestamp":"2025-08-23T12:20:03.856Z","level":"INFO","message":"✅ 캐시 정리 완료"}
+{"timestamp":"2025-08-23T12:20:03.857Z","level":"INFO","message":"🤖 4단계: Claude 데이터 정리 요청 준비 중..."}
+{"timestamp":"2025-08-23T12:20:03.859Z","level":"INFO","message":"🎯 Claude 작업 요청 파일 생성 완료","file":"C:\\Users\\y\\meire-blog-platform\\temp\\claude-work-request.json","tasks":5}
+{"timestamp":"2025-08-23T12:20:03.859Z","level":"INFO","message":"✅ 크롤링 작업 완료","executionId":"crawl-1755951600185","nextSteps":"Claude에게 데이터 정리 및 분석 요청 필요"}
+{"timestamp":"2025-08-23T12:20:03.860Z","level":"INFO","message":"🎉 스케줄된 작업 성공 완료","success":true,"executionId":"crawl-1755951600185"}
+{"timestamp":"2025-08-23T12:20:04.062Z","level":"INFO","message":"✅ 데이터베이스 동기화 완료"}
+{"timestamp":"2025-08-23T12:20:04.064Z","level":"INFO","message":"🧹 3단계: 애플리케이션 캐시 정리 중..."}
+{"timestamp":"2025-08-23T12:20:04.066Z","level":"INFO","message":"🧹 API 캐시 정리 중..."}
+{"timestamp":"2025-08-23T12:20:04.573Z","level":"INFO","message":"✅ 캐시 정리 완료"}
+{"timestamp":"2025-08-23T12:20:04.574Z","level":"INFO","message":"🤖 4단계: Claude 데이터 정리 요청 준비 중..."}
+{"timestamp":"2025-08-23T12:20:04.575Z","level":"INFO","message":"🎯 Claude 작업 요청 파일 생성 완료","file":"C:\\Users\\y\\meire-blog-platform\\temp\\claude-work-request.json","tasks":5}
+{"timestamp":"2025-08-23T12:20:04.576Z","level":"INFO","message":"✅ 크롤링 작업 완료","executionId":"crawl-1755951600863","nextSteps":"Claude에게 데이터 정리 및 분석 요청 필요"}
+{"timestamp":"2025-08-23T12:20:04.576Z","level":"INFO","message":"🎉 스케줄된 작업 성공 완료","success":true,"executionId":"crawl-1755951600863"}
+{"timestamp":"2025-08-23T15:20:00.504Z","level":"INFO","message":"⏰ 스케줄된 크롤링 작업 시작"}
+{"timestamp":"2025-08-23T15:20:00.506Z","level":"INFO","message":"🚀 크롤링 작업 시작","executionId":"crawl-1755962400506"}
+{"timestamp":"2025-08-23T15:20:00.507Z","level":"INFO","message":"📋 CLAUDE.md 준수 모드: 크롤링만 자동화, 분석은 Claude 직접 수행"}
+{"timestamp":"2025-08-23T15:20:00.511Z","level":"INFO","message":"📥 1단계: 새로운 블로그 포스트 크롤링 중..."}
+{"timestamp":"2025-08-23T15:20:00.642Z","level":"INFO","message":"📊 크롤링 진행","output":"🔄 블로그 포스트 크롤링 시작..."}
+{"timestamp":"2025-08-23T15:20:00.643Z","level":"ERROR","message":"💥 Uncaught Exception","error":"EPIPE: broken pipe, write","stack":"Error: EPIPE: broken pipe, write\n    at Socket._write (node:internal/net:63:18)\n    at writeOrBuffer (node:internal/streams/writable:572:12)\n    at _write (node:internal/streams/writable:501:10)\n    at Writable.write (node:internal/streams/writable:510:10)\n    at console.value (node:internal/console/constructor:298:16)\n    at console.log (node:internal/console/constructor:384:26)\n    at Logger.log (C:\\Users\\y\\meire-blog-platform\\scripts\\claude-automated-scheduler.js:35:17)\n    at Logger.info (C:\\Users\\y\\meire-blog-platform\\scripts\\claude-automated-scheduler.js:39:32)\n    at Socket.<anonymous> (C:\\Users\\y\\meire-blog-platform\\scripts\\claude-automated-scheduler.js:109:20)\n    at Socket.emit (node:events:518:28)"}
+{"timestamp":"2025-08-23T15:20:00.757Z","level":"INFO","message":"⏰ 스케줄된 크롤링 작업 시작"}
+{"timestamp":"2025-08-23T15:20:00.760Z","level":"INFO","message":"🚀 크롤링 작업 시작","executionId":"crawl-1755962400759"}
+{"timestamp":"2025-08-23T15:20:00.760Z","level":"INFO","message":"📋 CLAUDE.md 준수 모드: 크롤링만 자동화, 분석은 Claude 직접 수행"}
+{"timestamp":"2025-08-23T15:20:00.760Z","level":"INFO","message":"📥 1단계: 새로운 블로그 포스트 크롤링 중..."}
+{"timestamp":"2025-08-23T15:20:00.909Z","level":"INFO","message":"📊 크롤링 진행","output":"🔄 블로그 포스트 크롤링 시작..."}
+{"timestamp":"2025-08-23T15:20:02.940Z","level":"INFO","message":"📊 크롤링 진행","output":"✅ 크롤링 완료 (시뮬레이션)"}
+{"timestamp":"2025-08-23T15:20:03.012Z","level":"INFO","message":"🔄 2단계: 데이터베이스 동기화 중..."}
+{"timestamp":"2025-08-23T15:20:03.012Z","level":"INFO","message":"🔄 메르's Pick 업데이트 중..."}
+{"timestamp":"2025-08-23T15:20:03.013Z","level":"INFO","message":"📊 종목 통계 업데이트 중..."}
+{"timestamp":"2025-08-23T15:20:04.026Z","level":"INFO","message":"✅ 데이터베이스 동기화 완료"}
+{"timestamp":"2025-08-23T15:20:04.027Z","level":"INFO","message":"🧹 3단계: 애플리케이션 캐시 정리 중..."}
+{"timestamp":"2025-08-23T15:20:04.028Z","level":"INFO","message":"🧹 API 캐시 정리 중..."}
+{"timestamp":"2025-08-23T15:20:04.551Z","level":"INFO","message":"✅ 캐시 정리 완료"}
+{"timestamp":"2025-08-23T15:20:04.552Z","level":"INFO","message":"🤖 4단계: Claude 데이터 정리 요청 준비 중..."}
+{"timestamp":"2025-08-23T15:20:04.556Z","level":"INFO","message":"🎯 Claude 작업 요청 파일 생성 완료","file":"C:\\Users\\y\\meire-blog-platform\\temp\\claude-work-request.json","tasks":5}
+{"timestamp":"2025-08-23T15:20:04.556Z","level":"INFO","message":"✅ 크롤링 작업 완료","executionId":"crawl-1755962400759","nextSteps":"Claude에게 데이터 정리 및 분석 요청 필요"}
+{"timestamp":"2025-08-23T15:20:04.557Z","level":"INFO","message":"🎉 스케줄된 작업 성공 완료","success":true,"executionId":"crawl-1755962400759"}
+{"timestamp":"2025-08-23T18:20:00.535Z","level":"INFO","message":"⏰ 스케줄된 크롤링 작업 시작"}
+{"timestamp":"2025-08-23T18:20:00.537Z","level":"INFO","message":"🚀 크롤링 작업 시작","executionId":"crawl-1755973200537"}
+{"timestamp":"2025-08-23T18:20:00.538Z","level":"INFO","message":"📋 CLAUDE.md 준수 모드: 크롤링만 자동화, 분석은 Claude 직접 수행"}
+{"timestamp":"2025-08-23T18:20:00.538Z","level":"INFO","message":"📥 1단계: 새로운 블로그 포스트 크롤링 중..."}
+{"timestamp":"2025-08-23T18:20:00.758Z","level":"INFO","message":"📊 크롤링 진행","output":"🔄 블로그 포스트 크롤링 시작..."}
+{"timestamp":"2025-08-23T18:20:02.771Z","level":"INFO","message":"📊 크롤링 진행","output":"✅ 크롤링 완료 (시뮬레이션)"}
+{"timestamp":"2025-08-23T18:20:02.788Z","level":"INFO","message":"🔄 2단계: 데이터베이스 동기화 중..."}
+{"timestamp":"2025-08-23T18:20:02.789Z","level":"INFO","message":"🔄 메르's Pick 업데이트 중..."}
+{"timestamp":"2025-08-23T18:20:02.789Z","level":"INFO","message":"📊 종목 통계 업데이트 중..."}
+{"timestamp":"2025-08-23T18:20:03.805Z","level":"INFO","message":"✅ 데이터베이스 동기화 완료"}
+{"timestamp":"2025-08-23T18:20:03.807Z","level":"INFO","message":"🧹 3단계: 애플리케이션 캐시 정리 중..."}
+{"timestamp":"2025-08-23T18:20:03.807Z","level":"INFO","message":"🧹 API 캐시 정리 중..."}
+{"timestamp":"2025-08-23T18:20:04.319Z","level":"INFO","message":"✅ 캐시 정리 완료"}
+{"timestamp":"2025-08-23T18:20:04.320Z","level":"INFO","message":"🤖 4단계: Claude 데이터 정리 요청 준비 중..."}
+{"timestamp":"2025-08-23T18:20:04.322Z","level":"INFO","message":"🎯 Claude 작업 요청 파일 생성 완료","file":"C:\\Users\\y\\meire-blog-platform\\temp\\claude-work-request.json","tasks":5}
+{"timestamp":"2025-08-23T18:20:04.323Z","level":"INFO","message":"✅ 크롤링 작업 완료","executionId":"crawl-1755973200537","nextSteps":"Claude에게 데이터 정리 및 분석 요청 필요"}
+{"timestamp":"2025-08-23T18:20:04.323Z","level":"INFO","message":"🎉 스케줄된 작업 성공 완료","success":true,"executionId":"crawl-1755973200537"}
