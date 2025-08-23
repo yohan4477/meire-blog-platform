@@ -43,7 +43,32 @@ interface NavigationPost {
   slug: string;
 }
 
+interface PostAnalysis {
+  summary?: string;           // 한줄 정리 (메르님 말씀용)
+  explanation?: string;       // 설명 (독자 이해용)
+  investment_insight?: string; // 투자 인사이트
+  analyzed_at?: string;       // 분석 일시
+}
+
 interface PostData {
+  log_no: number;
+  title: string;
+  content: string;
+  excerpt: string;
+  author: string;
+  created_date: number;
+  views: number;
+  likes: number;
+  comments: number;
+  tags: string[];
+  mentionedStocks?: string[];
+  investmentTheme?: string;
+  sentimentTone?: string;
+  
+  // 🆕 Claude 직접 분석 결과
+  analysis?: PostAnalysis;
+  
+  // 기존 데이터 유지 (호환성)
   post: MerryBlogPost;
   relatedPosts: MerryBlogPost[];
   navigation: {
@@ -105,9 +130,9 @@ export default function MerryPostDetailPage() {
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return 'text-green-600 bg-green-50';
-      case 'negative': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'positive': return 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30';
+      case 'negative': return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30';
+      default: return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-800/50';
     }
   };
 
@@ -150,6 +175,50 @@ export default function MerryPostDetailPage() {
     }
   };
 
+  // 메르님 한 줄 요약 또는 한줄 코멘트를 파싱하고 스타일링하는 함수
+  const parseContentWithSummary = (content: string) => {
+    let processedContent = content;
+    let hasSummary = false;
+    let summary = '';
+    let summaryType = null;
+    
+    // 1. 메르님 한 줄 요약 패턴 감지 및 본문에서 제거
+    const summaryMatch = content.match(/📝\s*\*\*메르님 한 줄 요약\*\*:\s*(.*?)(?=\n\n---|\n\n|$)/s);
+    
+    if (summaryMatch) {
+      summary = summaryMatch[1].trim();
+      // 본문에서 메르님 한 줄 요약 섹션 완전 제거
+      processedContent = content.replace(/📝\s*\*\*메르님 한 줄 요약\*\*:.*?(?=\n\n---|\n\n|$)/s, '').replace(/^---\n\n/, '').trim();
+      hasSummary = true;
+      summaryType = 'summary';
+    } else {
+      // 2. 한줄 코멘트 패턴 감지 및 본문에서 제거
+      const commentMatch = content.match(/한줄\s*코멘트\s*\n+(.+)$/s);
+      
+      if (commentMatch) {
+        summary = commentMatch[1].trim();
+        // 본문에서 한줄 코멘트 섹션 완전 제거
+        processedContent = content.replace(/\n+한줄\s*코멘트\s*\n+.+$/s, '').trim();
+        hasSummary = true;
+        summaryType = 'comment';
+      }
+    }
+    
+    // 3. "메르님 한 줄 요약" 텍스트로 시작하는 경우 제거
+    if (processedContent.startsWith('메르님 한 줄 요약')) {
+      processedContent = processedContent.replace(/^메르님 한 줄 요약\s*\n*/, '').trim();
+    }
+    
+    return {
+      hasSummary,
+      summary,
+      content: processedContent, // 요약/코멘트가 제거된 본문
+      summaryType
+    };
+  };
+
+  const { hasSummary, summary, content, summaryType } = postData ? parseContentWithSummary(postData.post.content) : { hasSummary: false, summary: '', content: '', summaryType: null };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -166,7 +235,7 @@ export default function MerryPostDetailPage() {
           </div>
           <div className="space-y-4">
             {[...Array(8)].map((_, i) => (
-              <Skeleton key={i} className="h-4 w-full" />
+              <Skeleton key={`skeleton-${i}`} className="h-4 w-full" />
             ))}
           </div>
         </div>
@@ -177,8 +246,8 @@ export default function MerryPostDetailPage() {
   if (!postData) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">포스트를 찾을 수 없습니다</h1>
-        <p className="text-gray-600 mb-8">요청하신 포스트가 존재하지 않거나 삭제되었습니다.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">포스트를 찾을 수 없습니다</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">요청하신 포스트가 존재하지 않거나 삭제되었습니다.</p>
         <Link href="/merry">
           <Button>
             <ArrowLeft className="mr-2" size={16} />
@@ -223,12 +292,12 @@ export default function MerryPostDetailPage() {
           </div>
           
           {/* Title */}
-          <h1 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-6 leading-tight">
             {post.title}
           </h1>
           
           {/* Meta Information */}
-          <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 mb-6">
+          <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400 mb-6">
             <div className="flex items-center gap-1">
               <User size={16} />
               {post.author}
@@ -250,9 +319,9 @@ export default function MerryPostDetailPage() {
           {/* Stock Tickers */}
           {post.stockTickers.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">📊 관련 종목</h3>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">📊 관련 종목</h3>
               <div className="flex flex-wrap gap-2">
-                {post.stockTickers.map((ticker, index) => (
+                {post.stockTickers.map((ticker) => (
                   <Link key={ticker} href={`/merry/stocks/${ticker}`}>
                     <Badge variant="outline" className="hover:bg-blue-50 cursor-pointer">
                       <TrendingUp size={12} className="mr-1" />
@@ -266,8 +335,8 @@ export default function MerryPostDetailPage() {
 
           {/* Tags */}
           <div className="flex flex-wrap gap-2">
-            {post.tags.map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-sm">
+            {post.tags.map((tag) => (
+              <Badge key={tag} variant="outline" className="text-sm">
                 <Tag size={12} className="mr-1" />
                 {tag}
               </Badge>
@@ -275,12 +344,137 @@ export default function MerryPostDetailPage() {
           </div>
         </header>
 
-        {/* Content */}
-        <div className="prose prose-lg max-w-none mb-8">
+        {/* 메르님 한 줄 요약 또는 한줄 코멘트 - Beautiful Display */}
+        {hasSummary && summaryType === 'summary' && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-l-4 border-blue-500 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-1">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">📝</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-blue-800 mb-2 flex items-center gap-2">
+                  <span className="text-blue-600">💡</span>
+                  메르님 한 줄 요약
+                </h3>
+                <blockquote className="text-gray-700 text-lg leading-relaxed font-medium italic border-l-2 border-blue-300 pl-4 bg-white/60 rounded-r-lg p-3 whitespace-pre-line">
+                  "{summary}"
+                </blockquote>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 한줄 코멘트 카드 - Premium Style with Navy Gradient */}
+        {hasSummary && summaryType === 'comment' && (
+          <div className="mb-8 relative overflow-hidden">
+            {/* Background gradient effect - Neutral theme */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-100/50 via-slate-100/30 to-gray-100/50 dark:from-gray-900/30 dark:via-slate-900/20 dark:to-gray-900/30 rounded-2xl" />
+            
+            {/* Main card content - Dark mode compatible */}
+            <div className="relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg p-6">
+              {/* Header with icon */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-900 dark:from-slate-600 dark:to-slate-800 rounded-xl flex items-center justify-center shadow-lg border">
+                    <span className="text-white text-lg">💡</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold bg-gradient-to-r from-slate-700 to-slate-900 dark:from-slate-300 dark:to-slate-100 bg-clip-text text-transparent">
+                    메르님 한 줄 코멘트
+                  </h3>
+                </div>
+              </div>
+              
+              {/* Comment content with formatted text - Dark mode compatible */}
+              <div className="relative">
+                <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-slate-600 to-slate-800 dark:from-slate-400 dark:to-slate-600 rounded-full" />
+                <blockquote className="pl-6 text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <div 
+                    className="text-base font-medium"
+                    dangerouslySetInnerHTML={{
+                      __html: summary
+                        .replace(/^한줄 코멘트\s*/g, '')
+                        .replace(/\\n/g, '\n') // 먼저 \\n을 실제 줄바꿈으로 변환
+                        .replace(/\n/g, '<br/>') // 그 다음 모든 줄바꿈을 <br/>로 변환
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    }}
+                  />
+                </blockquote>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 🆕 Claude 직접 분석 카드들 - 올바른 순서 */}
+        {postData.analysis && (
+          <div className="space-y-6 mb-8">
+            
+            {/* 1️⃣ 📝 코멘트 풀이 카드 (투자 인사이트 스타일) */}
+            {postData.analysis.explanation && (
+              <div className="bg-card rounded-xl p-5 border">
+                <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                  <span>📝</span>
+                  <span>코멘트 풀이</span>
+                </h3>
+                <p 
+                  className="text-base text-foreground leading-relaxed break-keep"
+                  dangerouslySetInnerHTML={{
+                    __html: postData.analysis.explanation
+                      .replace(/\\n/g, '\n')
+                      .replace(/\n/g, '<br/>')
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                  }}
+                />
+              </div>
+            )}
+
+            {/* 2️⃣ 💡 핵심 한줄 요약 카드 (투자 인사이트 스타일) */}
+            {postData.analysis.summary && (
+              <div className="bg-card rounded-xl p-5 border">
+                <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                  <span>💡</span>
+                  <span>핵심 한줄 요약</span>
+                </h3>
+                <p className="text-base lg:text-lg leading-relaxed text-foreground font-medium break-keep">
+                  "{postData.analysis.summary}"
+                </p>
+              </div>
+            )}
+
+            {/* 3️⃣ 🎯 투자 인사이트 카드 (메르님 말씀 스타일 - 투자 통찰) */}
+            {postData.analysis.investment_insight && (
+              <div className="bg-card rounded-xl p-5 border">
+                <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>🎯 투자 인사이트</span>
+                </h3>
+                <p className="text-base text-foreground leading-relaxed break-keep">
+                  {postData.analysis.investment_insight}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 📖 본문 카드 - 통일된 스타일링 */}
+        <div className="bg-card rounded-xl p-5 border mb-8">
+          <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+            <span>📖</span>
+            <span>본문</span>
+          </h3>
           <div 
-            className="text-gray-800 leading-relaxed"
-            dangerouslySetInnerHTML={{ 
-              __html: post.content.replace(/\n/g, '<br>').replace(/#{1,6}\s/g, match => `<h${match.length - 1}>`) 
+            className="text-base text-foreground leading-relaxed break-keep"
+            dangerouslySetInnerHTML={{
+              __html: content
+                .replace(/\\n/g, '\n') // 먼저 \\n을 실제 줄바꿈으로 변환
+                .replace(/\n/g, '<br/>') // 그 다음 모든 줄바꿈을 <br/>로 변환
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
             }}
           />
         </div>
@@ -290,10 +484,10 @@ export default function MerryPostDetailPage() {
         {/* Keywords */}
         {post.keywords.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">🔍 핵심 키워드</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">🔍 핵심 키워드</h3>
             <div className="flex flex-wrap gap-2">
-              {post.keywords.map((keyword, index) => (
-                <Badge key={index} variant="secondary" className="text-sm">
+              {post.keywords.map((keyword) => (
+                <Badge key={keyword} variant="secondary" className="text-sm">
                   {keyword}
                 </Badge>
               ))}
@@ -369,7 +563,7 @@ export default function MerryPostDetailPage() {
       {/* Related Posts */}
       {relatedPosts.length > 0 && (
         <section>
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">🔗 관련 포스트</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">🔗 관련 포스트</h3>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {relatedPosts.map((relatedPost) => (
               <Card key={relatedPost.id} className="group hover:shadow-lg transition-shadow">
