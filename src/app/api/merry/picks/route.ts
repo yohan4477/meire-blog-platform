@@ -172,6 +172,63 @@ const TICKER_NAME_MAP: Record<string, string[]> = {
   'UNH': ['유나이티드헬스', '유나이티드헬스그룹', 'UnitedHealth']
 };
 
+// Helper function to get latest stock prices from database
+async function getLatestStockPrices(): Promise<Record<string, any>> {
+  const query = `
+    WITH latest_prices AS (
+      SELECT ticker, close_price, date, volume,
+             LAG(close_price, 1) OVER (PARTITION BY ticker ORDER BY date) as prev_close
+      FROM stock_prices 
+    ),
+    price_changes AS (
+      SELECT ticker, close_price, date, volume, prev_close,
+             ROUND(close_price - prev_close, 2) as price_change,
+             ROUND(((close_price - prev_close) * 100.0 / prev_close), 2) as change_percent
+      FROM latest_prices
+      WHERE prev_close IS NOT NULL
+    )
+    SELECT ticker, close_price, price_change, change_percent, date, volume
+    FROM price_changes
+    WHERE (ticker, date) IN (
+      SELECT ticker, MAX(date) 
+      FROM stock_prices 
+      GROUP BY ticker
+    )
+  `;
+  
+  try {
+    const rows = await new Promise<any[]>((resolve, reject) => {
+      const StockDB = require('../../../../lib/stock-db-sqlite3');
+      const stockDB = new StockDB();
+      stockDB.connect().then(() => {
+        stockDB.db.all(query, [], (err: any, rows: any) => {
+          stockDB.close();
+          if (err) reject(err);
+          else resolve(rows || []);
+        });
+      });
+    });
+    
+    const latestPrices: Record<string, any> = {};
+    
+    rows.forEach(row => {
+      latestPrices[row.ticker] = {
+        price: row.close_price,
+        change: row.price_change,
+        changePercent: row.change_percent,
+        date: row.date,
+        volume: row.volume
+      };
+    });
+    
+    console.log(`📊 Loaded latest prices for ${Object.keys(latestPrices).length} tickers with price changes`);
+    return latestPrices;
+  } catch (error) {
+    console.error('Failed to get latest stock prices:', error);
+    return {};
+  }
+}
+
 // Helper function to get sentiment analysis count for each ticker
 async function getAnalyzedCounts(): Promise<Record<string, number>> {
   const query = `
@@ -212,8 +269,12 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
     const startTime = Date.now();
     console.log(`⭐ Fetching Merry's picks with performance optimization (limit: ${limit})`);
     
-    // Get analyzed counts for sentiment analysis
-    const analyzedCounts = await getAnalyzedCounts();
+    // Get analyzed counts, latest prices, and stock tags
+    const [analyzedCounts, latestPrices, stockTags] = await Promise.all([
+      getAnalyzedCounts(),
+      getLatestStockPrices(),
+      getStockTags()
+    ]);
     
     // Use high-performance database helper
     const recentPosts = await getRecentPosts(90); // 90 days
@@ -279,6 +340,19 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
           description: '회사 정보 준비 중'
         };
 
+        const priceData = latestPrices[stock.ticker];
+
+        // Parse tags from database (JSON string format)
+        let parsedTags = [];
+        try {
+          if (stockTags[stock.ticker]) {
+            parsedTags = JSON.parse(stockTags[stock.ticker]);
+          }
+        } catch (error) {
+          console.warn(`Failed to parse tags for ${stock.ticker}:`, error);
+          parsedTags = [];
+        }
+
         return {
           ticker: stock.ticker,
           name: stockInfo.name,
@@ -286,11 +360,12 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
           currency: stockInfo.currency,
           last_mentioned_at: new Date(latestMentionTimestamp).toISOString(),
           mention_count: stock.count,
-          current_price: null,
-          price_change: null,
+          current_price: priceData?.price || null,
+          price_change: priceData?.changePercent || null,
           sentiment: 'neutral',
           description: stockInfo.description,
-          analyzed_count: analyzedCounts[stock.ticker] || 0 // Actual sentiment analysis count
+          analyzed_count: analyzedCounts[stock.ticker] || 0, // Actual sentiment analysis count
+          tags: parsedTags // Add tags from database
         };
       })
       .sort((a: any, b: any) => {
@@ -308,5 +383,37 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
   } catch (error) {
     console.error('DB에서 메르 Pick 조회 실패:', error);
     return [];
+  }
+}
+
+// Get stock tags from database
+async function getStockTags(): Promise<Record<string, string>> {
+  try {
+    const db = await performantDb.getInstance();
+    const query = `
+      SELECT ticker, tags 
+      FROM stocks 
+      WHERE tags IS NOT NULL AND tags != '' AND tags != '[]'
+    `;
+    
+    const rows: any[] = await new Promise((resolve, reject) => {
+      db.all(query, [], (err: any, rows: any) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
+    });
+
+    const tagMap: Record<string, string> = {};
+    rows.forEach((row: any) => {
+      if (row.tags) {
+        tagMap[row.ticker] = row.tags;
+      }
+    });
+
+    console.log(`📋 Loaded tags for ${Object.keys(tagMap).length} stocks`);
+    return tagMap;
+  } catch (error) {
+    console.error('Stock tags 조회 실패:', error);
+    return {};
   }
 }

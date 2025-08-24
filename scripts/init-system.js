@@ -85,21 +85,21 @@ function initializeDatabase() {
       merry_mentioned_stocks: `
         CREATE TABLE IF NOT EXISTS merry_mentioned_stocks (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          post_id INTEGER NOT NULL,
+          log_no TEXT NOT NULL,
           ticker TEXT NOT NULL,
           mentioned_date DATE NOT NULL,
           context TEXT,
           sentiment_score REAL DEFAULT 0,
           mention_type TEXT DEFAULT 'neutral',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          UNIQUE(post_id, ticker)
+          UNIQUE(log_no, ticker)
         )
       `,
       
       post_stock_sentiments: `
         CREATE TABLE IF NOT EXISTS post_stock_sentiments (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          post_id INTEGER NOT NULL,
+          log_no TEXT NOT NULL,
           ticker TEXT NOT NULL,
           sentiment TEXT NOT NULL CHECK (sentiment IN ('positive', 'negative', 'neutral')),
           sentiment_score DECIMAL(4,3) NOT NULL,
@@ -108,7 +108,7 @@ function initializeDatabase() {
           context_snippet TEXT,
           reasoning TEXT,
           analyzed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          UNIQUE(post_id, ticker)
+          UNIQUE(log_no, ticker)
         )
       `,
       

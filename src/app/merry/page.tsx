@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, User, Tag, Eye, MessageSquare, Heart, Share2, Filter } from 'lucide-react';
+import { Calendar, User, Tag, Eye, MessageSquare, Heart, Share2, Filter, Grid3X3, List } from 'lucide-react';
 import Link from 'next/link';
 
 interface MerryPost {
-  id: number;
+  log_no: string;
   title: string;
   content: string;
   excerpt: string;
@@ -36,13 +36,14 @@ export default function MerryPage() {
   const [hasMore, setHasMore] = useState(true);
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [dateFilter, setDateFilter] = useState<string>('all');
-  const [tickerFilter, setTickerFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [availableStocks, setAvailableStocks] = useState<Array<{ticker: string, name: string, count: number}>>([]);
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
   // 필터 변경시 포스트 다시 로드
   useEffect(() => {
     loadPosts(true);
-  }, [dateFilter, tickerFilter]);
+  }, [dateFilter, categoryFilter]);
 
   // 초기 로드 및 종목 목록 로드
   useEffect(() => {
@@ -52,8 +53,10 @@ export default function MerryPage() {
 
   const loadAvailableStocks = async () => {
     try {
+      console.log('🔄 종목 목록 로딩 시작...');
       const response = await fetch('/api/merry/stocks');
       const result = await response.json();
+      console.log('📊 종목 API 응답:', result);
       
       if (result.success && result.data?.stocks) {
         // 언급 횟수가 있는 종목만 필터링하고 정렬
@@ -66,10 +69,13 @@ export default function MerryPage() {
           }))
           .sort((a: any, b: any) => b.count - a.count);
         
+        console.log('✅ 필터링된 종목 목록:', stocksWithMentions);
         setAvailableStocks(stocksWithMentions);
+      } else {
+        console.error('❌ 종목 API 응답 구조 오류:', result);
       }
     } catch (error) {
-      console.error('종목 목록 로드 실패:', error);
+      console.error('❌ 종목 목록 로드 실패:', error);
     }
   };
 
@@ -92,7 +98,7 @@ export default function MerryPage() {
       });
       
       if (dateFilter && dateFilter !== 'all') params.append('date', dateFilter);
-      if (tickerFilter && tickerFilter !== 'all') params.append('ticker', tickerFilter);
+      if (categoryFilter && categoryFilter !== 'all') params.append('category', categoryFilter);
 
       const response = await fetch(`/api/merry/posts?${params.toString()}`);
       const result = await response.json();
@@ -100,7 +106,7 @@ export default function MerryPage() {
       if (result.success && result.data) {
         // API 데이터를 MerryPost 형식으로 변환
         const formattedPosts: MerryPost[] = result.data.map((post: any) => ({
-          id: post.id,
+          log_no: post.log_no || post.id,  // log_no 우선 사용
           title: post.title,
           content: post.content || post.excerpt,
           excerpt: post.excerpt || post.content?.substring(0, 200) + '...',
@@ -117,6 +123,14 @@ export default function MerryPage() {
         
         if (resetPosts) {
           setPosts(formattedPosts);
+          // 디버깅: 첫 번째 포스트의 log_no 확인
+          if (formattedPosts.length > 0) {
+            console.log('첫 번째 포스트 데이터:', {
+              id: formattedPosts[0].id,
+              log_no: formattedPosts[0].log_no,
+              title: formattedPosts[0].title
+            });
+          }
         } else {
           setPosts(prev => [...prev, ...formattedPosts]);
         }
@@ -201,27 +215,25 @@ export default function MerryPage() {
           </Select>
 
 
-          <Select value={tickerFilter} onValueChange={setTickerFilter}>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="종목 선택" />
+              <SelectValue placeholder="카테고리 선택" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">모든 종목</SelectItem>
-              {availableStocks.map((stock) => (
-                <SelectItem key={stock.ticker} value={stock.ticker}>
-                  {stock.name} ({stock.ticker}) - {stock.count}개 언급
-                </SelectItem>
-              ))}
+              <SelectItem value="all">모든 카테고리</SelectItem>
+              <SelectItem value="주절주절">주절주절</SelectItem>
+              <SelectItem value="경제/주식/국제정세/사회">경제/주식/국제정세/사회</SelectItem>
+              <SelectItem value="건강/의학/맛집/일상/기타">건강/의학/맛집/일상/기타</SelectItem>
             </SelectContent>
           </Select>
 
-          {(dateFilter !== 'all' || tickerFilter !== 'all') && (
+          {(dateFilter !== 'all' || categoryFilter !== 'all') && (
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => {
                 setDateFilter('all');
-                setTickerFilter('all');
+                setCategoryFilter('all');
               }}
             >
               초기화
@@ -232,21 +244,47 @@ export default function MerryPage() {
 
       {/* All Posts */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-6">
-          📝 모든 포스트 
-          {totalPosts > 0 && (
-            <span className="text-base font-normal text-muted-foreground ml-2">
-              (총 {totalPosts}개)
-            </span>
-          )}
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-foreground">
+            📝 모든 포스트 
+            {totalPosts > 0 && (
+              <span className="text-base font-normal text-muted-foreground ml-2">
+                (총 {totalPosts}개)
+              </span>
+            )}
+          </h2>
+          
+          {/* View Toggle Buttons */}
+          <div className="flex items-center gap-1 border rounded-lg p-1">
+            <Button
+              variant={viewMode === 'card' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('card')}
+              className="px-3"
+            >
+              <Grid3X3 size={16} className="mr-1" />
+              카드
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="px-3"
+            >
+              <List size={16} className="mr-1" />
+              리스트
+            </Button>
+          </div>
+        </div>
         
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Conditional rendering based on view mode */}
+        {viewMode === 'card' ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
-            <Card key={post.id} className="group hover:shadow-lg transition-shadow">
+            <Card key={post.log_no} className="group hover:shadow-lg transition-shadow">
               <CardHeader>
-                <CardTitle className="group-hover:text-blue-600 transition-colors">
-                  <Link href={`/merry/posts/${post.id}`}>
+                <CardTitle className="text-foreground group-hover:text-blue-600 transition-colors">
+                  <Link href={`/merry/posts/${post.log_no}`}>
                     {post.title}
                   </Link>
                 </CardTitle>
@@ -268,7 +306,7 @@ export default function MerryPage() {
                               tagsArray = parsed.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
                             }
                           } catch (parseError) {
-                            console.warn(`Failed to parse tags for post ${post.id}:`, parseError);
+                            console.warn(`Failed to parse tags for post ${post.log_no}:`, parseError);
                             tagsArray = [];
                           }
                         } else if (Array.isArray(post.tags)) {
@@ -277,7 +315,7 @@ export default function MerryPage() {
                         }
                       }
                     } catch (error) {
-                      console.error(`Tag processing error for post ${post.id}:`, error);
+                      console.error(`Tag processing error for post ${post.log_no}:`, error);
                       tagsArray = [];
                     }
                     
@@ -342,7 +380,26 @@ export default function MerryPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        ) : (
+          // List View - Only title and date as requested
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <div key={post.log_no} className="group p-4 border rounded-lg hover:shadow-md transition-shadow bg-card">
+                <Link href={`/merry/posts/${post.log_no}`} className="block">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-foreground group-hover:text-blue-600 transition-colors flex-1 mr-4">
+                      {post.title}
+                    </h3>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {formatDate(post.createdAt)}
+                    </span>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* 더보기 버튼 */}
         {hasMore && posts.length > 0 && (
@@ -369,7 +426,7 @@ export default function MerryPage() {
           <div className="text-center py-12">
             <div className="text-gray-400 text-lg mb-4">📝</div>
             <p className="text-gray-600">
-              {dateFilter !== 'all' || tickerFilter !== 'all'
+              {dateFilter !== 'all' || categoryFilter !== 'all'
                 ? '선택한 필터에 해당하는 포스트가 없습니다.'
                 : '아직 포스트가 없습니다.'
               }

@@ -52,7 +52,7 @@ interface PricePoint {
   date: string;
   price: number;
   postTitle?: string;
-  postId?: number;
+  logNo?: string;
   isCurrentPrice?: boolean;
   isActualData?: boolean; // 🆕 실제 데이터인지 보완된 데이터인지 구분
   missingDataNote?: string; // 🆕 데이터 누락 메모
@@ -1028,6 +1028,7 @@ export default memo(function StockPriceChart({
                   
                   return (
                     <circle
+                      key={`marker-${props.index}-${point.date}`}
                       cx={props.cx}
                       cy={props.cy}
                       r={isMobile ? 6 : 5}

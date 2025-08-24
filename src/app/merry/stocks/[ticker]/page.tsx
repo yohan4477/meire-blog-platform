@@ -561,8 +561,8 @@ export default function StockDetailPage() {
               </div>
               <div className="space-y-4">
                 {Array.isArray(postsState.posts) && postsState.posts.map(post => (
-                <Link key={post.id} href={`/merry/${post.id}`}>
-                  <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer border">
+                <Link key={post.id} href={`/merry/posts/${post.id}`}>
+                  <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer border bg-card">
                     <div className="space-y-2">
                       <h4 className="font-semibold hover:text-primary transition-colors">
                         {post.title}

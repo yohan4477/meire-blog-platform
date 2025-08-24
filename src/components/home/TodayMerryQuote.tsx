@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Calendar, Clock, TrendingUp, Quote } from 'lucide-react';
 import Link from 'next/link';
 
 interface TodayQuote {
-  id: string;
+  log_no: string;
   title: string;
   quote: string;
   insight: string;
@@ -75,73 +75,60 @@ const highlightStockNames = (text: string, relatedTickers: string[]) => {
 };
 
 export function TodayMerryQuote() {
-  const [quotesData, setQuotesData] = useState<TodayQuotesResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [quotesData, setQuotesData] = React.useState<TodayQuotesResponse | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchTodayQuotes() {
-      try {
-        const response = await fetch('/api/today-merry-quote');
-        if (response.ok) {
-          const data = await response.json();
-          setQuotesData(data);
-        }
-      } catch (error) {
-        console.error('오늘의 메르님 말씀 로딩 실패:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchTodayQuotes();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="bg-card rounded-2xl p-4 sm:p-6 lg:p-8 border shadow-lg hover:shadow-xl transition-all duration-300">
-        {/* 헤더 - 즉시 표시 */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="bg-primary p-1.5 sm:p-2 rounded-lg flex-shrink-0">
-              <Quote className="text-primary-foreground w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground leading-tight">
-                메르님 한줄 코멘트
-              </h2>
-              <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                <span className="truncate">로딩 중...</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 내용 - 로딩 중 */}
-        <div className="animate-pulse space-y-4 sm:space-y-6">
-          <div className="space-y-3">
-            <div className="h-4 bg-muted rounded w-full"></div>
-            <div className="h-4 bg-muted rounded w-4/5"></div>
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!quotesData || !quotesData.quotes.length) {
-    return (
-      <div className="bg-card rounded-2xl p-8 border">
-        <div className="flex items-center gap-2 mb-4">
-          <Quote className="text-muted-foreground w-6 h-6" />
-          <h2 className="text-xl font-bold text-muted-foreground">메르님 한줄 코멘트</h2>
-        </div>
-        <p className="text-muted-foreground">오늘의 말씀을 준비 중입니다...</p>
-      </div>
-    );
-  }
+  const fetchTodayQuotes = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch(`/api/today-merry-quote?t=${Date.now()}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      setQuotesData(result);
+    } catch (error) {
+      console.error('메르님 말씀 로딩 실패:', error);
+      setError(error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="bg-card rounded-2xl p-4 sm:p-6 lg:p-8 border shadow-lg hover:shadow-xl transition-all duration-300">
+      {isLoading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-muted-foreground">메르님의 오늘 인사이트를 분석하는 중...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8">
+          <div className="text-red-500 mb-4">⚠️ 로딩 실패</div>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <button 
+            onClick={fetchTodayQuotes}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          >
+            다시 시도
+          </button>
+        </div>
+      ) : !quotesData || !quotesData.quotes.length ? (
+        <div className="text-center py-8">
+          <Quote className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">오늘의 말씀을 준비하고 있습니다...</p>
+        </div>
+      ) : (
+        <div className="space-y-0">
       {/* 헤더 - 모바일 최적화 */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -150,12 +137,12 @@ export function TodayMerryQuote() {
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground leading-tight">
-              메르님 한줄 코멘트
+              메르님 한 줄 코멘트
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1 mt-1">
               <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="truncate">
-                {quotesData.quotes.length > 0 && new Date(quotesData.quotes[0].date).toLocaleDateString('ko-KR', {
+                {quotesData?.quotes?.length && quotesData.quotes.length > 0 && new Date(quotesData.quotes[0].date).toLocaleDateString('ko-KR', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
@@ -163,28 +150,27 @@ export function TodayMerryQuote() {
                 })}
               </span>
               <span className="ml-2 text-primary font-medium">
-                ({quotesData.quotes.length}개 포스트)
+                ({quotesData?.quotes?.length || 0}개 포스트)
               </span>
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1 text-primary text-xs sm:text-sm font-medium bg-primary/10 px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto">
           <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-          <span>{quotesData.quotes.length > 0 ? quotesData.quotes[0].readTime : '3분 읽기'}</span>
+          <span>{quotesData?.quotes?.length && quotesData.quotes.length > 0 ? quotesData.quotes[0].readTime : '3분 읽기'}</span>
         </div>
       </div>
 
       {/* 메인 컨텐츠 - 다중 포스트 지원 */}
       <div className="space-y-6 sm:space-y-8">
-        {quotesData.quotes.map((quote, index) => (
-          <Link 
-            key={quote.id} 
-            href={`/merry/posts/${quote.id}`}
-            className="block group cursor-pointer"
+        {quotesData?.quotes?.map((quote, index) => (
+          <div 
+            key={quote.log_no} 
+            className="block"
           >
-            <div className={`space-y-4 ${index > 0 ? 'pt-6 border-t border-border' : ''} hover:bg-muted/20 rounded-lg p-4 -m-4 transition-all duration-200`}>
+            <div className={`space-y-4 ${index > 0 ? 'pt-6 border-t border-border' : ''} bg-muted/10 rounded-lg p-4 border border-border/50`}>
             {/* 포스트 제목 (다중일 때만 표시) */}
-            {quotesData.quotes.length > 1 && (
+            {quotesData?.quotes && quotesData.quotes.length > 1 && (
               <div className="mb-3">
                 <h4 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2 group-hover:text-primary transition-colors">
                   <span className="w-6 h-6 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center flex-shrink-0">
@@ -252,17 +238,19 @@ export function TodayMerryQuote() {
             )}
               {/* 해당 포스트 보기 버튼 */}
               <div className="pt-3 sm:pt-4 border-t border-border">
-                <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-all duration-200 text-sm sm:text-base">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg group-hover:bg-primary/90 font-medium transition-all duration-200 text-sm sm:text-base cursor-pointer">
                   <span>해당 포스트 보기</span>
                   <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                </button>
+                </div>
               </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
+      </div>
+      )}
     </div>
   );
 }

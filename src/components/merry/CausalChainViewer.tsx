@@ -23,14 +23,14 @@ interface CausalNode {
 }
 
 interface CausalChainViewerProps {
-  postId?: string;
+  logNo?: string;
   nodes?: CausalNode[];
   links?: CausalLink[];
   className?: string;
 }
 
 export default function CausalChainViewer({ 
-  postId,
+  logNo,
   nodes = [],
   links = [],
   className = '' 

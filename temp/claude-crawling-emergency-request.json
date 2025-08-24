@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-08-24T03:20:01.944Z",
+  "type": "emergency-crawling-required",
+  "priority": "HIGH",
+  "reason": "자동 크롤링 실패",
+  "errorDetails": {
+    "message": "SQLITE_BUSY: database is locked",
+    "timestamp": "2025-08-24T03:20:01.944Z"
+  },
+  "tasks": [
+    "🔴 URGENT: 자동 크롤링 시스템 복구",
+    "📥 수동 블로그 포스트 수집 및 분석",
+    "🔍 크롤링 실패 원인 조사 및 해결",
+    "📊 누락된 포스트 데이터 복구",
+    "🧹 데이터 무결성 검증",
+    "⚡ 시스템 정상화 후 정기 스케줄 재개"
+  ],
+  "instructions": [
+    "CLAUDE.md 준수: Claude가 직접 수동 크롤링 수행",
+    "자동 크롤링 실패로 인한 긴급 수동 개입 필요",
+    "누락된 데이터 없이 완전한 복구 수행",
+    "크롤링 시스템 문제 해결 및 예방책 수립"
+  ],
+  "urgentAction": true,
+  "requestedBy": "automated-scheduler-emergency",
+  "nextScheduledRun": "크롤링 복구 후 재개"
+}

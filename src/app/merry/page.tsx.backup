@@ -1,0 +1,522 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar, User, Tag, Eye, MessageSquare, Heart, Share2, Filter, FileText, AlertCircle, Grid3X3, List } from 'lucide-react';
+import Link from 'next/link';
+import { useOptimizedLoading } from '@/hooks/useOptimizedLoading';
+import { EmptyState } from '@/components/ui/loading-states';
+
+interface MerryPost {
+  id: number;
+  title: string;
+  content: string;
+  excerpt: string;
+  category: string;
+  author: string;
+  createdAt: string;
+  views: number;
+  likes: number;
+  comments: number;
+  tags: string[];
+  featured: boolean;
+  // 새로운 필드들 추가
+  mentionedStocks?: string[];
+  investmentTheme?: string;
+  sentimentTone?: string;
+  // Claude 분석 결과
+  claudeSummary?: string;
+}
+
+export default function MerryPage() {
+  const [posts, setPosts] = useState<MerryPost[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalPosts, setTotalPosts] = useState<number>(0);
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [tickerFilter, setTickerFilter] = useState<string>('all');
+  const [availableStocks, setAvailableStocks] = useState<Array<{ticker: string, name: string, count: number}>>([]);
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
+  
+  // 🚀 최적화된 로딩 상태 관리
+  const mainLoading = useOptimizedLoading({
+    minLoadingTime: 500,
+    maxLoadingTime: 10000,
+    retryAttempts: 3
+  });
+  const loadMoreLoading = useOptimizedLoading({
+    minLoadingTime: 300,
+    retryAttempts: 2
+  });
+  const stocksLoading = useOptimizedLoading({ minLoadingTime: 200 });
+
+  // 필터 변경시 포스트 다시 로드
+  useEffect(() => {
+    loadPosts(true);
+  }, [dateFilter, tickerFilter]);
+
+  // 초기 로드 및 종목 목록 로드
+  useEffect(() => {
+    loadPosts(true);
+    loadAvailableStocks();
+  }, []);
+
+  const loadAvailableStocks = async () => {
+    const result = await stocksLoading.fetchWithLoading('/api/merry/stocks');
+      
+    if (result?.success && result.data?.stocks) {
+      // 언급 횟수가 있는 종목만 필터링하고 정렬
+      const stocksWithMentions = result.data.stocks
+        .filter((stock: any) => stock.mention_count > 0)
+        .map((stock: any) => ({
+          ticker: stock.ticker,
+          name: stock.name || stock.ticker,
+          count: stock.mention_count
+        }))
+        .sort((a: any, b: any) => b.count - a.count);
+      
+      setAvailableStocks(stocksWithMentions);
+    }
+  };
+
+  const loadPosts = async (resetPosts = false) => {
+    const loading = resetPosts ? mainLoading : loadMoreLoading;
+    
+    if (resetPosts) {
+      setPosts([]);
+    }
+
+    const result = await loading.fetchWithLoading(
+      `/api/merry/posts?${buildQueryParams(resetPosts)}`,
+      {},
+      (response) => response.json()
+    );
+      
+    if (result?.success && result.data) {
+      // API 데이터를 MerryPost 형식으로 변환
+      const formattedPosts: MerryPost[] = result.data.map((post: any) => ({
+        id: post.id,
+        title: post.title,
+        content: post.content || post.excerpt,
+        excerpt: post.excerpt || post.content?.substring(0, 200) + '...',
+        category: post.category || '일반',
+        author: '메르',
+        createdAt: post.createdAt || post.date,
+        views: post.views || 0,
+        likes: post.likes || 0,
+        comments: post.comments || 0,
+        tags: post.tags || [],
+        featured: post.featured || false,
+        claudeSummary: post.claudeSummary || post.excerpt || post.content?.substring(0, 150) + '...'
+      }));
+      
+      if (resetPosts) {
+        setPosts(formattedPosts);
+      } else {
+        setPosts(prev => [...prev, ...formattedPosts]);
+      }
+      
+      // 더 보기 버튼 표시 여부 결정
+      setHasMore(result.meta?.hasNext || false);
+      
+      // 총 포스트 수 업데이트
+      if (result.meta?.total !== undefined) {
+        setTotalPosts(result.meta.total);
+      }
+    }
+  };
+  
+  const buildQueryParams = (resetPosts: boolean) => {
+    const offset = resetPosts ? 0 : posts.length;
+    const limit = 10;
+    
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString()
+    });
+    
+    if (dateFilter && dateFilter !== 'all') params.append('date', dateFilter);
+    if (tickerFilter && tickerFilter !== 'all') params.append('ticker', tickerFilter);
+    
+    return params.toString();
+  };
+
+  const loadMorePosts = () => {
+    if (!loadMoreLoading.isLoading && hasMore) {
+      loadPosts(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // 📝 정확한 한 줄 요약 추출 (메르님 한 줄 요약 다음 첫 문장만)
+  const extractMerrySummary = (content: string): string => {
+    try {
+      if (!content) return '';
+      
+      // 1단계: "메르님 한 줄 요약" 다음 첫 번째 문단만 정확히 추출
+      if (content.includes('메르님 한 줄 요약')) {
+        const summaryPart = content.split('메르님 한 줄 요약')[1];
+        if (summaryPart) {
+          // 첫 번째 빈 줄까지만 (실제 한 줄 요약 문단)
+          let firstParagraph = summaryPart
+            .replace(/^[\s\n\r]*/, '')    // 앞 공백 제거
+            .split(/\n\s*\n/)[0]          // 첫 번째 문단만
+            ?.trim();
+            
+          if (firstParagraph && firstParagraph.length > 10) {
+            // 90자로 엄격하게 제한 (진짜 한 줄 요약만)
+            return firstParagraph.length > 90 ? firstParagraph.substring(0, 90) + '...' : firstParagraph;
+          }
+        }
+      }
+      
+      // 2단계: 다른 요약 패턴들도 첫 번째 문장만
+      const patterns = ['한줄요약', '요약:', '정리:', '결론:', '핵심:', '포인트:'];
+      
+      for (const pattern of patterns) {
+        if (content.includes(pattern)) {
+          const afterPattern = content.split(pattern)[1];
+          if (afterPattern) {
+            let summary = afterPattern
+              .replace(/^[\s\n\r:]*/, '')  // 앞 공백 제거
+              .split(/\n\s*\n/)[0]         // 첫 번째 문단만
+              ?.trim();
+              
+            if (summary && summary.length > 10) {
+              return summary.length > 90 ? summary.substring(0, 90) + '...' : summary;
+            }
+          }
+        }
+      }
+      
+      // 3단계: 요약 섹션이 없으면 첫 번째 문장만 (매우 짧게)
+      const cleanContent = content
+        .replace(/메르님 한 줄 요약[\s\S]*?\n\n/, '') // 요약 섹션 제거
+        .trim();
+      
+      if (cleanContent.length > 10) {
+        // 첫 번째 문장만 (마침표 기준으로 더 엄격하게)
+        const sentences = cleanContent.split('.');
+        const firstSentence = sentences[0]?.trim();
+        
+        if (firstSentence && firstSentence.length >= 10 && firstSentence.length <= 70) {
+          return firstSentence;
+        }
+        
+        // 60자로 더 짧게 자르기 (본문 노출 최소화)
+        return cleanContent.length > 60 ? cleanContent.substring(0, 60) + '...' : cleanContent;
+      }
+      
+      return '';
+    } catch (error) {
+      console.warn('요약 추출 실패:', error);
+      return '';
+    }
+  };
+
+  // 메인 로딩 상태 처리는 DataStateHandler로 이동
+
+  return (
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            🎭 우리형 메르
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            일상, 투자, 독서, 그리고 삶의 다양한 이야기들을 나누는 공간입니다. 
+            메르만의 독특한 시각으로 세상을 바라본 이야기들을 만나보세요.
+          </p>
+        </div>
+
+
+
+      {/* 필터 섹션 */}
+      <div className="mb-8">
+        <div className="flex items-center gap-4 p-4 bg-muted/50 border rounded-lg">
+          <Filter size={20} className="text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">필터:</span>
+          
+          <Select value={dateFilter} onValueChange={setDateFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="기간" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 기간</SelectItem>
+              <SelectItem value="week">최근 1주</SelectItem>
+              <SelectItem value="month">최근 1개월</SelectItem>
+              <SelectItem value="quarter">최근 3개월</SelectItem>
+              <SelectItem value="year">최근 1년</SelectItem>
+            </SelectContent>
+          </Select>
+
+
+          <Select value={tickerFilter} onValueChange={setTickerFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="종목 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">모든 종목</SelectItem>
+              {availableStocks.map((stock) => (
+                <SelectItem key={stock.ticker} value={stock.ticker}>
+                  {stock.name} ({stock.ticker}) - {stock.count}개 언급
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {(dateFilter !== 'all' || tickerFilter !== 'all') && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => {
+                setDateFilter('all');
+                setTickerFilter('all');
+              }}
+            >
+              초기화
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* 뷰 토글 버튼 */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-foreground">
+          📝 모든 포스트 
+          {totalPosts > 0 && (
+            <span className="text-base font-normal text-muted-foreground ml-2">
+              (총 {totalPosts}개)
+            </span>
+          )}
+        </h2>
+        
+        {/* 뷰 모드 토글 */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant={viewMode === 'card' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('card')}
+            className="flex items-center gap-2"
+          >
+            <Grid3X3 size={16} />
+            카드
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+            className="flex items-center gap-2"
+          >
+            <List size={16} />
+            리스트
+          </Button>
+        </div>
+      </div>
+
+        <div className={viewMode === 'card' ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" : "space-y-4"}>
+          {posts.map((post) => 
+            viewMode === 'card' ? (
+              // 카드 뷰
+              <Card key={post.id} className="group hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="group-hover:text-blue-600 transition-colors">
+                  <Link href={`/merry/posts/${post.id}`}>
+                    {post.title}
+                  </Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  // Claude 직접 분석한 한줄 요약 우선 사용 (post_analysis 테이블)
+                  const claudeSummary = post.claudeSummary; // Claude가 분석한 개별 포스트 한줄 요약
+                  const fallbackSummary = extractMerrySummary(post.content); // 본문에서 추출한 요약 (fallback)
+                  const displaySummary = claudeSummary || fallbackSummary || post.content?.substring(0, 100) + '...';
+                  
+                  return (
+                    <p className="text-muted-foreground mb-4 line-clamp-3">{displaySummary}</p>
+                  );
+                })()}
+                
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {(() => {
+                    let tagsArray: string[] = [];
+                    
+                    try {
+                      if (post.tags) {
+                        if (typeof post.tags === 'string') {
+                          // JSON 문자열 파싱 시도
+                          try {
+                            const parsed = JSON.parse(post.tags);
+                            if (Array.isArray(parsed)) {
+                              tagsArray = parsed.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
+                            }
+                          } catch (parseError) {
+                            console.warn(`Failed to parse tags for post ${post.id}:`, parseError);
+                            tagsArray = [];
+                          }
+                        } else if (Array.isArray(post.tags)) {
+                          // 이미 배열인 경우
+                          tagsArray = post.tags.filter(tag => typeof tag === 'string' && tag.trim().length > 0);
+                        }
+                      }
+                    } catch (error) {
+                      console.error(`Tag processing error for post ${post.id}:`, error);
+                      tagsArray = [];
+                    }
+                    
+                    // 최종 안전성 검증
+                    if (!Array.isArray(tagsArray)) {
+                      tagsArray = [];
+                    }
+                    
+                    return (
+                      <>
+                        {tagsArray.slice(0, 3).map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            <Tag size={10} className="mr-1" />
+                            {tag}
+                          </Badge>
+                        ))}
+                        {tagsArray.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{tagsArray.length - 3}
+                          </Badge>
+                        )}
+                        {tagsArray.length === 0 && (
+                          <Badge variant="outline" className="text-xs text-muted-foreground">
+                            태그 없음
+                          </Badge>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                  <div className="flex items-center gap-1">
+                    <User size={14} />
+                    {post.author}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar size={14} />
+                    {formatDate(post.createdAt)}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Eye size={14} />
+                      {post.views}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Heart size={14} />
+                      {post.likes}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageSquare size={14} />
+                      {post.comments}
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    <Share2 size={14} />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            ) : (
+              // 리스트 뷰 (제목과 날짜만)
+              <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <Link href={`/merry/posts/${post.id}`} className="block">
+                    <h3 className="font-medium text-foreground truncate hover:text-blue-600 transition-colors">
+                      {post.title}
+                    </h3>
+                  </Link>
+                </div>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground ml-4">
+                  <div className="flex items-center gap-1">
+                    <Calendar size={14} />
+                    {new Date(post.createdAt).toLocaleDateString('ko-KR')}
+                  </div>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+
+        {/* 더보기 버튼 */}
+        {hasMore && posts.length > 0 && (
+          <div className="flex justify-center mt-8">
+            <Button 
+              onClick={loadMorePosts}
+              disabled={loadMoreLoading.isLoading}
+              size="lg"
+              className="px-8"
+            >
+              {loadMoreLoading.isLoading ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                  로딩 중...
+                </>
+              ) : (
+                '더보기 (10개씩)'
+              )}
+            </Button>
+          </div>
+        )}
+        
+        {/* 더보기 로딩 에러 처리 */}
+        {loadMoreLoading.error && (
+          <div className="flex justify-center mt-4">
+            <div className="flex items-center space-x-2 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">더보기 실패: {loadMoreLoading.error}</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  loadMoreLoading.retry();
+                  loadMorePosts();
+                }}
+                className="text-xs"
+              >
+                재시도
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* 필터된 결과 없음 처리 */}
+        {posts.length === 0 && !mainLoading.isLoading && (dateFilter !== 'all' || tickerFilter !== 'all') && (
+          <EmptyState
+            message="선택한 필터에 해당하는 포스트가 없습니다"
+            description="다른 필터 조건을 사용해보세요"
+            icon={Filter}
+            action={
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setDateFilter('all');
+                  setTickerFilter('all');
+                }}
+              >
+                필터 초기화
+              </Button>
+            }
+          />
+        )}
+      </div>
+    </div>
+  );
+}

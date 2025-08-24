@@ -64,7 +64,7 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
         if (err) {
           console.error('분석 결과 조회 오류:', err);
           resolve({
-            id: log_no.toString(),
+            log_no: log_no.toString(),
             title,
             quote: "분석 결과 조회 중 오류 발생",
             insight: "DB 연결 문제로 분석 결과를 가져올 수 없음",
@@ -78,7 +78,7 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
         if (analysis && analysis.summary && analysis.investment_insight) {
           // DB에 Claude 분석 결과가 있는 경우
           resolve({
-            id: log_no.toString(),
+            log_no: log_no.toString(),
             title,
             quote: analysis.summary,  // 한줄 정리
             insight: analysis.investment_insight,  // 투자 인사이트
@@ -89,7 +89,7 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
         } else {
           // DB에 분석 결과가 없는 경우
           resolve({
-            id: log_no.toString(),
+            log_no: log_no.toString(),
             title,
             quote: "Claude 직접 분석 결과 대기 중",
             insight: `"${title}" 포스트에 대한 Claude 분석이 아직 완료되지 않음`,

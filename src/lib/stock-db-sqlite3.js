@@ -230,15 +230,16 @@ class StockDB {
         'MSFT': '마이크로소프트',
         'META': '메타',
         'AMD': 'AMD',
-        'OKLO': '오클로'
+        'OKLO': '오클로',
+        'CEG': '컨스텔레이션에너지'
       };
       
       const stockName = tickerToNameMap[ticker] || ticker;
       
-      // blog_posts에서 직접 검색
+      // blog_posts에서 직접 검색 - log_no 필드 사용
       this.db.all(`
         SELECT 
-          id as log_no,
+          log_no,
           created_date as mentioned_date,
           'neutral' as mention_type,
           0 as sentiment_score,
@@ -525,7 +526,8 @@ class StockDB {
         'MSFT': '마이크로소프트',
         'META': '메타',
         'AMD': 'AMD',
-        'OKLO': '오클로'
+        'OKLO': '오클로',
+        'CEG': '컨스텔레이션에너지'
       };
       
       const stockName = tickerToNameMap[ticker] || ticker;
@@ -557,9 +559,9 @@ class StockDB {
         const total = countResult?.total || 0;
         console.log(`📊 Found ${total} posts mentioning ${ticker}/${stockName}`);
         
-        // 포스트 목록 조회
+        // 포스트 목록 조회 - log_no 필드 사용
         this.db.all(`
-          SELECT id, title, excerpt, created_date, views, category, blog_type
+          SELECT log_no as id, title, excerpt, created_date, views, category, blog_type
           FROM blog_posts
           WHERE ${whereClause}
           ORDER BY created_date DESC

@@ -10,19 +10,19 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action') || 'analyze';
-    const postId = searchParams.get('postId');
+    const logNo = searchParams.get('logNo');
     
     switch (action) {
       case 'analyze':
         return await analyzeRecommendationPatterns();
       case 'predict':
-        if (!postId) {
+        if (!logNo) {
           return NextResponse.json(
-            { success: false, error: 'postId 파라미터가 필요합니다' },
+            { success: false, error: 'logNo 파라미터가 필요합니다' },
             { status: 400 }
           );
         }
-        return await predictRecommendationProbability(parseInt(postId));
+        return await predictRecommendationProbability(logNo);
       case 'patterns':
         return await getLearnedPatterns();
       default:
@@ -52,7 +52,7 @@ async function analyzeRecommendationPatterns() {
       content: string;
       created_date: string;
     }>(`
-      SELECT id, title, content, created_date
+      SELECT id, log_no, title, content, created_date
       FROM blog_posts 
       WHERE title LIKE '%늦생시%' 
       ORDER BY created_date DESC
@@ -69,7 +69,7 @@ async function analyzeRecommendationPatterns() {
       const mentions = extractStockMentions(post.content);
       stockMentions.push(...mentions.map(m => ({
         ...m,
-        postId: post.id,
+        logNo: post.log_no,
         postTitle: post.title,
         postDate: post.created_date
       })));
@@ -104,14 +104,15 @@ async function analyzeRecommendationPatterns() {
 /**
  * 개별 포스트의 추천 가능성 예측
  */
-async function predictRecommendationProbability(postId: number) {
+async function predictRecommendationProbability(logNo: string) {
   try {
     const post = await query<{
       id: number;
+      log_no: string;
       title: string;
       content: string;
       created_date: string;
-    }>('SELECT id, title, content, created_date FROM blog_posts WHERE id = ?', [postId]);
+    }>('SELECT id, log_no, title, content, created_date FROM blog_posts WHERE log_no = ?', [logNo]);
 
     if (post.length === 0) {
       return NextResponse.json(
@@ -126,7 +127,7 @@ async function predictRecommendationProbability(postId: number) {
     return NextResponse.json({
       success: true,
       data: {
-        postId,
+        logNo,
         title: post[0]?.title || 'Unknown',
         recommendationProbability: probability,
         analysis,
@@ -224,7 +225,7 @@ async function analyzePostPattern(post: any) {
   if (stockMentions.length > 0) confidence += 1;
 
   return {
-    postId: post.id,
+    logNo: post.log_no || post.id,
     title: post.title,
     sourceCount: sources.length,
     sources,

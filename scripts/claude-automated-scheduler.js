@@ -90,61 +90,206 @@ async function runCrawlingScript() {
     return new Promise((resolve, reject) => {
         const { spawn } = require('child_process');
         
-        // 실제 크롤링 스크립트 실행 (blog-crawler.ts 또는 별도 크롤링 모듈)
-        const crawlProcess = spawn('node', ['-e', `
-            console.log('🔄 블로그 포스트 크롤링 시작...');
-            
-            // 여기에 실제 크롤링 로직 구현
-            // - RSS 피드 확인
-            // - 새로운 포스트 감지
-            // - blog_posts 테이블에 저장
-            // - 종목 언급 추출 및 stocks 테이블 업데이트
-            
-            setTimeout(() => {
-                console.log('✅ 크롤링 완료 (시뮬레이션)');
-            }, 2000);
-        `]);
+        // 실제 크롤링 스크립트 실행 - JavaScript blog-crawler 사용
+        logger.info('📥 실제 블로그 크롤링 스크립트 실행 중...');
+        
+        const crawlProcess = spawn('node', ['scripts/blog-crawler.js'], {
+            stdio: 'pipe',
+            cwd: path.resolve(__dirname, '..')
+        });
         
         crawlProcess.stdout.on('data', (data) => {
-            logger.info('📊 크롤링 진행', { output: data.toString().trim() });
+            const output = data.toString().trim();
+            logger.info('📊 크롤링 진행', { output });
+            console.log(output);
+        });
+        
+        crawlProcess.stderr.on('data', (data) => {
+            const error = data.toString().trim();
+            logger.warn('⚠️ 크롤링 경고', { error });
+            console.warn(error);
         });
         
         crawlProcess.on('close', (code) => {
             if (code === 0) {
+                logger.info('✅ 실제 크롤링 완료');
                 resolve();
             } else {
-                reject(new Error(`크롤링 스크립트 실패 (종료 코드: ${code})`));
+                const error = new Error(`크롤링 스크립트 실패 (종료 코드: ${code})`);
+                logger.error('❌ 크롤링 실패', { code, error: error.message });
+                reject(error);
             }
         });
         
         crawlProcess.on('error', (error) => {
+            logger.error('💥 크롤링 프로세스 오류', { error: error.message });
             reject(error);
         });
+        
+        // 타임아웃 설정 (5분)
+        setTimeout(() => {
+            crawlProcess.kill('SIGTERM');
+            reject(new Error('크롤링 타임아웃 (5분 초과)'));
+        }, 5 * 60 * 1000);
     });
 }
 
 // 데이터베이스 동기화
 async function syncDatabase() {
-    logger.info('🔄 메르\'s Pick 업데이트 중...');
-    // - mention_count 업데이트
-    // - last_mentioned_at 업데이트
-    // - is_merry_mentioned 플래그 설정
+    const sqlite3 = require('sqlite3').verbose();
+    const dbPath = path.resolve(__dirname, '../database.db');
     
-    logger.info('📊 종목 통계 업데이트 중...');
-    // - stocks 테이블 통계 갱신
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    logger.info('✅ 데이터베이스 동기화 완료');
+    return new Promise((resolve, reject) => {
+        const db = new sqlite3.Database(dbPath);
+        
+        logger.info('🔄 메르\'s Pick 업데이트 중...');
+        
+        // 1. stocks 테이블 언급 횟수 업데이트
+        db.run(`
+            UPDATE stocks 
+            SET mention_count = (
+                SELECT COUNT(*) 
+                FROM blog_posts 
+                WHERE (
+                    title LIKE '%' || stocks.ticker || '%' OR 
+                    content LIKE '%' || stocks.ticker || '%' OR
+                    title LIKE '%' || stocks.company_name || '%' OR
+                    content LIKE '%' || stocks.company_name || '%'
+                )
+            )
+        `, (err) => {
+            if (err) {
+                logger.error('❌ 언급 횟수 업데이트 실패', { error: err.message });
+                db.close();
+                return reject(err);
+            }
+            
+            logger.info('📊 종목 통계 업데이트 중...');
+            
+            // 2. 최근 언급 날짜 업데이트 (NULL 값 처리)
+            db.run(`
+                UPDATE stocks 
+                SET last_mentioned_date = (
+                    SELECT MAX(created_date) 
+                    FROM blog_posts 
+                    WHERE (
+                        title LIKE '%' || stocks.ticker || '%' OR 
+                        content LIKE '%' || stocks.ticker || '%' OR
+                        title LIKE '%' || stocks.company_name || '%' OR
+                        content LIKE '%' || stocks.company_name || '%'
+                    ) AND created_date IS NOT NULL
+                )
+                WHERE EXISTS (
+                    SELECT 1 
+                    FROM blog_posts 
+                    WHERE (
+                        title LIKE '%' || stocks.ticker || '%' OR 
+                        content LIKE '%' || stocks.ticker || '%' OR
+                        title LIKE '%' || stocks.company_name || '%' OR
+                        content LIKE '%' || stocks.company_name || '%'
+                    ) AND created_date IS NOT NULL
+                )
+            `, (err) => {
+                if (err) {
+                    logger.error('❌ 최근 언급 날짜 업데이트 실패', { error: err.message });
+                    db.close();
+                    return reject(err);
+                }
+                
+                // 3. is_merry_mentioned 플래그 설정
+                db.run(`
+                    UPDATE stocks 
+                    SET is_merry_mentioned = CASE 
+                        WHEN mention_count > 0 THEN 1 
+                        ELSE 0 
+                    END
+                `, (err) => {
+                    if (err) {
+                        logger.error('❌ 메르 언급 플래그 업데이트 실패', { error: err.message });
+                        db.close();
+                        return reject(err);
+                    }
+                    
+                    logger.info('📊 메르\'s Pick 테이블 동기화 중...');
+                    
+                    // 4. merry_mentioned_stocks 테이블 동기화 (API에서 사용)
+                    db.run(`
+                        UPDATE merry_mentioned_stocks 
+                        SET mention_count = (
+                            SELECT COUNT(*) 
+                            FROM blog_posts 
+                            WHERE (
+                                title LIKE '%' || merry_mentioned_stocks.ticker || '%' OR 
+                                content LIKE '%' || merry_mentioned_stocks.ticker || '%'
+                            )
+                        ),
+                        last_mentioned_at = (
+                            SELECT MAX(created_date) 
+                            FROM blog_posts 
+                            WHERE (
+                                title LIKE '%' || merry_mentioned_stocks.ticker || '%' OR 
+                                content LIKE '%' || merry_mentioned_stocks.ticker || '%'
+                            ) AND created_date IS NOT NULL
+                        )
+                        WHERE EXISTS (
+                            SELECT 1 
+                            FROM blog_posts 
+                            WHERE (
+                                title LIKE '%' || merry_mentioned_stocks.ticker || '%' OR 
+                                content LIKE '%' || merry_mentioned_stocks.ticker || '%'
+                            ) AND created_date IS NOT NULL
+                        )
+                    `, (err) => {
+                        db.close();
+                        
+                        if (err) {
+                            logger.error('❌ 메르\'s Pick 테이블 동기화 실패', { error: err.message });
+                            return reject(err);
+                        }
+                        
+                        logger.info('✅ 데이터베이스 동기화 완료 (stocks + merry_mentioned_stocks)');
+                        resolve();
+                    });
+                });
+            });
+        });
+    });
 }
 
 // 애플리케이션 캐시 정리
 async function clearAppCaches() {
     logger.info('🧹 API 캐시 정리 중...');
-    // - Redis 캐시 정리
-    // - 메모리 캐시 무효화
     
-    await new Promise(resolve => setTimeout(resolve, 500));
-    logger.info('✅ 캐시 정리 완료');
+    try {
+        // Next.js 캐시 정리
+        const { execSync } = require('child_process');
+        const cacheDir = path.resolve(__dirname, '../.next/cache');
+        
+        // 캐시 디렉토리 존재 확인 후 정리
+        if (require('fs').existsSync(cacheDir)) {
+            execSync('rm -rf .next/cache/*', { 
+                cwd: path.resolve(__dirname, '..'),
+                stdio: 'pipe' 
+            });
+            logger.info('🗂️ Next.js 캐시 정리 완료');
+        }
+        
+        // API 호출로 런타임 캐시 정리
+        try {
+            const response = await fetch('http://localhost:3006/api/merry/picks?_clearCache=true');
+            if (response.ok) {
+                logger.info('🌐 API 런타임 캐시 정리 완료');
+            }
+        } catch (apiError) {
+            logger.warn('⚠️ API 캐시 정리 실패 (서버 접근 불가)', { error: apiError.message });
+        }
+        
+        logger.info('✅ 캐시 정리 완료');
+        
+    } catch (error) {
+        logger.warn('⚠️ 캐시 정리 중 일부 오류', { error: error.message });
+        // 캐시 정리 실패는 치명적이지 않으므로 계속 진행
+    }
 }
 
 // Claude 작업 요청 준비

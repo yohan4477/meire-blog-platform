@@ -159,21 +159,27 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
     // PERFORMANCE OPTIMIZED: Use stocks table directly
     console.log('🚀 Using stocks table for optimized stock data');
     
-    // stocks 테이블에서 직접 데이터 조회 - 최신 언급일 순, 같은 날짜면 언급 적은 순
-    // 실제 blog_posts에서의 언급 수와 감정 분석 데이터를 정확히 계산
+    // stocks 테이블에서 직접 데이터 조회 - ticker 기준으로 중복 완전 제거
     const stocksQuery = `
       SELECT 
-        s.ticker, s.company_name, s.market, 
-        s.mention_count, s.last_mentioned_date as last_mentioned_at,
-        s.first_mentioned_date, s.last_mentioned_date,
-        s.sector, s.industry, s.description, s.tags,
-        -- 실제 분석 완료된 고유한 post_id 개수만 카운트 (DISTINCT 사용)
+        s.ticker,
+        -- 가장 완전한 데이터를 선택 (NULL이 아닌 값 우선)
+        COALESCE(MAX(CASE WHEN s.company_name IS NOT NULL AND s.company_name != '' THEN s.company_name END), MAX(s.company_name)) as company_name,
+        COALESCE(MAX(CASE WHEN s.market IS NOT NULL AND s.market != '' THEN s.market END), MAX(s.market)) as market,
+        MAX(s.mention_count) as mention_count,
+        MAX(s.last_mentioned_date) as last_mentioned_at,
+        MAX(s.first_mentioned_date) as first_mentioned_date,
+        MAX(s.last_mentioned_date) as last_mentioned_date,
+        COALESCE(MAX(CASE WHEN s.sector IS NOT NULL AND s.sector != '' THEN s.sector END), MAX(s.sector)) as sector,
+        COALESCE(MAX(CASE WHEN s.industry IS NOT NULL AND s.industry != '' THEN s.industry END), MAX(s.industry)) as industry,
+        COALESCE(MAX(CASE WHEN s.description IS NOT NULL AND s.description != '' THEN s.description END), MAX(s.description)) as description,
+        COALESCE(MAX(CASE WHEN s.tags IS NOT NULL AND s.tags != '' AND s.tags != '[]' THEN s.tags END), MAX(s.tags)) as tags,
+        -- 실제 분석 완료된 고유한 post_id 개수만 카운트
         COUNT(DISTINCT psa.log_no) as analyzed_count
       FROM stocks s
       LEFT JOIN post_stock_analysis psa ON s.ticker = psa.ticker
-      -- 모든 stocks 테이블 종목 표시 (필터링 없음)
       GROUP BY s.ticker
-      ORDER BY s.last_mentioned_date DESC NULLS LAST, s.mention_count ASC
+      ORDER BY last_mentioned_date DESC NULLS LAST, mention_count ASC
     `;
     
     const stockResults = await new Promise<any[]>((resolve, reject) => {
@@ -194,6 +200,7 @@ async function loadStocksData(pricesOnly: string | null = null): Promise<any[]> 
       company_name: stock.company_name,
       name: stock.company_name,
       market: stock.market || (stock.ticker.length === 6 ? 'KRX' : 'NASDAQ'),
+      sector: stock.sector, // 🎯 섹터 정보 추가 (필터링 필수)
       mention_count: stock.mention_count, // 🎯 stocks 테이블의 mention_count가 곧 blog_posts에서 언급된 횟수
       analyzed_count: stock.analyzed_count, // 🎯 실제 감정 분석 완료된 포스트 개수 (메르's Pick에서 "분석 완료" 표시용)
       last_mentioned_at: stock.last_mentioned_at,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -11,6 +11,8 @@ import {
   ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
+import { useOptimizedLoading } from '@/hooks/useOptimizedLoading';
+import { DataStateHandler } from '@/components/ui/loading-states';
 
 interface MerryPickStock {
   ticker: string;
@@ -36,42 +38,30 @@ export default function MerryPicks({
   showTitle = true,
   compact = false 
 }: MerryPicksProps) {
-  const [picks, setPicks] = useState<MerryPickStock[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const loading = useOptimizedLoading({
+    minLoadingTime: 500,  // UX를 위한 최소 로딩 시간
+    maxLoadingTime: 8000, // 8초 timeout
+    retryAttempts: 3
+  });
 
   useEffect(() => {
     fetchMerryPicks();
-  }, [limit]);
+  }, [limit, loading.retryCount]);
 
   const fetchMerryPicks = async () => {
-    try {
-      setLoading(true);
-      
-      // 메인 페이지 성능 최적화: 30초 캐시 활용
-      const response = await fetch(`/api/merry/picks?limit=${limit}`);
+    const result = await loading.fetchWithLoading<{success: boolean, data: {picks: MerryPickStock[]}}>(
+      `/api/merry/picks?limit=${limit}&t=${Date.now()}`, // 캐시 버스터 추가
+      { method: 'GET' }
+    );
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          console.log(`⭐ Loaded ${data.data.picks.length} Merry's picks`);
-          console.log('📊 Merry\'s Pick 순서:', data.data.picks.map((p: any, i: number) => 
-            `${i+1}. ${p.name}(${p.ticker}) - ${new Date(p.last_mentioned_at).toLocaleDateString('ko-KR')} - ${p.mention_count}번`
-          ));
-          setPicks(data.data.picks);
-        } else {
-          setError('메르의 Pick 데이터를 불러올 수 없습니다.');
-        }
-      } else {
-        setError('서버 응답 오류가 발생했습니다.');
-      }
-    } catch (err) {
-      console.error('Merry picks loading failed:', err);
-      // CLAUDE.md 원칙: 실제 데이터 없으면 "정보 없음" 표시
-      setError('Pick 정보 없음');
-    } finally {
-      setLoading(false);
+    if (result?.success && result.data?.picks) {
+      console.log(`⭐ Loaded ${result.data.picks.length} Merry's picks`);
+      console.log('📊 Merry\'s Pick 순서:', result.data.picks.map((p: any, i: number) => 
+        `${i+1}. ${p.name}(${p.ticker}) - ${new Date(p.last_mentioned_at).toLocaleDateString('ko-KR')} - ${p.mention_count}번`
+      ));
     }
+
+    return result?.data?.picks || [];
   };
 
   const formatDate = (dateStr: string): string => {
@@ -124,58 +114,14 @@ export default function MerryPicks({
     }
   };
 
-  if (loading) {
-    return (
-      <Card className="w-full">
-        {showTitle && (
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-500" />
-              메르's Pick
-            </CardTitle>
-          </CardHeader>
-        )}
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: limit }).map((_, index) => (
-              <div key={index} className="p-4 border rounded-lg animate-pulse">
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // picks 데이터를 로딩 결과에서 가져오기 위해 임시 상태 추가
+  const [picks, setPicks] = React.useState<MerryPickStock[]>([]);
 
-  if (error || picks.length === 0) {
-    return (
-      <Card className="w-full">
-        {showTitle && (
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-500" />
-              메르's Pick
-            </CardTitle>
-          </CardHeader>
-        )}
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <div className="space-y-2">
-              <p className="text-lg font-medium">Pick 정보 없음</p>
-              <p className="text-sm">
-                메르가 최근에 언급한 종목 정보가<br/>
-                아직 준비되지 않았습니다.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  React.useEffect(() => {
+    if (!loading.isLoading && !loading.error) {
+      fetchMerryPicks().then(setPicks);
+    }
+  }, [loading.isLoading, loading.error, loading.retryCount]);
 
   return (
     <Card className="w-full">
@@ -197,12 +143,36 @@ export default function MerryPicks({
       )}
       
       <CardContent>
-        <div className={`grid gap-4 ${
-          compact 
-            ? 'grid-cols-1 md:grid-cols-2' 
-            : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
-        }`}>
-          {picks.map((stock, index) => (
+        <DataStateHandler
+          isLoading={loading.isLoading}
+          hasError={!!loading.error}
+          isEmpty={!loading.isLoading && !loading.error && picks.length === 0}
+          loadingConfig={{
+            message: "메르's Pick을 불러오는 중...",
+            variant: "skeleton",
+            size: "md"
+          }}
+          errorConfig={{
+            error: loading.error || undefined,
+            canRetry: loading.canRetry,
+            onRetry: () => {
+              loading.retry();
+              fetchMerryPicks().then(setPicks);
+            },
+            isRetrying: loading.isRetrying
+          }}
+          emptyConfig={{
+            icon: Star,
+            message: "Pick 정보 없음",
+            description: "메르가 최근에 언급한 종목 정보가 아직 준비되지 않았습니다."
+          }}
+        >
+          <div className={`grid gap-4 ${
+            compact 
+              ? 'grid-cols-1 md:grid-cols-2' 
+              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+          }`}>
+            {picks.map((stock, index) => (
             <Link 
               key={stock.ticker} 
               href={`/merry/stocks/${stock.ticker}`}
@@ -276,20 +246,21 @@ export default function MerryPicks({
               </Card>
             </Link>
           ))}
-        </div>
-
-        {/* 더 보기 링크 (compact 모드가 아닐 때만) */}
-        {!compact && (
-          <div className="text-center mt-6 pt-4 border-t">
-            <Link 
-              href="/merry/stocks" 
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              모든 종목 보기
-              <ExternalLink className="w-3 h-3" />
-            </Link>
           </div>
-        )}
+
+          {/* 더 보기 링크 (compact 모드가 아닐 때만) */}
+          {!compact && (
+            <div className="text-center mt-6 pt-4 border-t">
+              <Link 
+                href="/merry/stocks" 
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                모든 종목 보기
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+          )}
+        </DataStateHandler>
       </CardContent>
     </Card>
   );

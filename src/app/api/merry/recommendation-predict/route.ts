@@ -37,16 +37,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { postIds } = body;
+    const { logNos } = body;
     
-    if (!postIds || !Array.isArray(postIds)) {
+    if (!logNos || !Array.isArray(logNos)) {
       return NextResponse.json(
-        { success: false, error: 'postIds 배열이 필요합니다' },
+        { success: false, error: 'logNos 배열이 필요합니다' },
         { status: 400 }
       );
     }
     
-    const predictions = await predictSpecificPosts(postIds);
+    const predictions = await predictSpecificPosts(logNos);
     
     return NextResponse.json({
       success: true,
@@ -75,7 +75,7 @@ async function predictRecentPosts(limit: number) {
       created_date: string;
       views: number;
     }>(`
-      SELECT id, title, content, created_date, views
+      SELECT id, log_no, title, content, created_date, views
       FROM blog_posts 
       WHERE blog_type = 'merry' 
         AND title NOT LIKE '%늦생시%'
@@ -127,7 +127,7 @@ async function getHighProbabilityPosts() {
       created_date: string;
       views: number;
     }>(`
-      SELECT id, title, content, created_date, views
+      SELECT id, log_no, title, content, created_date, views
       FROM blog_posts 
       WHERE blog_type = 'merry' 
         AND created_date >= datetime('now', '-30 days')
@@ -172,18 +172,19 @@ async function getHighProbabilityPosts() {
 /**
  * 특정 포스트들의 추천 가능성 예측
  */
-async function predictSpecificPosts(postIds: number[]) {
+async function predictSpecificPosts(logNos: string[]) {
   try {
     const predictions: any[] = [];
 
-    for (const postId of postIds) {
+    for (const logNo of logNos) {
       const post = await query<{
         id: number;
+        log_no: string;
         title: string;
         content: string;
         created_date: string;
         views: number;
-      }>('SELECT id, title, content, created_date, views FROM blog_posts WHERE id = ?', [postId]);
+      }>('SELECT id, log_no, title, content, created_date, views FROM blog_posts WHERE log_no = ?', [logNo]);
 
       if (post.length > 0) {
         const prediction = await analyzePostForRecommendation(post[0]);
@@ -210,7 +211,7 @@ async function predictAllPosts() {
       title: string;
       created_date: string;
     }>(`
-      SELECT id, title, created_date
+      SELECT id, log_no, title, created_date
       FROM blog_posts 
       WHERE blog_type = 'merry' 
         AND title NOT LIKE '%늦생시%'
@@ -353,7 +354,7 @@ async function analyzePostForRecommendation(post: any) {
   const finalScore = Math.min(totalScore + bonusScore, 100);
 
   return {
-    postId: post.id,
+    logNo: post.log_no || post.id,
     title: post.title,
     created_date: post.created_date,
     views: post.views,

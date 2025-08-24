@@ -49,13 +49,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       // 카테고리 필터링
       if (category && category !== 'all') {
-        conditions.push('category = ?');
+        conditions.push('bp.category = ?');
         params.push(category);
       }
 
       // featured 필터링
       if (featured === 'true') {
-        conditions.push('featured = 1');
+        conditions.push('bp.featured = 1');
       }
 
       // 날짜 필터링
@@ -66,19 +66,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         switch (dateFilter) {
           case 'week':
             const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            dateCondition = `created_date >= '${weekAgo.toISOString().split('T')[0]}'`;
+            dateCondition = `bp.created_date >= '${weekAgo.toISOString().split('T')[0]}'`;
             break;
           case 'month':
             const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-            dateCondition = `created_date >= '${monthAgo.toISOString().split('T')[0]}'`;
+            dateCondition = `bp.created_date >= '${monthAgo.toISOString().split('T')[0]}'`;
             break;
           case 'quarter':
             const quarterAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-            dateCondition = `created_date >= '${quarterAgo.toISOString().split('T')[0]}'`;
+            dateCondition = `bp.created_date >= '${quarterAgo.toISOString().split('T')[0]}'`;
             break;
           case 'year':
             const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-            dateCondition = `created_date >= '${yearAgo.toISOString().split('T')[0]}'`;
+            dateCondition = `bp.created_date >= '${yearAgo.toISOString().split('T')[0]}'`;
             break;
         }
         
@@ -87,33 +87,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         }
       }
 
-      // 종목 관련 포스트 필터링
-      if (stockFilter === '1') {
-        conditions.push(`(
-          title LIKE '%주식%' OR title LIKE '%종목%' OR title LIKE '%투자%' OR 
-          title LIKE '%매수%' OR title LIKE '%매도%' OR title LIKE '%상장%' OR
-          title LIKE '%TSLA%' OR title LIKE '%AAPL%' OR title LIKE '%NVDA%' OR
-          title LIKE '%테슬라%' OR title LIKE '%애플%' OR title LIKE '%엔비디아%' OR
-          title LIKE '%삼성전자%' OR title LIKE '%005930%' OR
-          content LIKE '%주식%' OR content LIKE '%종목%' OR content LIKE '%투자%'
-        )`);
-      }
-
-      // 매크로 경제 관련 포스트 필터링
-      if (macroFilter === '1') {
-        conditions.push(`(
-          title LIKE '%경제%' OR title LIKE '%인플레이션%' OR title LIKE '%금리%' OR
-          title LIKE '%연준%' OR title LIKE '%Fed%' OR title LIKE '%GDP%' OR
-          title LIKE '%달러%' OR title LIKE '%환율%' OR title LIKE '%무역%' OR
-          title LIKE '%정책%' OR title LIKE '%정치%' OR title LIKE '%선거%' OR
-          title LIKE '%트럼프%' OR title LIKE '%바이든%' OR 
-          content LIKE '%경제%' OR content LIKE '%인플레이션%' OR content LIKE '%금리%'
-        )`);
-      }
 
       // 특정 종목 필터링 (merry_mentioned_stocks 테이블 활용)
       if (tickerFilter) {
-        conditions.push(`id IN (
+        conditions.push(`bp.log_no IN (
           SELECT DISTINCT log_no 
           FROM merry_mentioned_stocks 
           WHERE ticker = ?
@@ -125,7 +102,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         query += ' WHERE ' + conditions.join(' AND ');
       }
 
-      query += ' ORDER BY created_date DESC LIMIT ? OFFSET ?';
+      query += ' ORDER BY bp.created_date DESC LIMIT ? OFFSET ?';
       params.push(limit, offset);
 
       db.all(query, params, (err, rows: any[]) => {
@@ -181,18 +158,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             success: true,
             data: {
               ...post,
+              log_no: post.log_no, // log_no 명시적 포함
+              category: post.category === 'general' ? '주절주절' : (post.category || '주절주절'),
               tags: finalTags,
               excerpt: post.excerpt || post.content?.substring(0, 200) + '...',
               mentionedStocks,
               investmentTheme,
-              sentimentTone
+              sentimentTone,
+              // Claude 직접 분석한 한줄 요약 (post_analysis 테이블에서)
+              claudeSummary: post.claudeSummary || post.summary
             }
           }));
           return;
         }
 
         // 전체 카운트 조회
-        let countQuery = 'SELECT COUNT(*) as total FROM blog_posts';
+        let countQuery = 'SELECT COUNT(*) as total FROM blog_posts bp LEFT JOIN post_analysis pa ON bp.log_no = pa.log_no';
         let countConditions = conditions.filter(condition => 
           !condition.includes('LIMIT') && !condition.includes('OFFSET')
         );
@@ -201,7 +182,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           countQuery += ' WHERE ' + countConditions.join(' AND ');
         }
 
-        db.get(countQuery, [], (countErr, countResult: any) => {
+        // count query에도 같은 매개변수 사용 (LIMIT, OFFSET 제외)
+        const countParams = params.slice(0, -2); // 마지막 2개 매개변수 (limit, offset) 제외
+        
+        db.get(countQuery, countParams, (countErr, countResult: any) => {
           db.close();
           
           if (countErr) {
@@ -246,10 +230,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
             return {
               id: post.id,
+              log_no: post.log_no, // log_no 필드 추가
               title: post.title,
               content: post.content,
               excerpt: post.excerpt || post.content?.substring(0, 200) + '...',
-              category: post.category || '일반',
+              category: post.category === 'general' ? '주절주절' : (post.category || '주절주절'),
               author: post.author || '메르',
               createdAt: post.createdAt,
               views: post.views || 0,
@@ -260,7 +245,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
               // 새로운 필드들 추가
               mentionedStocks,
               investmentTheme,
-              sentimentTone
+              sentimentTone,
+              // Claude 직접 분석한 한줄 요약 (post_analysis 테이블에서)
+              claudeSummary: post.claudeSummary || post.summary
             };
           });
 

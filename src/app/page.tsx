@@ -204,7 +204,7 @@ export default function Home() {
               <InteractiveButton 
                 variant="outline" 
                 size="lg" 
-                href="/merry"
+                href="/posts"
                 className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-1"
               >
                 <span className="truncate">📝 메르 포스트</span>

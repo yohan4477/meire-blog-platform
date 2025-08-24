@@ -11,12 +11,12 @@ import { query } from '@/lib/database';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const postId = searchParams.get('postId');
+    const logNo = searchParams.get('logNo');
     const limit = parseInt(searchParams.get('limit') || '10');
 
     const merryAI = getMerryInsightAI();
     const chains = await merryAI.getCausalChains(
-      postId ? parseInt(postId) : undefined, 
+      logNo || undefined, 
       limit
     );
 
@@ -41,12 +41,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { postId, forceReAnalysis = false } = body;
+    const { logNo, forceReAnalysis = false } = body;
 
-    if (!postId) {
+    if (!logNo) {
       return NextResponse.json({
         success: false,
-        error: 'postId가 필요합니다.'
+        error: 'logNo가 필요합니다.'
       }, { status: 400 });
     }
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       title: string;
       content: string;
       excerpt: string;
-    }>('SELECT id, title, content, excerpt FROM blog_posts WHERE id = ?', [postId]);
+    }>('SELECT id, log_no, title, content, excerpt FROM blog_posts WHERE log_no = ?', [logNo]);
 
     if (posts.length === 0) {
       return NextResponse.json({
@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
     // 2. 기존 분석이 있는지 확인
     if (!forceReAnalysis) {
       const existingChains = await query<{id: number}>(
-        'SELECT id FROM causal_chains WHERE source_post_id = ?', 
-        [postId]
+        'SELECT id FROM causal_chains WHERE source_log_no = ?', 
+        [logNo]
       );
 
       if (existingChains.length > 0) {
@@ -95,11 +95,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. 논리체인 추출 실행
-    console.log(`🧠 [API] 포스트 ${postId} 논리체인 분석 시작`);
+    console.log(`🧠 [API] 포스트 ${logNo} 논리체인 분석 시작`);
     
     const merryAI = getMerryInsightAI();
     const causalChain = await merryAI.extractCausalChain(
-      postId, 
+      logNo, 
       post.content || post.excerpt, 
       post.title
     );
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log(`✅ [API] 포스트 ${postId} 논리체인 분석 완료`);
+    console.log(`✅ [API] 포스트 ${logNo} 논리체인 분석 완료`);
 
     return NextResponse.json({
       success: true,

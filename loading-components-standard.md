@@ -133,7 +133,7 @@ import { TrendingUp, BarChart3, Brain, FileText, Quote, PieChart } from 'lucide-
 
 // 메르님 말씀 (기존)
 <LoadingSection 
-  title="메르님 한줄 코멘트" 
+  title="메르님 한 줄 코멘트" 
   icon={Quote}
 />
 

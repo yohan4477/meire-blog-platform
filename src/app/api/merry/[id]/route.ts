@@ -22,15 +22,15 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       }, { status: 400 });
     }
 
-    // 포스트 정보 조회 (blog_posts 테이블 사용)
+    // 포스트 정보 조회 (blog_posts 테이블 - log_no 필드 사용)
     const postQuery = `
       SELECT 
-        id, title, content, excerpt, category, created_date, views, featured
+        log_no as id, title, content, excerpt, category, created_date, views, featured
       FROM blog_posts
-      WHERE id = ?
+      WHERE log_no = ?
     `;
 
-    const posts = await query<BlogPost & { tags?: string }>(postQuery, [postId]);
+    const posts = await query<BlogPost & { tags?: string }>(postQuery, [id]);
 
     if (posts.length === 0) {
       return NextResponse.json({
@@ -44,17 +44,38 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
     }
 
     const firstPost = posts[0];
+    
+    // post_analysis 테이블에서 분석 데이터 조회
+    const analysisQuery = `
+      SELECT 
+        summary,
+        explanation, 
+        investment_insight,
+        analyzed_at
+      FROM post_analysis
+      WHERE log_no = ?
+    `;
+    
+    const analysisResults = await query<any>(analysisQuery, [id]);
+    const analysis = analysisResults.length > 0 ? analysisResults[0] : null;
+    
     const post = {
       ...firstPost,
       author: '메르', // 기본 작성자
       createdAt: firstPost?.created_date || new Date().toISOString(),
       likes: 0, // 기본값
       comments: 0, // 기본값  
-      tags: [] // 태그는 추후 구현
+      tags: [], // 태그는 추후 구현
+      analysis: analysis ? {
+        summary: analysis.summary,
+        explanation: analysis.explanation,
+        investment_insight: analysis.investment_insight,
+        analyzed_at: analysis.analyzed_at
+      } : undefined
     };
 
-    // 조회수 증가
-    await query('UPDATE blog_posts SET views = views + 1 WHERE id = ?', [postId]);
+    // 조회수 증가 - log_no 기반
+    await query('UPDATE blog_posts SET views = views + 1 WHERE log_no = ?', [id]);
     post.views = (post.views || 0) + 1;
 
     return NextResponse.json({

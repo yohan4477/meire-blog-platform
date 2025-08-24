@@ -151,7 +151,7 @@ class MissingStockFinder {
   async getThreeMonthsPosts() {
     return new Promise((resolve, reject) => {
       this.db.all(`
-        SELECT id, title, content, created_date 
+        SELECT id, log_no, title, content, created_date 
         FROM blog_posts 
         WHERE created_date >= date('now', '-3 months')
         ORDER BY created_date DESC
@@ -175,7 +175,7 @@ class MissingStockFinder {
             ticker,
             company_name: stockInfo.company_name,
             market: stockInfo.market,
-            post_id: post.id,
+            log_no: post.log_no || post.id,
             mentioned_date: post.created_date,
             found_by: `keyword: ${keyword}`
           });
@@ -196,7 +196,7 @@ class MissingStockFinder {
               ticker,
               company_name: stockInfo.company_name,
               market: stockInfo.market,
-              post_id: post.id,
+              log_no: post.log_no || post.id,
               mentioned_date: post.created_date,
               found_by: `pattern: ${patternInfo.type}`
             });

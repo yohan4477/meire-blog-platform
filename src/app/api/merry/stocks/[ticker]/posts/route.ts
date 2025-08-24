@@ -88,6 +88,7 @@ async function findPostsByTickerFromDB(ticker: string, limit: number, offset: nu
       'OKLO': ['오클로', 'OKLO', 'Oklo'],
       '005930': ['삼성전자', '삼성', 'Samsung'],
       'TSLA': ['테슬라', 'Tesla'],
+      'CEG': ['CEG', 'Constellation Energy', '컨스텔레이션', '컨스털레이션', '컨스텔레이션에너지', '컨스털레이션에너지'],
       // 필요시 추가
     };
     
@@ -198,6 +199,8 @@ function getTickerSearchTerms(ticker: string): string[] {
     'MSFT': ['마이크로소프트', 'MSFT', 'Microsoft', '마소'],
     'AMZN': ['아마존', 'AMZN', 'Amazon'],
     'META': ['메타', 'META', '페이스북', 'Facebook'],
+    'CEG': ['CEG', 'Constellation Energy', '컨스텔레이션', '컨스털레이션', '컨스텔레이션에너지', '컨스털레이션에너지'],
+    'OKLO': ['오클로', 'OKLO', 'Oklo'],
     '042660': ['한화오션', '042660', '한화시스템'],
     '267250': ['HD현대', '267250', '현대중공업'],
     '010620': ['현대미포조선', '010620', '미포조선']
