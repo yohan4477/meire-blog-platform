@@ -202,14 +202,21 @@ export default memo(function StockPriceChart({
           }
         });
         
-        // 🚀 현재가 계산 (즉시 표시)
-        if (basicPriceData.length >= 2) {
-          // 날짜순으로 정렬된 데이터에서 최신 데이터 가져오기
+        // 🚀 현재가 계산 (API 응답과 일치)
+        // 차트 헤더용 현재가 - stock prop에서 받아온 값 우선 사용
+        if (stock?.currentPrice && stock?.priceChange) {
+          const priceChangeNum = parseFloat(stock.priceChange.replace(/[+%]/g, ''));
+          setCurrentPrice(stock.currentPrice);
+          setChangePercent(priceChangeNum);
+          console.log(`📊 헤더와 일치: 현재가 ${stock.currentPrice}, 변화율 ${stock.priceChange}`);
+        } else if (basicPriceData.length >= 2) {
+          // 폴백: 종가 데이터에서 계산
           const sortedData = [...basicPriceData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
           const latest = sortedData[sortedData.length - 1];
           const previous = sortedData[sortedData.length - 2];
           setCurrentPrice(latest.price);
           setChangePercent(((latest.price - previous.price) / previous.price) * 100);
+          console.log(`📊 폴백 계산: 현재가 ${latest.price}, 변화율 ${((latest.price - previous.price) / previous.price) * 100}%`);
         }
         
         // 🔑 기본 차트는 이제 사용 가능!
@@ -387,10 +394,12 @@ export default memo(function StockPriceChart({
   const [isZooming, setIsZooming] = useState(false);
   const [zoomArea, setZoomArea] = useState<{start?: string, end?: string}>({});
   
-  // 모바일 터치 상태 (핀치 제스처 지원)
+  // 모바일 터치 상태 (핀치 제스처 및 부드러운 스크롤 지원)
   const [touchState, setTouchState] = useState<{
     startX?: number;
     startY?: number;
+    lastX?: number;
+    lastY?: number;
     isTouch: boolean;
     touchStartTime?: number;
     initialDistance?: number;
@@ -456,17 +465,19 @@ export default memo(function StockPriceChart({
         {/* 가격 정보 */}
         <div className="mb-3">
           <div className="text-lg sm:text-xl font-bold" style={{ color: chartColor }}>
-            ${data.price.toLocaleString()}
+            {stock?.currency === 'KRW' ? '₩' : '$'}{data.price.toLocaleString()}
           </div>
         </div>
         
 
         {/* 📝 포스트 & 감정 분석 번갈아가며 표시 */}
-        {data.sentiments?.length > 0 && (
+        {(data.sentiments?.length > 0 || data.posts?.length > 0 || data.postTitles?.length > 0) && (
           <div className="mb-3">
-            <p className="text-xs font-medium text-gray-700 mb-2">📝 메르 언급 포스트</p>
+            <p className="text-xs font-medium text-gray-700 mb-2">📝 검토중 포스트</p>
             <div className="space-y-1">
-              {data.sentiments?.slice(0, 2).map((sentiment: any, index: number) => {
+              {/* 감정 분석이 있는 경우 */}
+              {data.sentiments?.length > 0 ? (
+                data.sentiments?.slice(0, 2).map((sentiment: any, index: number) => {
                 const sentimentColor = sentiment?.sentiment === 'positive' 
                   ? '#16a34a' : sentiment?.sentiment === 'negative' 
                   ? '#dc2626' : '#6b7280';
@@ -510,11 +521,33 @@ export default memo(function StockPriceChart({
                     </div>
                   </div>
                 );
-              })}
+              })
+              ) : (
+                /* 감정 분석이 없고 포스트만 있는 경우 - 타이틀만 표시 */
+                <>
+                  {/* posts 배열의 포스트들 */}
+                  {data.posts?.slice(0, 2).map((post: any, index: number) => (
+                    <div key={`post-${index}`} className="text-xs p-2 bg-blue-50 rounded-lg border-l-2 border-blue-400 mb-1">
+                      <div className="font-medium text-blue-800 line-clamp-2">
+                        {post.title || post.postTitle || '제목 없음'}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* postTitles 배열의 제목들 (posts가 없거나 추가로 표시할 때) */}
+                  {data.postTitles?.slice(0, Math.max(0, 2 - (data.posts?.length || 0))).map((title: string, index: number) => (
+                    <div key={`postTitle-${index}`} className="text-xs p-2 bg-blue-50 rounded-lg border-l-2 border-blue-400 mb-1">
+                      <div className="font-medium text-blue-800 line-clamp-2">
+                        {title || '제목 없음'}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
-            {data.sentiments?.length > 2 && (
+            {((data.sentiments?.length > 2) || (data.posts?.length > 2) || (data.postTitles?.length > 2)) && (
               <div className="text-xs text-gray-500 mt-2">
-                +{data.sentiments.length - 2}개 포스트 더 있음
+                +{(data.sentiments?.length || data.posts?.length || data.postTitles?.length || 0) - 2}개 포스트 더 있음
               </div>
             )}
           </div>
@@ -600,22 +633,29 @@ export default memo(function StockPriceChart({
     }
   };
 
-  // 모바일 터치 이벤트 핸들러 (핀치 줌 지원)
+  // 모바일 터치 이벤트 핸들러 (부드러운 스크롤 및 툴팁 지원)
   const handleTouchStart = (e: React.TouchEvent) => {
     console.log('터치 시작:', e.touches.length, '개 터치');
     
     if (e.touches.length === 1) {
-      // 단일 터치 - 기본 터치 상태 설정
+      // 단일 터치 - 부드러운 스크롤을 위한 터치 상태 설정
       const touch = e.touches[0];
       setTouchState({
         startX: touch.clientX,
         startY: touch.clientY,
         isTouch: true,
         touchStartTime: Date.now(),
-        isPinching: false
+        isPinching: false,
+        lastX: touch.clientX,
+        lastY: touch.clientY
       });
+      
+      // 차트 영역 선택 방지
+      e.stopPropagation();
     } else if (e.touches.length === 2) {
       // 두 손가락 터치 - 핀치 제스처 시작
+      e.preventDefault(); // 기본 스크롤 방지
+      
       const distance = getDistance(e.touches);
       console.log('핀치 제스처 시작:', distance);
       setTouchState({
@@ -648,12 +688,43 @@ export default memo(function StockPriceChart({
         handleZoomOut();
         setTouchState(prev => ({ ...prev, initialDistance: currentDistance }));
       }
+    } else if (e.touches.length === 1 && touchState.isTouch) {
+      // 단일 터치 이동 - 차트 영역 선택 방지하고 자연스러운 스크롤 허용
+      const touch = e.touches[0];
+      const deltaX = Math.abs(touch.clientX - (touchState.startX || 0));
+      const deltaY = Math.abs(touch.clientY - (touchState.startY || 0));
+      
+      // 수직 스크롤이 주된 움직임이면 기본 스크롤 허용
+      if (deltaY > deltaX && deltaY > 10) {
+        // 수직 스크롤 - 차트 이벤트 방지하지 않음
+        return;
+      } else if (deltaX > 10) {
+        // 수평 이동이 주된 움직임 - 차트 선택 방지
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      setTouchState(prev => ({
+        ...prev,
+        lastX: touch.clientX,
+        lastY: touch.clientY
+      }));
     }
-    // 단일 터치는 자연스럽게 툴팁 동작 허용
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     // 터치 종료 시 상태 리셋
+    const touchDuration = touchState.touchStartTime ? Date.now() - touchState.touchStartTime : 0;
+    
+    // 빠른 탭 (< 200ms)이면 툴팁 표시 허용
+    if (touchDuration < 200 && touchState.startX && touchState.lastX) {
+      const moveDistance = Math.abs((touchState.lastX || 0) - touchState.startX);
+      if (moveDistance < 10) {
+        // 거의 움직이지 않은 탭 - 툴팁 표시 허용
+        console.log('빠른 탭 감지 - 툴팁 표시 허용');
+      }
+    }
+    
     setTouchState({ isTouch: false, isPinching: false });
   };
 
@@ -711,7 +782,7 @@ export default memo(function StockPriceChart({
               
               <div className="flex items-center gap-2 sm:gap-3 mt-1">
                 <span className="text-xl sm:text-2xl font-bold" style={{ color: chartColor }}>
-                  ${currentPrice.toLocaleString()}
+                  {stock?.currency === 'KRW' ? '₩' : '$'}{currentPrice.toLocaleString()}
                 </span>
                 <div className="flex items-center gap-1">
                   {changePercent >= 0 ? (
@@ -784,7 +855,7 @@ export default memo(function StockPriceChart({
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#60a5fa' : '#2563eb' }}></div>
-                  <span className="text-xs">메르 언급</span>
+                  <span className="text-xs">검토중</span>
                 </div>
               </div>
               
@@ -810,7 +881,11 @@ export default memo(function StockPriceChart({
           onTouchEnd={handleTouchEnd}
           onWheel={handleWheel}
           style={{ 
-            touchAction: 'manipulation' // 핀치 줌 허용
+            touchAction: 'pan-y pinch-zoom', // 수직 스크롤과 핀치 줌만 허용, 수평 드래그 비활성화
+            userSelect: 'none', // 텍스트 선택 방지
+            WebkitUserSelect: 'none', // iOS Safari 지원
+            WebkitTouchCallout: 'none', // iOS 길게 누르기 메뉴 비활성화
+            overscrollBehavior: 'none' // 과도한 스크롤 방지
           }}
         >
           {/* 줌 리셋 버튼만 유지 (필요시만 표시) */}
@@ -837,6 +912,11 @@ export default memo(function StockPriceChart({
                 legend={false}
                 layout="horizontal"
                 className="recharts-no-legend"
+                syncId="stockChart"
+                onClick={undefined}
+                onMouseDown={undefined}
+                onMouseMove={undefined}
+                onMouseUp={undefined}
               >
               {/* 최소한의 그리드 (토스 스타일 - 다크모드 대응) */}
               <CartesianGrid 
@@ -969,10 +1049,13 @@ export default memo(function StockPriceChart({
                 }}
                 tickCount={isMobile ? 4 : 6}
                 tickFormatter={(value) => {
+                  // 한국 주식 currency 정보 사용
+                  const currencySymbol = stock?.currency === 'KRW' ? '₩' : '$';
+                  
                   if (value >= 1000) {
-                    return isMobile ? `$${(value / 1000).toFixed(0)}K` : `$${(value / 1000).toFixed(1)}K`;
+                    return isMobile ? `${currencySymbol}${(value / 1000).toFixed(0)}K` : `${currencySymbol}${(value / 1000).toFixed(1)}K`;
                   } else {
-                    return isMobile ? `$${Math.round(value)}` : `$${value.toFixed(0)}`;
+                    return isMobile ? `${currencySymbol}${Math.round(value)}` : `${currencySymbol}${value.toFixed(0)}`;
                   }
                 }}
                 domain={['dataMin * 0.98', 'dataMax * 1.02']}
@@ -1000,7 +1083,7 @@ export default memo(function StockPriceChart({
                   }
                   
                   // 색상 결정 (감정 분석 우선, 없으면 파란색)
-                  let markerColor = isDarkMode ? '#60a5fa' : '#2563eb'; // 기본: 파란색 (메르 언급)
+                  let markerColor = isDarkMode ? '#60a5fa' : '#2563eb'; // 기본: 파란색 (검토중)
                   let strokeWidth = 2;
                   
                   if (hasSentiments) {
@@ -1084,7 +1167,7 @@ export default memo(function StockPriceChart({
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: isDarkMode ? '#60a5fa' : '#2563eb' }}></div>
-                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>메르 언급</span>
+                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>검토중</span>
               </div>
             </div>
           </div>

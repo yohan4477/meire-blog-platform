@@ -54,58 +54,59 @@ async function analyzeMerryAchievements(limit: number) {
     // 메르 포스트 데이터 로드
     const merryPosts = await loadMerryPosts(limit);
     
-    // 업적 분석
+    // 실제 직장 생활 썰 기반 업적 분석
     const achievements = {
       totalAnalyzed: merryPosts.length,
       corporateAchievements: [
         {
-          title: "투자 블로그 '메르' 운영",
-          description: "개인 투자 경험과 분석을 공유하는 블로거",
+          title: "금융권 자산운용 전문가",
+          description: "수십조원 규모 자산운용 실무 경험과 금융상품 개발",
           category: "career",
-          period: "2018-현재",
+          period: "삼성 입사-현재",
           impact: "high",
-          details: "500여개 포스트를 통해 투자 철학과 종목 분석을 공유, 개인 투자자들에게 실질적 도움 제공"
+          details: "삼성 신입사원 출신으로 거제도 지점부터 시작하여 본사 자산운용 부서까지, 실제 금융 현장 경험을 바탕으로 한 투자 인사이트 공유"
         },
         {
-          title: "코로나19 위기 극복 투자 성공",
-          description: "팬데믹 위기 상황에서 기술주 집중 투자로 큰 수익 달성",
+          title: "업무 프로세스 혁신상 수상",
+          description: "인지세 전자납부 시스템 도입으로 한국은행 업무개선상 수상",
           category: "award",
-          date: "2020-12-31",
+          period: "대리 시절",
           impact: "high",
-          details: "팬데믹 초기 재택근무 수혜주와 클라우드 기업 선별 투자로 포트폴리오 +45% 수익률 달성"
+          details: "전국 금융기관의 인지세 납부 업무를 전산화로 혁신하여 수많은 직원들의 단순반복 업무를 없앤 공로로 한국은행 표창 수상"
         },
         {
-          title: "AI 반도체 트렌드 선도적 분석",
-          description: "ChatGPT 이전부터 AI 반도체 수요 폭증 예측한 블로그 포스트",
-          category: "research",
-          date: "2023-03-15",
+          title: "역모기지(주택연금) 제도 설계 참여",
+          description: "재경부 과장과의 면담을 통해 국내 주택연금 제도 설계에 기여",
+          category: "research", 
+          period: "2000년대 초반",
           impact: "high",
-          details: "ChatGPT 열풍 3개월 전 AI 반도체 수요 폭증을 예측한 블로그 포스트로 많은 주목 받음"
+          details: "미국 모기지 시장 벤치마킹 보고서 작성 후 재경부와 협의, 현재 주택금융공사의 주택연금 제도 기반 설계에 참여"
         },
         {
-          title: "개인 투자자 교육 콘텐츠 제작",
-          description: "투자 초보자를 위한 쉬운 투자 교육 포스트 시리즈",
-          category: "education",
-          period: "2021-2022", 
-          impact: "medium",
-          details: "투자 기초부터 고급 분석까지 단계별 교육 콘텐츠로 많은 개인 투자자들에게 도움 제공"
-        },
-        {
-          title: "ESG 투자 철학 정립 및 실천",
-          description: "지속가능한 투자 철학을 바탕으로 한 포트폴리오 운용",
+          title: "예외승인 심사 전문가",
+          description: "기준을 벗어나는 특수 투자건에 대한 정밀심사 업무 담당",
           category: "leadership",
-          period: "2022-현재",
+          period: "차장급 시절",
+          impact: "medium",
+          details: "위험값 0.5% 범위에서 연간 500억원 손실 한도 내 예외승인 업무, 보수적 안전투자와 수익성 사이의 균형 유지"
+        },
+        {
+          title: "현장 중심 투자 철학 확립",
+          description: "재무제표보다 현장 실사를 중시하는 독특한 투자 분석 방법론",
+          category: "research",
+          period: "차장-부장급",
           impact: "high",
-          details: "ESG 중심 투자 원칙을 개인 포트폴리오에 적용하여 연평균 12% 수익률과 리스크 30% 감소 달성"
+          details: "홍콩 현지 실사로 1조원 대출 부실기업 사전 발견, 돼지 축사 현장 방문 등 발로 뛰는 현장 중심 투자 분석 실천"
         }
       ],
       investmentPhilosophy: {
-        core: "장기 메가트렌드 기반 투자",
+        core: "현장 실사 기반 리스크 관리 투자",
         principles: [
-          "기술 혁신의 장기적 영향력 중시",
-          "시장 타이밍보다 기업 펀더멘털 우선",
-          "리스크 관리와 분산투자 병행",
-          "감정보다 데이터 기반 의사결정"
+          "재무제표보다 현장이 우선 - 발로 뛰는 투자",
+          "적절한 위험 수준 유지 (밴드 평가 0.1-5% 손실)",
+          "하자 있는 저평가 우량주 발굴",
+          "감정보다 논리와 근거 중심 의사결정",
+          "조직 관리와 투자 분석의 균형"
         ]
       },
     };

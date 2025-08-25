@@ -187,7 +187,7 @@ export default function PhilosophyPage() {
 
         <div className="text-center mt-8">
           <Button asChild variant="outline">
-            <Link href="/posts">
+            <Link href="/merry">
               모든 분석 자료 보기
             </Link>
           </Button>

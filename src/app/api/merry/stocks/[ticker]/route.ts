@@ -42,6 +42,13 @@ export async function GET(
       tags: ''
     };
     
+    // 한국 주식 currency 강제 수정 (DB에 잘못 저장된 경우 대비)
+    const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
+    if (isKoreanStock && basicInfo.currency !== 'KRW') {
+      console.log(`🔧 Fixing currency for Korean stock ${ticker}: ${basicInfo.currency} → KRW`);
+      basicInfo.currency = 'KRW';
+    }
+    
     // 가격 데이터 가져오기 (6개월)
     const priceData = await stockDB.getStockPrices(ticker, '6mo');
     
@@ -75,8 +82,10 @@ export async function GET(
       console.log('감정 분석 개수 조회 실패:', error);
     }
     
-    // 실시간 가격 정보 가져오기
+    // 실시간 가격 정보 가져오기 (실패 시 종가 데이터로 폴백)
     let priceInfo = { currentPrice: 0, priceChange: '+0.00%' };
+    let useRealTimePrice = false;
+    
     try {
       console.log(`💰 Fetching real-time price for ${ticker}...`);
       const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
@@ -122,12 +131,106 @@ export async function GET(
               currentPrice: isKoreanStock ? Math.round(currentPrice) : parseFloat(currentPrice.toFixed(2)),
               priceChange: `${changeSign}${changePercent}%`
             };
+            useRealTimePrice = true;
             console.log(`✅ Real-time price for ${ticker}: ${priceInfo.currentPrice} (${priceInfo.priceChange})`);
           }
         }
       }
     } catch (error) {
       console.warn(`⚠️ Failed to fetch real-time price for ${ticker}:`, error instanceof Error ? error.message : 'Unknown error');
+    }
+    
+    // 실시간 가격 실패 시 종가 데이터로 폴백
+    if (!useRealTimePrice && priceData.length >= 2) {
+      console.log(`🔄 Using historical price data as fallback for ${ticker}`);
+      const sortedPriceData = [...priceData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const latest = sortedPriceData[sortedPriceData.length - 1];
+      const previous = sortedPriceData[sortedPriceData.length - 2];
+      
+      const changeAmount = latest.close_price - previous.close_price;
+      const changePercent = ((changeAmount / previous.close_price) * 100).toFixed(2);
+      const changeSign = changeAmount >= 0 ? '+' : '';
+      
+      const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
+      priceInfo = {
+        currentPrice: isKoreanStock ? Math.round(latest.close_price) : parseFloat(latest.close_price.toFixed(2)),
+        priceChange: `${changeSign}${changePercent}%`
+      };
+      console.log(`✅ Fallback price for ${ticker}: ${priceInfo.currentPrice} (${priceInfo.priceChange}) from ${latest.date}`);
+    }
+
+    // first_mentioned_date fallback 로직 구현
+    let firstMentionDate = basicInfo.first_mentioned_date;
+    
+    // stocks DB에 first_mentioned_date가 없거나 빈 값인 경우 blog_posts에서 찾기
+    if (!firstMentionDate) {
+      try {
+        console.log(`🔍 Finding earliest blog post mention for ${ticker}...`);
+        
+        // 한국 종목인지 확인
+        const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
+        let searchTerms = [ticker];
+        
+        // 티커에 따른 회사명 검색어 추가
+        if (basicInfo.company_name && basicInfo.company_name !== ticker) {
+          searchTerms.push(basicInfo.company_name);
+        }
+        
+        // 한국 주요 종목의 추가 검색어
+        const koreanStockNames: Record<string, string[]> = {
+          '005930': ['삼성전자', '삼성'],
+          '000660': ['SK하이닉스', '하이닉스'],
+          '035420': ['네이버', 'NAVER']
+        };
+        
+        // 미국 주요 종목의 추가 검색어
+        const usStockNames: Record<string, string[]> = {
+          'TSLA': ['테슬라', 'Tesla'],
+          'NVDA': ['엔비디아', 'NVIDIA'],
+          'GOOGL': ['구글', 'Google', '알파벳', 'Alphabet'],
+          'MSFT': ['마이크로소프트', 'Microsoft'],
+          'AAPL': ['애플', 'Apple']
+        };
+        
+        if (isKoreanStock && koreanStockNames[ticker]) {
+          searchTerms = searchTerms.concat(koreanStockNames[ticker]);
+        } else if (usStockNames[ticker]) {
+          searchTerms = searchTerms.concat(usStockNames[ticker]);
+        }
+        
+        // 검색 쿼리 생성
+        const titleConditions = searchTerms.map(term => `title LIKE '%${term}%'`).join(' OR ');
+        const contentConditions = searchTerms.map(term => `content LIKE '%${term}%'`).join(' OR ');
+        
+        const earliestPostQuery = `
+          SELECT MIN(created_date) as earliest_date 
+          FROM blog_posts 
+          WHERE (${titleConditions}) OR (${contentConditions})
+          ORDER BY created_date 
+          LIMIT 1
+        `;
+        
+        const earliestPostResult = await new Promise<any>((resolve, reject) => {
+          stockDB.db.get(earliestPostQuery, (err: any, row: any) => {
+            if (err) {
+              console.error('Earliest post query error:', err);
+              reject(err);
+            } else {
+              resolve(row);
+            }
+          });
+        });
+        
+        if (earliestPostResult?.earliest_date) {
+          firstMentionDate = earliestPostResult.earliest_date;
+          console.log(`✅ Found fallback first mention date for ${ticker}: ${firstMentionDate}`);
+        } else {
+          console.log(`⚠️ No fallback first mention date found for ${ticker}`);
+        }
+        
+      } catch (error) {
+        console.warn(`⚠️ Failed to get fallback first mention date for ${ticker}:`, error);
+      }
     }
 
     // 응답 데이터 구성 - 실시간 가격 포함
@@ -160,7 +263,7 @@ export async function GET(
         // 통계
         stats: {
           totalMentions: basicInfo.mention_count || mentions.length,
-          firstMention: basicInfo.first_mentioned_date,
+          firstMention: firstMentionDate,
           lastMention: basicInfo.last_mentioned_date || basicInfo.last_mentioned_at,
           totalPosts: analyzedCount
         }

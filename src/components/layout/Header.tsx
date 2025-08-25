@@ -14,6 +14,7 @@ import {
   SheetTitle, 
   SheetTrigger 
 } from '@/components/ui/sheet';
+import TodayPostsNotification from '@/components/layout/TodayPostsNotification';
 import {
   Dialog,
   DialogContent,
@@ -38,34 +39,6 @@ export default function Header() {
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: 'AI 포트폴리오 분석 완료',
-      message: 'Goldman Sachs 에이전트가 최신 포트폴리오 분석을 완료했습니다.',
-      time: '5분 전',
-      type: 'success',
-      read: false
-    },
-    {
-      id: 2,
-      title: '국민연금 새로운 13F 파일링',
-      message: '국민연금공단의 새로운 13F 파일링이 SEC에 제출되었습니다.',
-      time: '15분 전',
-      type: 'info',
-      read: false
-    },
-    {
-      id: 3,
-      title: '시장 변동성 경고',
-      message: 'BlackRock 에이전트가 높은 시장 변동성을 감지했습니다.',
-      time: '1시간 전',
-      type: 'warning',
-      read: true
-    }
-  ]);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
   const router = useRouter();
 
   const handleAdminAccess = () => {
@@ -282,92 +255,8 @@ export default function Header() {
               <Search className="h-4 w-4" />
             </Button>
 
-            {/* 알림 시스템 */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-10 sm:w-10">
-                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                  {unreadCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 text-xs flex items-center justify-center"
-                    >
-                      {unreadCount}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-96">
-                <SheetHeader>
-                  <SheetTitle>알림</SheetTitle>
-                  <SheetDescription>
-                    최신 AI 분석 결과와 시장 정보를 확인하세요
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6 space-y-4">
-                  {notifications.map((notification) => (
-                    <div 
-                      key={notification.id} 
-                      className={`p-4 rounded-lg border transition-colors ${
-                        notification.read 
-                          ? 'bg-gray-50 border-gray-200' 
-                          : 'bg-white border-blue-200 shadow-sm'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className={`font-medium text-sm ${
-                          notification.read ? 'text-gray-700' : 'text-gray-900'
-                        }`}>
-                          {notification.title}
-                        </h4>
-                        <div className="flex items-center space-x-2">
-                          <Badge 
-                            variant={
-                              notification.type === 'success' ? 'default' :
-                              notification.type === 'warning' ? 'destructive' : 'secondary'
-                            }
-                            className="text-xs"
-                          >
-                            {notification.type === 'success' ? '완료' :
-                             notification.type === 'warning' ? '주의' : '정보'}
-                          </Badge>
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                          )}
-                        </div>
-                      </div>
-                      <p className={`text-xs mb-2 ${
-                        notification.read ? 'text-gray-500' : 'text-gray-600'
-                      }`}>
-                        {notification.message}
-                      </p>
-                      <div className="text-xs text-gray-400">
-                        {notification.time}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {notifications.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                      <p className="text-sm">새로운 알림이 없습니다</p>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="mt-6 pt-4 border-t">
-                  <Button 
-                    variant="outline" 
-                    className="w-full text-sm"
-                    onClick={() => setNotifications(prev => 
-                      prev.map(n => ({ ...n, read: true }))
-                    )}
-                  >
-                    모든 알림 읽음 처리
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
+            {/* 오늘 포스트 알림 */}
+            <TodayPostsNotification />
 
             <ThemeToggle />
             

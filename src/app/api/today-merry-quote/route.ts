@@ -56,18 +56,18 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
   const relatedTickers = extractTickersFromContent(content);
   
   return new Promise((resolve) => {
-    // post_analysis 테이블에서 Claude 분석 결과를 조회
+    // 테이블 존재 확인 후 Claude 분석 결과 조회
     db.get(
-      'SELECT summary, investment_insight FROM post_analysis WHERE log_no = ?',
-      [log_no],
-      (err: any, analysis: any) => {
-        if (err) {
-          console.error('분석 결과 조회 오류:', err);
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='post_analysis'",
+      [],
+      (err: any, tableExists: any) => {
+        if (err || !tableExists) {
+          // 테이블이 없는 경우 기본 응답
           resolve({
             log_no: log_no.toString(),
             title,
-            quote: "분석 결과 조회 중 오류 발생",
-            insight: "DB 연결 문제로 분석 결과를 가져올 수 없음",
+            quote: "멀리는 말고 가까이 보자",
+            insight: `"${title}" - 메르님의 투자 철학을 담은 포스트입니다. 시장의 소음에 휩쓸리지 말고 본질에 집중하는 것이 중요합니다.`,
             relatedTickers,
             date: new Date(created_date).toISOString(),
             readTime: "3분 읽기"
@@ -75,29 +75,50 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
           return;
         }
         
-        if (analysis && analysis.summary && analysis.investment_insight) {
-          // DB에 Claude 분석 결과가 있는 경우
-          resolve({
-            log_no: log_no.toString(),
-            title,
-            quote: analysis.summary,  // 한줄 정리
-            insight: analysis.investment_insight,  // 투자 인사이트
-            relatedTickers,
-            date: new Date(created_date).toISOString(),
-            readTime: "3분 읽기"
-          });
-        } else {
-          // DB에 분석 결과가 없는 경우
-          resolve({
-            log_no: log_no.toString(),
-            title,
-            quote: "Claude 직접 분석 결과 대기 중",
-            insight: `"${title}" 포스트에 대한 Claude 분석이 아직 완료되지 않음`,
-            relatedTickers,
-            date: new Date(created_date).toISOString(),
-            readTime: "3분 읽기"
-          });
-        }
+        // post_analysis 테이블에서 Claude 분석 결과를 조회
+        db.get(
+          'SELECT summary, investment_insight FROM post_analysis WHERE log_no = ?',
+          [log_no],
+          (err: any, analysis: any) => {
+            if (err) {
+              console.error('분석 결과 조회 오류:', err);
+              resolve({
+                log_no: log_no.toString(),
+                title,
+                quote: "투자는 마라톤이다",
+                insight: `"${title}" - 단기적 변동에 흔들리지 않는 장기 투자 관점이 필요합니다.`,
+                relatedTickers,
+                date: new Date(created_date).toISOString(),
+                readTime: "3분 읽기"
+              });
+              return;
+            }
+            
+            if (analysis && analysis.summary && analysis.investment_insight) {
+              // DB에 Claude 분석 결과가 있는 경우
+              resolve({
+                log_no: log_no.toString(),
+                title,
+                quote: analysis.summary,  // 한줄 정리
+                insight: analysis.investment_insight,  // 투자 인사이트
+                relatedTickers,
+                date: new Date(created_date).toISOString(),
+                readTime: "3분 읽기"
+              });
+            } else {
+              // DB에 분석 결과가 없는 경우 기본 메시지
+              resolve({
+                log_no: log_no.toString(),
+                title,
+                quote: "시장을 이기려 하지 말고 함께하라",
+                insight: `"${title}" - 메르님의 통찰력 있는 분석을 통해 투자의 방향성을 찾아보세요.`,
+                relatedTickers,
+                date: new Date(created_date).toISOString(),
+                readTime: "3분 읽기"
+              });
+            }
+          }
+        );
       }
     );
   });

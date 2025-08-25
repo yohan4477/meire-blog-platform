@@ -285,7 +285,7 @@ export default function MerryStockPicks() {
                 
                 {/* 2. 종목별 특성 뱃지 (개별 종목) */}
                 {characteristicBadges.map((badge, badgeIndex) => (
-                  <Badge key={badgeIndex} className={`text-xs ${badge.className}`}>
+                  <Badge key={`${stock.ticker}-badge-${badgeIndex}-${badge.text}`} className={`text-xs ${badge.className}`}>
                     {badge.icon} {badge.text}
                   </Badge>
                 ))}
@@ -357,7 +357,7 @@ export default function MerryStockPicks() {
                   {/* 🔧 API에서 이미 배열로 변환되므로 간단한 처리 */}
                   {Array.isArray(stock.tags) && stock.tags.length > 0 ? (
                     stock.tags.slice(0, 3).map((tag, tagIndex) => (
-                      <Badge key={`${stock.ticker}-tag-${tagIndex}`} variant="secondary" className="text-xs">
+                      <Badge key={`${stock.ticker}-tag-${tagIndex}-${tag}`} variant="secondary" className="text-xs">
                         {tag}
                       </Badge>
                     ))

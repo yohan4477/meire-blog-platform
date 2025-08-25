@@ -173,6 +173,11 @@ export default function StockDetailPage() {
       
       if (data.success && data.data) {
         // 개별 종목 API 응답 구조에 맞게 데이터 매핑
+        const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
+        const finalCurrency = data.data.currency || (isKoreanStock ? 'KRW' : 'USD');
+        
+        console.log(`💰 Currency mapping for ${ticker}: isKorean=${isKoreanStock}, API_currency=${data.data.currency}, final_currency=${finalCurrency}`);
+        
         const stockData = {
           ticker: data.data.ticker,
           name: data.data.name,
@@ -180,7 +185,8 @@ export default function StockDetailPage() {
           market: data.data.market,
           currentPrice: data.data.currentPrice || 0,
           priceChange: data.data.priceChange || '+0.00%',
-          currency: data.data.currency || 'USD',
+          // 한국 주식 currency 매핑 강화
+          currency: finalCurrency,
           description: data.data.description || `${ticker} 종목`,
           mentions: data.data.stats?.totalMentions || 0,
           mention_count: data.data.stats?.totalMentions || 0,
@@ -209,7 +215,7 @@ export default function StockDetailPage() {
           postCount: 0,
           currentPrice: 0,
           priceChange: '+0.00%',
-          currency: ticker.length === 6 ? 'KRW' : 'USD',
+          currency: ticker.length === 6 && !isNaN(Number(ticker)) ? 'KRW' : 'USD',
           market: ticker.length === 6 ? 'KOSPI' : 'NASDAQ',
           description: `${ticker} 종목 정보`,
           tags: ['투자', '종목'],
@@ -233,7 +239,7 @@ export default function StockDetailPage() {
         postCount: 0,
         currentPrice: 0,
         priceChange: '+0.00%',
-        currency: ticker.length === 6 ? 'KRW' : 'USD',
+        currency: ticker.length === 6 && !isNaN(Number(ticker)) ? 'KRW' : 'USD',
         market: ticker.length === 6 ? 'KOSPI' : 'NASDAQ',
         description: `${ticker} 종목 정보`,
         tags: ['투자', '종목'],

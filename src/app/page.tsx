@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { InteractiveButton } from '@/components/ui/interactive-button';
-import { Card } from '@/components/ui/card';
-import { ArrowRight, TrendingUp, BarChart3, User } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TrendingUp, User } from 'lucide-react';
 import { useResponsive } from '@/hooks/useResponsive';
 import { mainPageCache } from '@/lib/performance-cache';
 
@@ -13,7 +13,6 @@ interface SectionStatus {
   todayQuote: 'idle' | 'loading' | 'loaded' | 'error';
   merryPicks: 'idle' | 'loading' | 'loaded' | 'error';
   mainContent: 'idle' | 'loading' | 'loaded' | 'error';
-  bottomCards: 'idle' | 'loading' | 'loaded' | 'error';
 }
 
 // ⚡ 성능 모니터링 함수 (1초 로딩 목표)
@@ -23,7 +22,6 @@ function trackSectionPerformance(sectionName: string, loadTime: number) {
     todayQuote: 200, // 오늘의 말씀: 200ms 이내
     merryPicks: 300, // 메르's Pick: 300ms 이내
     mainContent: 250, // 메인 콘텐츠: 250ms 이내
-    bottomCards: 400, // 하단 카드: 400ms 이내 (총 1초)
   };
   
   if (loadTime > performanceTargets[sectionName as keyof typeof performanceTargets]) {
@@ -65,25 +63,12 @@ const animationStyles = `
     }
   }
   
-  @keyframes slideInFromLeft {
-    from {
-      opacity: 0;
-      transform: translateX(-30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-  
   .section-hero { animation: fadeInUp 0.3s ease-out; }
   .section-today-quote { animation: scaleIn 0.4s ease-out 0.2s both; }
   .section-merry-picks { animation: fadeInUp 0.3s ease-out 0.4s both; }
   .section-main-content { animation: fadeInUp 0.3s ease-out 0.6s both; }
-  .section-bottom-cards { animation: slideInFromLeft 0.3s ease-out 0.8s both; }
   
   .card-stagger-1 { animation: fadeInUp 0.3s ease-out 0.1s both; }
-  .card-stagger-2 { animation: fadeInUp 0.3s ease-out 0.2s both; }
 `;
 
 
@@ -97,8 +82,7 @@ export default function Home() {
     hero: 'loaded',        // Hero는 즉시 표시
     todayQuote: 'idle',    // 모바일: 즉시, 데스크톱: 300ms 후
     merryPicks: 'idle',    // 600ms 후 로딩
-    mainContent: 'idle',   // 모바일: 즉시, 데스크톱: 900ms 후  
-    bottomCards: 'idle'    // 1200ms 후 로딩
+    mainContent: 'idle'    // 모바일: 즉시, 데스크톱: 900ms 후
   });
   
   const [merryPosts, setMerryPosts] = useState<any[]>([]);
@@ -144,7 +128,7 @@ export default function Home() {
     console.log('⚡ 모든 섹션 즉시 로딩 시작');
     
     const loadAllSectionsImmediately = () => {
-      const sections = ['todayQuote', 'merryPicks', 'mainContent', 'bottomCards'];
+      const sections = ['todayQuote', 'merryPicks', 'mainContent'];
       
       sections.forEach((name) => {
         startSectionTimer(name);
@@ -204,7 +188,7 @@ export default function Home() {
               <InteractiveButton 
                 variant="outline" 
                 size="lg" 
-                href="/posts"
+                href="/merry"
                 className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-1"
               >
                 <span className="truncate">📝 메르 포스트</span>
@@ -218,15 +202,6 @@ export default function Home() {
               >
                 <span className="truncate">📊 종목 리스트</span>
                 <TrendingUp className="ml-2 h-4 w-4 flex-shrink-0" />
-              </InteractiveButton>
-              <InteractiveButton 
-                variant="outline" 
-                size="lg" 
-                href="/merry/weekly-report"
-                className="w-full sm:w-auto min-w-0 text-sm sm:text-base card-stagger-2"
-              >
-                <span className="truncate">📊 주간 보고</span>
-                <BarChart3 className="ml-2 h-4 w-4 flex-shrink-0" />
               </InteractiveButton>
             </div>
           </div>
@@ -284,67 +259,6 @@ export default function Home() {
         ) : null}
       </div>
 
-      {/* 🏛️ 국민연금 분석 - 1200ms 후 로딩 */}
-      <section className={`bg-card border-t transition-all duration-300 ${
-        sectionStatus.bottomCards === 'loaded' ? 'section-bottom-cards' : 
-        sectionStatus.bottomCards === 'loading' ? 'animate-pulse' :
-        'opacity-0'
-      }`} data-testid="bottom-cards">
-        <div className="container mx-auto px-4 py-6">
-          {sectionStatus.bottomCards === 'loaded' ? (
-            <div className="flex justify-center">
-              <Card className="p-6 card-stagger-1 max-w-md w-full">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center">
-                    <BarChart3 className="mr-2 h-5 w-5" />
-                    국민연금 분석
-                  </h3>
-                  <InteractiveButton 
-                    variant="ghost" 
-                    size="sm" 
-                    href="/investment"
-                    loadingText="로딩 중..."
-                  >
-                    자세히 보기
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </InteractiveButton>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  국민연금공단의 최신 포트폴리오 변화와 투자 전략을 분석합니다
-                </p>
-                {/* 외부 링크 데모 버튼 추가 */}
-                <div className="mt-4 pt-4 border-t border-muted">
-                  <h4 className="text-sm font-medium mb-2">외부 링크 테스트</h4>
-                  <div className="flex gap-2">
-                    <InteractiveButton 
-                      variant="outline" 
-                      size="sm" 
-                      href="https://www.nps.or.kr"
-                      external={true}
-                      loadingText="연결 중..."
-                    >
-                      국민연금 공식 사이트
-                    </InteractiveButton>
-                    <InteractiveButton 
-                      variant="outline" 
-                      size="sm" 
-                      href="https://finance.naver.com"
-                      external={true}
-                      loadingText="연결 중..."
-                    >
-                      네이버 금융
-                    </InteractiveButton>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          ) : sectionStatus.bottomCards === 'loading' ? (
-            <div className="animate-pulse flex justify-center">
-              <Skeleton className="h-32 w-full max-w-md" />
-            </div>
-          ) : null}
-        </div>
-      </section>
     </div>
   );
 }

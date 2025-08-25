@@ -222,7 +222,7 @@ export function TodayMerryQuote() {
                 <div className="flex flex-wrap gap-2">
                   {quote.relatedTickers.map((ticker, tickerIndex) => (
                     <span
-                      key={ticker}
+                      key={`${quote.log_no}-ticker-${ticker}-${tickerIndex}`}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -238,12 +238,12 @@ export function TodayMerryQuote() {
             )}
               {/* 해당 포스트 보기 버튼 */}
               <div className="pt-3 sm:pt-4 border-t border-border">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg group-hover:bg-primary/90 font-medium transition-all duration-200 text-sm sm:text-base cursor-pointer">
-                  <span>해당 포스트 보기</span>
-                  <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
+                <Link 
+                  href={`/merry/posts/${quote.log_no}`}
+                  className="inline-block px-3 py-2 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors cursor-pointer border border-gray-400 hover:border-primary"
+                >
+                  해당 포스트 보기 &gt;
+                </Link>
               </div>
             </div>
           </div>

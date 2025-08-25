@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 2
+      "actualWorkers": 1
     },
     "preserveOutput": "always",
     "reporter": [
@@ -41,7 +41,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 1
         },
         "id": "chromium",
         "name": "chromium",
@@ -57,7 +57,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 1
         },
         "id": "firefox",
         "name": "firefox",
@@ -73,7 +73,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 1
         },
         "id": "webkit",
         "name": "webkit",
@@ -89,7 +89,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 1
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
@@ -105,7 +105,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 1
         },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
@@ -131,21 +131,21 @@
   },
   "suites": [
     {
-      "title": "individual-post-functionality-test.spec.ts",
-      "file": "individual-post-functionality-test.spec.ts",
+      "title": "stock-filter-test.spec.ts",
+      "file": "stock-filter-test.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Individual Post Page Functionality",
-          "file": "individual-post-functionality-test.spec.ts",
+          "title": "종목 필터 테스트",
+          "file": "stock-filter-test.spec.ts",
           "line": 3,
           "column": 6,
           "specs": [
             {
-              "title": "should navigate to formatted post page when clicking related posts",
-              "ok": true,
+              "title": "종목 필터가 실제 종목들을 표시하는지 확인",
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -158,86 +158,63 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 8481,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "CEG page title: 컨스텔레이션에너지\n"
+                      "status": "failed",
+                      "duration": 7708,
+                      "error": {
+                        "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nLocator: locator('h1')\nExpected string: \u001b[32m\"우리형 메르\"\u001b[39m\nReceived string: \u001b[31m\"404\"\u001b[39m\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\u001b[2m    9 × locator resolved to <h1 class=\"next-error-h1\">404</h1>\u001b[22m\n\u001b[2m      - unexpected value \"404\"\u001b[22m\n",
+                        "stack": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nLocator: locator('h1')\nExpected string: \u001b[32m\"우리형 메르\"\u001b[39m\nReceived string: \u001b[31m\"404\"\u001b[39m\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\u001b[2m    9 × locator resolved to <h1 class=\"next-error-h1\">404</h1>\u001b[22m\n\u001b[2m      - unexpected value \"404\"\u001b[22m\n\n    at C:\\Users\\y\\meire-blog-platform\\tests\\stock-filter-test.spec.ts:10:38",
+                        "location": {
+                          "file": "C:\\Users\\y\\meire-blog-platform\\tests\\stock-filter-test.spec.ts",
+                          "column": 38,
+                          "line": 10
                         },
+                        "snippet": "\u001b[0m \u001b[90m  8 |\u001b[39m     \n \u001b[90m  9 |\u001b[39m     \u001b[90m// 페이지가 제대로 로드되었는지 확인\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 10 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'h1'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'우리형 메르'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 11 |\u001b[39m     \n \u001b[90m 12 |\u001b[39m     \u001b[90m// 종목 필터 드롭다운 찾기\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mconst\u001b[39m stockFilter \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=종목 선택'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
                         {
-                          "text": "Found 4 related post links\n"
-                        },
-                        {
-                          "text": "First related post link href: /merry/posts/223977895361\n"
-                        },
-                        {
-                          "text": "Current URL after click: http://localhost:3004/merry/posts/223977895361\n"
-                        },
-                        {
-                          "text": "Post title: 이제는 SMR(소형 모듈 원자로)이 아닐수도 있다?\n"
-                        },
-                        {
-                          "text": "✅ Individual post page loaded successfully with formatted content\n"
+                          "location": {
+                            "file": "C:\\Users\\y\\meire-blog-platform\\tests\\stock-filter-test.spec.ts",
+                            "column": 38,
+                            "line": 10
+                          },
+                          "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nLocator: locator('h1')\nExpected string: \u001b[32m\"우리형 메르\"\u001b[39m\nReceived string: \u001b[31m\"404\"\u001b[39m\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\u001b[2m    9 × locator resolved to <h1 class=\"next-error-h1\">404</h1>\u001b[22m\n\u001b[2m      - unexpected value \"404\"\u001b[22m\n\n\n   8 |     \n   9 |     // 페이지가 제대로 로드되었는지 확인\n> 10 |     await expect(page.locator('h1')).toContainText('우리형 메르');\n     |                                      ^\n  11 |     \n  12 |     // 종목 필터 드롭다운 찾기\n  13 |     const stockFilter = page.locator('text=종목 선택').first();\n    at C:\\Users\\y\\meire-blog-platform\\tests\\stock-filter-test.spec.ts:10:38"
                         }
                       ],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-08-24T15:54:34.900Z",
+                      "startTime": "2025-08-25T00:00:00.535Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\stock-filter-test-종목-필터-테스트-종목-필터가-실제-종목들을-표시하는지-확인-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\stock-filter-test-종목-필터-테스트-종목-필터가-실제-종목들을-표시하는지-확인-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\y\\meire-blog-platform\\test-results\\stock-filter-test-종목-필터-테스트-종목-필터가-실제-종목들을-표시하는지-확인-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\y\\meire-blog-platform\\tests\\stock-filter-test.spec.ts",
+                        "column": 38,
+                        "line": 10
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
-              "id": "a754ab9026838e37e957-bc334e200899bf8bdca4",
-              "file": "individual-post-functionality-test.spec.ts",
+              "id": "b3b81385a564e9f4d50d-486a3198bb13d4b2b878",
+              "file": "stock-filter-test.spec.ts",
               "line": 4,
-              "column": 7
-            },
-            {
-              "title": "should display properly formatted post content",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
-                      "status": "passed",
-                      "duration": 5681,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "Post title: 이제는 SMR(소형 모듈 원자로)이 아닐수도 있다?\n"
-                        },
-                        {
-                          "text": "✅ Back navigation working properly\n"
-                        },
-                        {
-                          "text": "✅ Post formatting and navigation test passed\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-08-24T15:54:34.904Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "a754ab9026838e37e957-5f27308f425c0c0797d9",
-              "file": "individual-post-functionality-test.spec.ts",
-              "line": 74,
               "column": 7
             }
           ]
@@ -247,11 +224,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-08-24T15:54:33.790Z",
-    "duration": 13093.476999999999,
-    "expected": 2,
+    "startTime": "2025-08-24T23:59:57.611Z",
+    "duration": 14355.529999999999,
+    "expected": 0,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 1,
     "flaky": 0
   }
 }

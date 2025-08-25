@@ -20,19 +20,19 @@ export default function Footer() {
             <h4 className="font-medium mb-4">주요 카테고리</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/posts?category=경제/주식/국제정세/사회" 
+                <a href="/merry?category=경제/주식/국제정세/사회" 
                    className="text-muted-foreground hover:text-foreground transition-colors">
                   경제 & 투자
                 </a>
               </li>
               <li>
-                <a href="/posts?category=주절주절" 
+                <a href="/merry?category=주절주절" 
                    className="text-muted-foreground hover:text-foreground transition-colors">
                   주절주절
                 </a>
               </li>
               <li>
-                <a href="/posts?category=건강/의학/맛집/일상/기타" 
+                <a href="/merry?category=건강/의학/맛집/일상/기타" 
                    className="text-muted-foreground hover:text-foreground transition-colors">
                   일상 & 기타
                 </a>
