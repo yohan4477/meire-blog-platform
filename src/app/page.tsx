@@ -38,6 +38,7 @@ function trackSectionPerformance(sectionName: string, loadTime: number) {
 import MerryStockPicks from '@/components/merry/MerryStockPicks';
 import MerryProfileTab from '@/components/merry/MerryProfileTab';
 import { TodayMerryQuote } from '@/components/home/TodayMerryQuote';
+import { DailyEventPopup } from '@/components/home/DailyEventPopup';
 
 // 🎨 CSS 애니메이션 시스템 (종목 페이지 차트 애니메이션 방식)
 const animationStyles = `
@@ -259,6 +260,8 @@ export default function Home() {
         ) : null}
       </div>
 
+      {/* 🎉 일일 이벤트 팝업 */}
+      <DailyEventPopup />
     </div>
   );
 }
