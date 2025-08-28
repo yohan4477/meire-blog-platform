@@ -143,9 +143,13 @@ export const mockScionPortfolio: ScionPortfolio = {
 
 // Function to create mock data with current timestamp
 export function createMockScionData(): ScionPortfolio {
+  const lastMonth = new Date();
+  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  const reportDate = lastMonth.toISOString().split('T')[0] || lastMonth.toISOString().substring(0, 10);
+  
   return {
     ...mockScionPortfolio,
     lastUpdated: new Date().toISOString(),
-    reportDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0]
+    reportDate
   };
 }

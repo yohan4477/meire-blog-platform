@@ -21,7 +21,7 @@ export function createSuccessResponse<T>(
   const response: ApiResponse<T> = {
     success: true,
     data,
-    message,
+    message: message || '',
     meta: {
       ...meta,
       requestId: generateRequestId(),
@@ -47,16 +47,16 @@ export function createErrorResponse(
       message: error,
       statusCode,
       timestamp: new Date().toISOString(),
-      field
+      field: field || ''
     };
   } else if (error instanceof Error) {
     apiError = {
       code: code || 'INTERNAL_ERROR',
       message: error.message,
-      details: error.stack,
+      details: error.stack || '',
       statusCode,
       timestamp: new Date().toISOString(),
-      field
+      field: field || ''
     };
   } else {
     apiError = {

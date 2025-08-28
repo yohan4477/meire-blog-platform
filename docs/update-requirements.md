@@ -14,13 +14,13 @@
 - **데이터 소스**: Yahoo Finance API, Alpha Vantage API
 - **업데이트 주기**: 
   - **한국 주식**: 매일 3시 40분 (15:40 KST) - 한국 장 마감 후
-  - **미국 주식**: 매일 아침 7시 (07:00 KST) - 미국 장 마감 후 (현지시간 기준)
+  - **미국 주식**: 매일 아침 7시 (07:00 KST) - 미국 장 마감 후
 - **대상 테이블**: `stock_prices`, `stocks`
 
 #### 2. **📝 포스트 업데이트**
 - **목적**: 새로운 블로그 포스트 감지 및 관련 데이터 갱신
 - **데이터 소스**: 메르 블로그 RSS/웹 크롤링
-- **업데이트 주기**: 3시간 20분마다 (00:20, 03:20, 06:20, 09:20, 12:20, 15:20, 18:20, 21:20 KST)
+- **업데이트 주기**: 3시간 20분마다 (00:20, 03:20, 07:00, 09:20, 12:20, 15:40, 18:20, 21:20 KST)
 - **대상 테이블**: `blog_posts`, `stocks`, `post_stock_analysis`
 
 ---
@@ -45,8 +45,8 @@
 #### **종가 업데이트** (한국/미국 분리)
 ```bash
 # KST 기준 스케줄
-15:40 - 한국 주식 종가 수집 (KOSPI, KOSDAQ) - 한국 장 마감 후
-07:00 - 미국 주식 종가 수집 (NASDAQ, NYSE) - 미국 장 마감 후 (현지시간 기준)
+15:40 - 한국 주식 종가 수집 (KOSPI, KOSDAQ) - 3시 40분
+07:00 - 미국 주식 종가 수집 (NASDAQ, NYSE) - 아침 7시
 ```
 
 ### 🔧 **업데이트 방식 (CLAUDE.md 완전 준수)**
@@ -203,32 +203,62 @@ for (const post of newPosts) {
 
 ### **📝 2단계: 포스트 페이지 포맷 수정 요청 준비**
 
-#### **2.1 포스트 포맷 수정 시스템** (Claude 직접 수행 - **수동 트리거 방식**)
+#### **2.1 포스트 페이지 표시 포맷 시스템** (Claude 직접 수행 - **수동 트리거 방식**)
 ```javascript
-// 새 포스트에 대한 Claude 포맷 수정 요청 파일 생성
-async function prepareClaudePostFormatting(newPosts) {
+// 새 포스트에 대한 Claude 페이지 포맷 요청 파일 생성
+async function prepareClaudePostPageFormatting(newPosts) {
     const requestData = {
         timestamp: new Date().toISOString(),
-        type: 'post-formatting-required',
+        type: 'post-page-formatting-required',
         posts: newPosts.map(post => ({
             id: post.id,
             title: post.title,
+            content: post.content,
             url: `/merry/posts/${post.id}`,
             current_format: 'raw_content',
-            required_format: 'blog_display_format'
+            required_sections: [
+                'merry_comment',        // 메르님 한줄 코멘트 (기존)
+                'comment_explanation',  // 📝 코멘트 풀이 (신규)
+                'key_summary',         // 💡 핵심 한줄 요약 (신규)
+                'investment_insight'   // 🎯 투자 인사이트 (신규)
+            ]
         })),
-        instructions: 'Claude가 각 포스트 페이지에 접근하여 포맷을 수정하고 가독성을 개선'
+        instructions: `Claude가 각 포스트를 분석하여 4개 섹션을 생성:
+        1. 📝 코멘트 풀이: 핵심 용어/개념을 구체적으로 설명
+        2. 💡 핵심 한줄 요약: 코멘트의 핵심을 투자 포인트로 압축
+        3. 🎯 투자 인사이트: 장기적 투자 관점의 통찰 제공
+        4. DB 저장: blog_posts 테이블의 summary, investment_insight 필드 업데이트`
     };
     
-    await fs.writeFileSync('temp/claude-post-formatting-request.json', JSON.stringify(requestData, null, 2));
-    console.log('📝 Claude 포스트 포맷 수정 요청 파일 생성 완료');
+    await fs.writeFileSync('temp/claude-post-page-formatting-request.json', JSON.stringify(requestData, null, 2));
+    console.log('📝 Claude 포스트 페이지 포맷 요청 파일 생성 완료');
 }
 ```
 
-- **🎯 수정 방식**: **Claude가 포스트 페이지에 직접 접근하여 포맷 수정**
-- **⏰ 실행 시점**: 사용자가 "포스트 포맷 수정해줘" 요청 시 또는 Claude가 요청 파일 발견 시
-- **🔧 수정 범위**: 제목 형식, 문단 구분, 하이라이트, 가독성 개선
+- **🎯 수정 방식**: **Claude가 포스트를 분석하여 4개 주요 섹션 생성**
+  - **📝 코멘트 풀이**: 메르님 코멘트의 핵심 용어/개념을 구체적으로 해석
+  - **💡 핵심 한줄 요약**: 투자 포인트를 한 줄로 압축 정리
+  - **🎯 투자 인사이트**: 장기적 투자 관점의 통찰 제공
+- **⏰ 실행 시점**: 사용자가 "포스트 페이지 포맷 수정해줘" 요청 시 또는 Claude가 요청 파일 발견 시
+- **🔧 수정 범위**: `post-page-requirements.md` 명세에 따른 4개 섹션 구현
+- **💾 DB 저장**: `blog_posts.summary`, `blog_posts.investment_insight` 필드 업데이트
 - **✅ 완료 후**: 다음 단계(감정 분석)로 진행
+
+#### **2.2 포스트 페이지 Claude 분석 방법론** (Claude 직접 분석 - **CLAUDE.md 준수**)
+
+**📋 Claude 분석 프로세스** (자동화 금지, 수동 분석만):
+1. **🔍 핵심 용어 추출**: 메르님 코멘트에서 전문 용어/개념 식별
+2. **📖 본문 컨텍스트 매칭**: 해당 용어의 설명을 본문에서 찾기
+3. **🎯 연결 설명**: 왜 메르가 그렇게 코멘트했는지 논리적 연결
+4. **💡 투자 포인트 압축**: 기술적 핵심 + 투자적 가치를 한 문장으로 결합
+5. **🔮 투자 인사이트**: 장기적 관점의 투자 통찰 제공
+
+**🚫 절대 금지사항** (CLAUDE.md 완전 준수):
+- ❌ AI API 호출 (OpenAI, Anthropic API 등)
+- ❌ 키워드 매칭 알고리즘
+- ❌ 패턴 분석 자동화
+- ❌ 규칙 기반 텍스트 생성
+- ✅ **허용**: Claude가 포스트를 직접 읽고 수동 분석만
 
 ### **🧠 3단계: 감정 분석 요청 준비**
 

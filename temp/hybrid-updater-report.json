@@ -1,0 +1,491 @@
+{
+  "executionTime": "2025-08-27T06:19:21.005Z",
+  "summary": {
+    "rssPostsFound": 20,
+    "newPostsAdded": 0,
+    "postsNeedingAnalysis": 13,
+    "claudeAnalysisRequired": 13,
+    "errors": 0
+  },
+  "details": {
+    "postsNeedingAnalysis": [
+      {
+        "logNo": "223984718208",
+        "title": "트럼프,내각회의에서 연준장악 발언을(feat 미란, 연준이사 리사 쿡)",
+        "analysisRequest": {
+          "postId": "223984718208",
+          "title": "트럼프,내각회의에서 연준장악 발언을(feat 미란, 연준이사 리사 쿡)",
+          "content": "2025년 8월 26일, 트럼프는 연준이사인 리사 쿡에 대한 해임 통보문을 본인의 트루스 소셜에 공개했다. 통보문에서 트럼프는 \"미국 헌법 제2조와 개정된 1913년 연방준비제도법(연준법)에 따른 나의 권한에 의거해 귀하는 연방준비제도이사회 직위에서 해임되고 이는 즉시 효력이 발생한다. 연준법은 내가 재량으로, 사유가 있을 경우 귀하를 해임할 수 있도록 규정하고 있다\"고 주장했다. 리사 쿡 연준 이사는 즉각 반박 성명을 냈다. \"법률상 근거가 없고 그는 그런 권한이 없다\"라며, 연준 이사로 직무를 유지하겠다고 나왔다. 쿡 연준이사가 지위를 유지하면서, 재판을 진행할 가능성이 높아보이는 상황이다. 이렇게 생....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjdfMjIw/MDAxNzU2MjM2NTk4OTcx.9BVKD8dUvWPp3ZxwaWZ8we1YlKPMnhj8KeIgxXSCKMUg.FOnY6R5u6aofx4yBl9kl2JRQT1yVVDTgU8N5nDeGAZ8g.JPEG/58avyoct.jpg?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.954Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223982941308",
+        "title": "일본은행이 움직이기 시작하나? (feat 금리, 엔화)",
+        "analysisRequest": {
+          "postId": "223982941308",
+          "title": "일본은행이 움직이기 시작하나? (feat 금리, 엔화)",
+          "content": "정상회담을 따라서 갑자기 들어온 분들을 노잼으로 보내드릴 시간인듯. 일본은행에 변화가 보여서 정리해 봅니다. 7월30일 일본은행 정책회의가 개최됨. 2. 정책회의 이후 열린 기자회견에서, 일본은행의 우에다 총재는 다음과 같은 발언을 함. \"금리수준이 인플레이션 상황에 비해 뒤쳐져 있다고 보지 않는다. 현 시점에서 금리를 올리지 않아 발생할 위험은 특히 높아 보이지 않다\" 3. 파월은 쉬운 말을 어렵게 하는데, 우에다 총재는 말을 비비꼬아서 하는 경향이 있음. 4. 우에다 총재의 발언은 한마디로 \"금리 인상을 서두르지 않고 천천히 하겠다\"는 말임. 5. 일본은행의 금리인상 가능성이 한동안 보이지 않자 엔화는....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjdfMjMy/MDAxNzU2MjM0MDE2OTc0.ZwkbWi8YIdLa0y8sChG_D5NF-x_ld6-dEfFfyfHrTVwg.PADKkhec8MXg_Fz7GGiUh9f_xBLtkUBP0QpegbFHs5Ag.JPEG/7jqxeqdx.jpg?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.957Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223983215532",
+        "title": "(업데이트)트럼프, 대한민국에서 무슨 일이 일어나고 있는가?",
+        "analysisRequest": {
+          "postId": "223983215532",
+          "title": "(업데이트)트럼프, 대한민국에서 무슨 일이 일어나고 있는가?",
+          "content": "이거 무슨 일이지? 한국시간 2025년 8월 25일, 오후 10시 20분, 트럼프는 본인의 SNS 트루스 쇼셜에 글을 하나 올렸다. 한국에 대해서 언급한 내용인데, 내용이 험악하고 기괴하고 이해가 가지 않는다. 트럼프의 SNS를 해석하면 아래와 같다. 대한민국에서 무슨 일이 일어나고 있는가? 숙청이나 혁명이라도 일어난 것 같다. 우리는 그런 상황에서 그곳에서 사업을 할 수 없다. 오늘 백악관에서 한국 신임 대통령을 만날 예정이다. 이 문제에 관심을 가져줘서 감사한다. 잠시후면 한미정상회담이 시작된다. 한미정상회담을 몇시간 남겨두지 않고 남긴 이 이 말들은 어떤 의미일까? 트럼프가 남긴 수수께끼 같은 문장을 같이 풀어보자. 협상에서 기....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjVfMjUy/MDAxNzU2MTMxMDE5MDM2.iIvHcsp-D7Enq_4yHxChrzizS1YvgjsEkUkp3CHvplQg.gvuWbPBnk9e6fG4_GQZNTEzfWkNUP_sV1X1z84Fin4cg.JPEG/kun6ir64.jpg?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.962Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223982183908",
+        "title": "트럼프의 입, 캐롤라인 레빗 백악관 대변인은 누구?",
+        "analysisRequest": {
+          "postId": "223982183908",
+          "title": "트럼프의 입, 캐롤라인 레빗 백악관 대변인은 누구?",
+          "content": "백악관 대변인이 시선을 끌고 있어서 가볍게 정리해 봅니다. 보스턴에서 북쪽으로 34마일 거리에 있는 뉴햄프셔주의 애킨슨은 인구 7천명의 작은 소도시임. 2. 1997년 8월 24일, 캐롤라인 레빗이 넷째딸로 그곳에서 태어남. 3. 어머니는 집근처 가판대(ice cream stand)에서 아이스크림을 팔았고, 아버지는 자그마한 중고트럭 매장을 운영함. 4. 레빗은 어릴때부터 어머니의 아이스크림 가판대와 아버지의 중고트럭 매장에서 알바를 하면서, 사람을 응대하는 것을 익혔다고 함. 5, 대학은 뉴햄프셔 인근의 세인트 안셀름 칼리지를 나옴. 6. 안셀름 칼리지는 1889년에 베니딕트 수도회가 설립한 카톨릭 계열이고, 합격률 76% 수준으로 입학이 어렵....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjVfMTI4/MDAxNzU2MDc0MDg4NTY2.giVEUl_t3gI_Fvs6QaZIBv2ffuXsYSxtpmMNV85KCAgg.Bhjo0Vo35FZURGHNzTesj0DJwvPNq1gKsshxmWslgQkg.PNG/image.png?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.964Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223981242384",
+        "title": "어쩌면 AI 시대에는 문과가?",
+        "analysisRequest": {
+          "postId": "223981242384",
+          "title": "어쩌면 AI 시대에는 문과가?",
+          "content": "AI시대의 의대진학 A/S (feat 어떤 학.. : 네이버블로그 AI 시대의 필요 지식과 관련된 글을 올렸다. 댓글에서 질문을 하나 받았다. 통계학을 공부하는 학생이 데이터 사이언스와 통계학, 리스크 관리의 연결점을 궁금해했다. 리스크 관리 쪽은 과거보다 물리나 인문학 쪽 입사 비중이 높아지고, 분석보다 해석이 중요해지는 분위기라는 답변을 했다. 답변을 하고 나니, 분석과 해석이 어떤 차이가 있는지 궁금해할 수 있다는 생각이 들었다. 중세 유럽에서는 늪과 가까운 곳에서 질병이 많이 생기는 것을 보고, 늪에서 나오는 유독한 기체가 질병의 원인이 된다고 생각했다. © kylejglenn, 출처 Unsplash 역사상 최초의 화학적 원인론적 이론이....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjBfMjc5/MDAxNzU1Njg3MTg5ODgz.gtPUKP7uFoEZG2Wm1Lmm0wOMzfBjV0J4WTmmQl_jV9og.gdpbOOlwmeFGe-EQFYia0cms0GOeltxvu5XmodoXP6Eg.JPEG/9rk8clmp.jpg?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.967Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223980385638",
+        "title": "세상에서 가장 비싼 것과 위험한 것은?",
+        "analysisRequest": {
+          "postId": "223980385638",
+          "title": "세상에서 가장 비싼 것과 위험한 것은?",
+          "content": "주말에 하는 건강이야기입니다. 제 글이 늘 그렇듯이 여기저기 돌아갑니다. 실제로 거래되는 물질중에 가장 비싼것은 캘리포늄(Californium, Cf-252)임. 2. 캘리포늄은 자연에 존재하지 않고 100% 인공적으로 원자로에서 합성됨. 3. 플로토늄(Pu) 같은 무거운 원소에 중성자를 몇년간 쬐면, 플로토늄이 중성자를 흡수하면서 만들어지게 됨. 4. 판매가격은 1g에 27백만달러(360억원)정도임. 5. 미국 오크리지 국립연구소에서 주로 생산하는데, 4~5년을 돌려야 1g정도가 나오기때문에 비싼것임. 6. 캘리포늄의 가치는 작은 부피에서 강력한 중성자를 내는 것임. 7. 캘리포늄을 작은 캡술에 넣어서 지하 시추공으로 내려보내면, 강력한 방사능으로 시....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjNfMTU0/MDAxNzU1OTEwNzg0MzAw.NqLtrNzqmF_KSgPOrueV_Tyutn3c_R2f0eMh5ilprnQg.eaApqTz7HvLGAQPCv3lKODiAq0_vNzmowCholXFicfsg.JPEG/1506026.jpg?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.969Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223980110425",
+        "title": "파월의 잭슨홀미팅 발표 근황 (feat 파둘기, 평균금리목표제 폐지)",
+        "analysisRequest": {
+          "postId": "223980110425",
+          "title": "파월의 잭슨홀미팅 발표 근황 (feat 파둘기, 평균금리목표제 폐지)",
+          "content": "24년, 잭슨홀 미팅에서 파월은 두괄식이었다. 발표 앞부분에서 \"이제 정책을 전환할 때가 왔다\"라며, 9월에는 금리를 내리겠다는 말을 날리고 시작했다. 당시에 저 말이 나오면서 미국 증시가 오르기 시작했다. 파월이 확실한 비둘기성 발언을 시작부터 날리는 바람에, 금리를 내리는 것은 확정이고, 0.25%냐 0.5%를 가지고 예상이 오가는 상황이 되었다. 1년 전의 파월의 머릿속에는 인플레이션이 사라진듯하고, 고용만이 남아있었다. © zacdurant, 출처 Unsplash 1년이 지난 2025년 잭슨홀 미팅, 고용만 남아있는 것 같던 파월의 머릿속에 인플레이션이 추가되었다. 파월은 매와 비둘기가 반반인 매둘기에서, 머리와 몸통은 비둘기가....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjNfNDUg/MDAxNzU1ODc1MDM0MjY2.GHyEXe8Xu29KGjqJrJ2vQMPRCh6mAzlQNK9yrLqKiLog.bsfPLVXijrONpVL_nBa_ys47jdY3-TXGkK4pOsYq64cg.JPEG/cbvbqhnb.JPG?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.972Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223979290690",
+        "title": "리사 쿡 연준이사는 \"즉각 사퇴하라!\" (feat 트럼프)",
+        "analysisRequest": {
+          "postId": "223979290690",
+          "title": "리사 쿡 연준이사는 \"즉각 사퇴하라!\" (feat 트럼프)",
+          "content": "트럼프가 리사 쿡 연준이사에 대해서 즉각 사퇴를 요구했다. 사퇴이유는 주택담보대출 사기혐의다. 리사 쿡 이사는 2021년 6월 18일, 미시간주 주택을 구입하면서 실거주예정이라고 신고하고 20만달러(2.8억원)의 주담대를 받았다. 2021년 7월 2일, 조지아주의 또 다른 주택도 주거용으로 신고하고 54만달러(7.5억원) 주담대를 추가로 받았다. 2개의 주택을 구입하면서 본인이 실거주 하겠다고 서류를 작성했는데, 그중 하나인 조지아주 부동산을 1년뒤 임대로 내놨다는 혐의다. 미국의 경우(한국도 비슷하지만), 같은 주택이라고 하더라도, 주거목적으로 사면 저금리 혜택이 있고, 투자나 임대목적은 금리가 높다. 저금리를 노리고, 본인거주라....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjJfMTE5/MDAxNzU1ODI3NDU4MzQ0.ziSCLeD2xhgnLytdyTZo6gsXHPdlpLoPOcnJ5VDfr90g.xt0rk0_NGGKuHZ3FOWkyRBtQAk4IQvynYmyk0-BnBJMg.JPEG/hh1pqccx.jpg?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.975Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223975462723",
+        "title": "미장에 그날이 다가온다.",
+        "analysisRequest": {
+          "postId": "223975462723",
+          "title": "미장에 그날이 다가온다.",
+          "content": "유대인의 1년은 365일이 아니라 354일이다. 1년을 12개월로 나누는데, 29일짜리 달이 6개, 30일짜리 달이 6개로 354일이 되는 것이다. 실제 1년은 365일에 가까운데, 354일로 1년을 계산하다보니, 3년에 한번정도 윤달을 만들어 불일치를 해결해 왔다. 유대인의 달력 기준으로 2025년은 5785년이고, 아담이 창조된 날인 \"로쉬 하샤나\"부터 카운터가 시작되고 있다. 우리로 치면, 1월 1일이 \"로쉬 하샤나\"인것이다. 유대인들은 로쉬 하샤나에 사과와 할라빵에 꿀을 찍어 먹는다. 찍먹을 하고 난뒤, 강가에 가서 주머니에 든 것을 버린다. 1년간 지은 죄를 털어낸다는 \"타쉴리크\"라는 행사다. 미장을 제목에 언급하....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MTlfMjE1/MDAxNzU1NTY5MzMxODE3.hVR83vIqnnhUk8lbHW_HSBl7MuX3n_Gx39MYZBoCq0gg.TNNzHNEV-Lm5x3JkWqoiGiHF9AwZZADOshST3yXLCgMg.JPEG/1483008.jpg?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.979Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223976666607",
+        "title": "AI시대의 의대진학 A/S (feat 어떤 학과를 선택해야 할까?)",
+        "analysisRequest": {
+          "postId": "223976666607",
+          "title": "AI시대의 의대진학 A/S (feat 어떤 학과를 선택해야 할까?)",
+          "content": "AI시대의 의대 진학 (feat AI 확산으로 .. : 네이버 블로그 AI 시대의 의대 진학이라는 글을 쓴 적이 있다. 댓글에서 AI 시대에 어떤 학과에 가야 할지 문의하는 댓글들이 있었다. AI 관련 직무에서 돈을 벌기 위해서는 크게 3가지 학습이 필요하다고 생각한다. 1. 확률과 통계: 확률 분포, 통계적 추론, 가설 검증, 회귀 분석 등 2. 선형대수와 미적분: 벡터, 행렬, 연산, 다변수 미적분 등 3. 정보이론: 엔트로피, 정보량, 채널 용량 등 이 중에 가장 중요한 한 가지를 꼽는다면, 선형대수학이다. 선형대수학은 AI 개발자를 위한 필수 수학으로 벡터, 행렬 등이 모두 녹아있다. 정보이론의 채널용량은 통신 시스템에서 오류 없이 얼마나 많은 정....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjBfMTA5/MDAxNzU1NjQ4OTI2MzE3.4uwB0LnElxKG9SB-KPLh9CrIAYiJn2OWbJsqXd9pDcgg.peUtmYgi8sxSCB-ARNK1_RmmlZsJG6GTw8fqzYF8Nj4g.JPEG/5883689.jpg?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.981Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223974679610",
+        "title": "일본 종합상사 근황(feat 워렌 버핏 추매이후)",
+        "analysisRequest": {
+          "postId": "223974679610",
+          "title": "일본 종합상사 근황(feat 워렌 버핏 추매이후)",
+          "content": "워렌 버핏, 일본 종합상사 주식 비중을 늘렸다. : 네이버 블로그 2025년 2월 22일, 버크셔 헤더웨이의 주주서한이 발표되었고, 그 내용을 가지고 위 글을 썼다. 주주서한에 워렌 버핏은 일본 종합상사를 아래(나무색)와 같이 언급했다. © bluebox0508, 출처 미국 중심의 우리 투자에서 작지만 중요한 예외는 일본에서의 증가하는 투자입니다. 버크셔가 다섯 개의 일본 기업들의 주식을 매입하기 시작한 지 거의 6년이 되었습니다. 이 기업들은 버크셔와 다소 비슷한 방식으로 매우 성공적으로 운영되고 있습니다. 이 다섯 기업은 (알파벳 순으로) ITOCHU, Marubeni, Mitsubishi, Mitsui, Sumitomo입니다. 이 대기업들은 각각 수많은 사업들의 지....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MTlfMTM1/MDAxNzU1NTc2MTQwNzc0.Tg6HFHY5TKIpEV1kQQK6Pyn8KHe4E1CylGN3HUTbGv4g.IVtnR1x5ReESEphyr9mFHl1CJYXDJmESm8fmwRKHLUQg.PNG/image.png?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:20.997Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223974642398",
+        "title": "연준의 역레포 잔고가 드디어...",
+        "analysisRequest": {
+          "postId": "223974642398",
+          "title": "연준의 역레포 잔고가 드디어...",
+          "content": "한가지 생각할 숫자가 있어서, 정리해 봅니다. 좀 머리가 아픈글입니다. 1. 2025년 8월 15일 연준의 역레포잔고는 337억달러 남아있음. 2. 금액만 보면 많아보일수도 있음. 3. 하지만, 아래 그래프를 보면 감을 잡을 수 있을 것임. 4. 역레포(Reverse Repo,RRP)는 연준이 금융기관으로부터 돈을 빌리는 것을 말함. 5. 금융기관이 연준에 돈을 빌리는게 기본인데(Repo), 반대로 하니 역(Reverse)이라는 명칭이 붙은 것임. 6. 연준이 돈이 없어서 금융기관에게 돈을 빌리는 것이 아님. 7. 시장에 돈이 너무 많이 풀려있으면, 인플레이션이 발생할 수 있음. 8. 연준이 금융기관에 돈을 빌리면서 시장의 돈을 흡수하는 것임. 9. 역레포(RRP) 잔고가 늘....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MThfMTMw/MDAxNzU1NDU3Njk0NDMx.pRk-hcXuMqKcquhf1sdFzU1WcPv1N1s3R0LqWI2kBc8g.CVN93QlWioOqXPBpdFT-WoWKoPlWSCUCp1NPjzI_JfQg.PNG/image.png?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:21.002Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      },
+      {
+        "logNo": "223974720460",
+        "title": "블로그 이웃 27만명, 블로그 키우는 법등",
+        "analysisRequest": {
+          "postId": "223974720460",
+          "title": "블로그 이웃 27만명, 블로그 키우는 법등",
+          "content": "판다랭크라는 곳이 있다고 이웃이 알려줬다. 들어가보니, 판다랭크의 카테고리별 채널 순위에서 네이버 블로그 1위로 되어 있었다. 블로그 이웃수 27.8만명이라... 2022년 3월말, 블로그에 글을 처음 쓰기 시작했고, 0명이었던 이웃이 3년 5개월 동안 27만명이상으로 늘어났다. 현재도 이웃은 하루에 200~500명선으로 꾸준하게 늘어나고 있다. 월로 보면, 매달 8천명정도 이웃이 늘어나고 있다. 일간현황을 보면, 아직 저녁시간인데 24만명이 조회했고,만개의 공감, 7백여개의 댓글이 달리고 있다. 블로그를 키운다는 이야기들을 많이 한다. 3년반만에 블로그 이웃 27만명이 넘는 블로그가 되었으니, 블로그를 어느정도 잘 키운축에 속할 것이다....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MThfMTI1/MDAxNzU1NTEwOTMyOTI3.8CY3xmGoOihanGwq9g9E_9E-IkIWfGPjaOPThFj1CmQg.yehGz3_weQ3FCxVi0pS6TKGWoTKtMMhyHpDX0kMD5V8g.JPEG/jyv2j0x7.jpg?type=s3\" />",
+          "requestTime": "2025-08-27T06:19:21.004Z",
+          "analysisType": "manual_claude_analysis",
+          "instructions": [
+            "✅ Claude가 직접 포스트 내용을 읽고 분석",
+            "✅ mentioned_stocks: 언급된 종목 티커 식별",
+            "✅ investment_theme: 투자 주제/테마 식별",
+            "✅ sentiment_tone: 감정 톤 분석",
+            "❌ 자동화 키워드 매칭 사용 금지",
+            "❌ AI API 호출 금지",
+            "❌ 패턴 매칭 알고리즘 사용 금지"
+          ]
+        }
+      }
+    ],
+    "claudeAnalysisRequired": [
+      {
+        "postId": "223984718208",
+        "title": "트럼프,내각회의에서 연준장악 발언을(feat 미란, 연준이사 리사 쿡)",
+        "content": "2025년 8월 26일, 트럼프는 연준이사인 리사 쿡에 대한 해임 통보문을 본인의 트루스 소셜에 공개했다. 통보문에서 트럼프는 \"미국 헌법 제2조와 개정된 1913년 연방준비제도법(연준법)에 따른 나의 권한에 의거해 귀하는 연방준비제도이사회 직위에서 해임되고 이는 즉시 효력이 발생한다. 연준법은 내가 재량으로, 사유가 있을 경우 귀하를 해임할 수 있도록 규정하고 있다\"고 주장했다. 리사 쿡 연준 이사는 즉각 반박 성명을 냈다. \"법률상 근거가 없고 그는 그런 권한이 없다\"라며, 연준 이사로 직무를 유지하겠다고 나왔다. 쿡 연준이사가 지위를 유지하면서, 재판을 진행할 가능성이 높아보이는 상황이다. 이렇게 생....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjdfMjIw/MDAxNzU2MjM2NTk4OTcx.9BVKD8dUvWPp3ZxwaWZ8we1YlKPMnhj8KeIgxXSCKMUg.FOnY6R5u6aofx4yBl9kl2JRQT1yVVDTgU8N5nDeGAZ8g.JPEG/58avyoct.jpg?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.954Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223982941308",
+        "title": "일본은행이 움직이기 시작하나? (feat 금리, 엔화)",
+        "content": "정상회담을 따라서 갑자기 들어온 분들을 노잼으로 보내드릴 시간인듯. 일본은행에 변화가 보여서 정리해 봅니다. 7월30일 일본은행 정책회의가 개최됨. 2. 정책회의 이후 열린 기자회견에서, 일본은행의 우에다 총재는 다음과 같은 발언을 함. \"금리수준이 인플레이션 상황에 비해 뒤쳐져 있다고 보지 않는다. 현 시점에서 금리를 올리지 않아 발생할 위험은 특히 높아 보이지 않다\" 3. 파월은 쉬운 말을 어렵게 하는데, 우에다 총재는 말을 비비꼬아서 하는 경향이 있음. 4. 우에다 총재의 발언은 한마디로 \"금리 인상을 서두르지 않고 천천히 하겠다\"는 말임. 5. 일본은행의 금리인상 가능성이 한동안 보이지 않자 엔화는....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjdfMjMy/MDAxNzU2MjM0MDE2OTc0.ZwkbWi8YIdLa0y8sChG_D5NF-x_ld6-dEfFfyfHrTVwg.PADKkhec8MXg_Fz7GGiUh9f_xBLtkUBP0QpegbFHs5Ag.JPEG/7jqxeqdx.jpg?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.957Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223983215532",
+        "title": "(업데이트)트럼프, 대한민국에서 무슨 일이 일어나고 있는가?",
+        "content": "이거 무슨 일이지? 한국시간 2025년 8월 25일, 오후 10시 20분, 트럼프는 본인의 SNS 트루스 쇼셜에 글을 하나 올렸다. 한국에 대해서 언급한 내용인데, 내용이 험악하고 기괴하고 이해가 가지 않는다. 트럼프의 SNS를 해석하면 아래와 같다. 대한민국에서 무슨 일이 일어나고 있는가? 숙청이나 혁명이라도 일어난 것 같다. 우리는 그런 상황에서 그곳에서 사업을 할 수 없다. 오늘 백악관에서 한국 신임 대통령을 만날 예정이다. 이 문제에 관심을 가져줘서 감사한다. 잠시후면 한미정상회담이 시작된다. 한미정상회담을 몇시간 남겨두지 않고 남긴 이 이 말들은 어떤 의미일까? 트럼프가 남긴 수수께끼 같은 문장을 같이 풀어보자. 협상에서 기....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjVfMjUy/MDAxNzU2MTMxMDE5MDM2.iIvHcsp-D7Enq_4yHxChrzizS1YvgjsEkUkp3CHvplQg.gvuWbPBnk9e6fG4_GQZNTEzfWkNUP_sV1X1z84Fin4cg.JPEG/kun6ir64.jpg?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.962Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223982183908",
+        "title": "트럼프의 입, 캐롤라인 레빗 백악관 대변인은 누구?",
+        "content": "백악관 대변인이 시선을 끌고 있어서 가볍게 정리해 봅니다. 보스턴에서 북쪽으로 34마일 거리에 있는 뉴햄프셔주의 애킨슨은 인구 7천명의 작은 소도시임. 2. 1997년 8월 24일, 캐롤라인 레빗이 넷째딸로 그곳에서 태어남. 3. 어머니는 집근처 가판대(ice cream stand)에서 아이스크림을 팔았고, 아버지는 자그마한 중고트럭 매장을 운영함. 4. 레빗은 어릴때부터 어머니의 아이스크림 가판대와 아버지의 중고트럭 매장에서 알바를 하면서, 사람을 응대하는 것을 익혔다고 함. 5, 대학은 뉴햄프셔 인근의 세인트 안셀름 칼리지를 나옴. 6. 안셀름 칼리지는 1889년에 베니딕트 수도회가 설립한 카톨릭 계열이고, 합격률 76% 수준으로 입학이 어렵....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjVfMTI4/MDAxNzU2MDc0MDg4NTY2.giVEUl_t3gI_Fvs6QaZIBv2ffuXsYSxtpmMNV85KCAgg.Bhjo0Vo35FZURGHNzTesj0DJwvPNq1gKsshxmWslgQkg.PNG/image.png?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.964Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223981242384",
+        "title": "어쩌면 AI 시대에는 문과가?",
+        "content": "AI시대의 의대진학 A/S (feat 어떤 학.. : 네이버블로그 AI 시대의 필요 지식과 관련된 글을 올렸다. 댓글에서 질문을 하나 받았다. 통계학을 공부하는 학생이 데이터 사이언스와 통계학, 리스크 관리의 연결점을 궁금해했다. 리스크 관리 쪽은 과거보다 물리나 인문학 쪽 입사 비중이 높아지고, 분석보다 해석이 중요해지는 분위기라는 답변을 했다. 답변을 하고 나니, 분석과 해석이 어떤 차이가 있는지 궁금해할 수 있다는 생각이 들었다. 중세 유럽에서는 늪과 가까운 곳에서 질병이 많이 생기는 것을 보고, 늪에서 나오는 유독한 기체가 질병의 원인이 된다고 생각했다. © kylejglenn, 출처 Unsplash 역사상 최초의 화학적 원인론적 이론이....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjBfMjc5/MDAxNzU1Njg3MTg5ODgz.gtPUKP7uFoEZG2Wm1Lmm0wOMzfBjV0J4WTmmQl_jV9og.gdpbOOlwmeFGe-EQFYia0cms0GOeltxvu5XmodoXP6Eg.JPEG/9rk8clmp.jpg?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.967Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223980385638",
+        "title": "세상에서 가장 비싼 것과 위험한 것은?",
+        "content": "주말에 하는 건강이야기입니다. 제 글이 늘 그렇듯이 여기저기 돌아갑니다. 실제로 거래되는 물질중에 가장 비싼것은 캘리포늄(Californium, Cf-252)임. 2. 캘리포늄은 자연에 존재하지 않고 100% 인공적으로 원자로에서 합성됨. 3. 플로토늄(Pu) 같은 무거운 원소에 중성자를 몇년간 쬐면, 플로토늄이 중성자를 흡수하면서 만들어지게 됨. 4. 판매가격은 1g에 27백만달러(360억원)정도임. 5. 미국 오크리지 국립연구소에서 주로 생산하는데, 4~5년을 돌려야 1g정도가 나오기때문에 비싼것임. 6. 캘리포늄의 가치는 작은 부피에서 강력한 중성자를 내는 것임. 7. 캘리포늄을 작은 캡술에 넣어서 지하 시추공으로 내려보내면, 강력한 방사능으로 시....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjNfMTU0/MDAxNzU1OTEwNzg0MzAw.NqLtrNzqmF_KSgPOrueV_Tyutn3c_R2f0eMh5ilprnQg.eaApqTz7HvLGAQPCv3lKODiAq0_vNzmowCholXFicfsg.JPEG/1506026.jpg?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.969Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223980110425",
+        "title": "파월의 잭슨홀미팅 발표 근황 (feat 파둘기, 평균금리목표제 폐지)",
+        "content": "24년, 잭슨홀 미팅에서 파월은 두괄식이었다. 발표 앞부분에서 \"이제 정책을 전환할 때가 왔다\"라며, 9월에는 금리를 내리겠다는 말을 날리고 시작했다. 당시에 저 말이 나오면서 미국 증시가 오르기 시작했다. 파월이 확실한 비둘기성 발언을 시작부터 날리는 바람에, 금리를 내리는 것은 확정이고, 0.25%냐 0.5%를 가지고 예상이 오가는 상황이 되었다. 1년 전의 파월의 머릿속에는 인플레이션이 사라진듯하고, 고용만이 남아있었다. © zacdurant, 출처 Unsplash 1년이 지난 2025년 잭슨홀 미팅, 고용만 남아있는 것 같던 파월의 머릿속에 인플레이션이 추가되었다. 파월은 매와 비둘기가 반반인 매둘기에서, 머리와 몸통은 비둘기가....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjNfNDUg/MDAxNzU1ODc1MDM0MjY2.GHyEXe8Xu29KGjqJrJ2vQMPRCh6mAzlQNK9yrLqKiLog.bsfPLVXijrONpVL_nBa_ys47jdY3-TXGkK4pOsYq64cg.JPEG/cbvbqhnb.JPG?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.972Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223979290690",
+        "title": "리사 쿡 연준이사는 \"즉각 사퇴하라!\" (feat 트럼프)",
+        "content": "트럼프가 리사 쿡 연준이사에 대해서 즉각 사퇴를 요구했다. 사퇴이유는 주택담보대출 사기혐의다. 리사 쿡 이사는 2021년 6월 18일, 미시간주 주택을 구입하면서 실거주예정이라고 신고하고 20만달러(2.8억원)의 주담대를 받았다. 2021년 7월 2일, 조지아주의 또 다른 주택도 주거용으로 신고하고 54만달러(7.5억원) 주담대를 추가로 받았다. 2개의 주택을 구입하면서 본인이 실거주 하겠다고 서류를 작성했는데, 그중 하나인 조지아주 부동산을 1년뒤 임대로 내놨다는 혐의다. 미국의 경우(한국도 비슷하지만), 같은 주택이라고 하더라도, 주거목적으로 사면 저금리 혜택이 있고, 투자나 임대목적은 금리가 높다. 저금리를 노리고, 본인거주라....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjJfMTE5/MDAxNzU1ODI3NDU4MzQ0.ziSCLeD2xhgnLytdyTZo6gsXHPdlpLoPOcnJ5VDfr90g.xt0rk0_NGGKuHZ3FOWkyRBtQAk4IQvynYmyk0-BnBJMg.JPEG/hh1pqccx.jpg?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.975Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223975462723",
+        "title": "미장에 그날이 다가온다.",
+        "content": "유대인의 1년은 365일이 아니라 354일이다. 1년을 12개월로 나누는데, 29일짜리 달이 6개, 30일짜리 달이 6개로 354일이 되는 것이다. 실제 1년은 365일에 가까운데, 354일로 1년을 계산하다보니, 3년에 한번정도 윤달을 만들어 불일치를 해결해 왔다. 유대인의 달력 기준으로 2025년은 5785년이고, 아담이 창조된 날인 \"로쉬 하샤나\"부터 카운터가 시작되고 있다. 우리로 치면, 1월 1일이 \"로쉬 하샤나\"인것이다. 유대인들은 로쉬 하샤나에 사과와 할라빵에 꿀을 찍어 먹는다. 찍먹을 하고 난뒤, 강가에 가서 주머니에 든 것을 버린다. 1년간 지은 죄를 털어낸다는 \"타쉴리크\"라는 행사다. 미장을 제목에 언급하....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MTlfMjE1/MDAxNzU1NTY5MzMxODE3.hVR83vIqnnhUk8lbHW_HSBl7MuX3n_Gx39MYZBoCq0gg.TNNzHNEV-Lm5x3JkWqoiGiHF9AwZZADOshST3yXLCgMg.JPEG/1483008.jpg?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.979Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223976666607",
+        "title": "AI시대의 의대진학 A/S (feat 어떤 학과를 선택해야 할까?)",
+        "content": "AI시대의 의대 진학 (feat AI 확산으로 .. : 네이버 블로그 AI 시대의 의대 진학이라는 글을 쓴 적이 있다. 댓글에서 AI 시대에 어떤 학과에 가야 할지 문의하는 댓글들이 있었다. AI 관련 직무에서 돈을 벌기 위해서는 크게 3가지 학습이 필요하다고 생각한다. 1. 확률과 통계: 확률 분포, 통계적 추론, 가설 검증, 회귀 분석 등 2. 선형대수와 미적분: 벡터, 행렬, 연산, 다변수 미적분 등 3. 정보이론: 엔트로피, 정보량, 채널 용량 등 이 중에 가장 중요한 한 가지를 꼽는다면, 선형대수학이다. 선형대수학은 AI 개발자를 위한 필수 수학으로 벡터, 행렬 등이 모두 녹아있다. 정보이론의 채널용량은 통신 시스템에서 오류 없이 얼마나 많은 정....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MjBfMTA5/MDAxNzU1NjQ4OTI2MzE3.4uwB0LnElxKG9SB-KPLh9CrIAYiJn2OWbJsqXd9pDcgg.peUtmYgi8sxSCB-ARNK1_RmmlZsJG6GTw8fqzYF8Nj4g.JPEG/5883689.jpg?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.981Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223974679610",
+        "title": "일본 종합상사 근황(feat 워렌 버핏 추매이후)",
+        "content": "워렌 버핏, 일본 종합상사 주식 비중을 늘렸다. : 네이버 블로그 2025년 2월 22일, 버크셔 헤더웨이의 주주서한이 발표되었고, 그 내용을 가지고 위 글을 썼다. 주주서한에 워렌 버핏은 일본 종합상사를 아래(나무색)와 같이 언급했다. © bluebox0508, 출처 미국 중심의 우리 투자에서 작지만 중요한 예외는 일본에서의 증가하는 투자입니다. 버크셔가 다섯 개의 일본 기업들의 주식을 매입하기 시작한 지 거의 6년이 되었습니다. 이 기업들은 버크셔와 다소 비슷한 방식으로 매우 성공적으로 운영되고 있습니다. 이 다섯 기업은 (알파벳 순으로) ITOCHU, Marubeni, Mitsubishi, Mitsui, Sumitomo입니다. 이 대기업들은 각각 수많은 사업들의 지....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MTlfMTM1/MDAxNzU1NTc2MTQwNzc0.Tg6HFHY5TKIpEV1kQQK6Pyn8KHe4E1CylGN3HUTbGv4g.IVtnR1x5ReESEphyr9mFHl1CJYXDJmESm8fmwRKHLUQg.PNG/image.png?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:20.997Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223974642398",
+        "title": "연준의 역레포 잔고가 드디어...",
+        "content": "한가지 생각할 숫자가 있어서, 정리해 봅니다. 좀 머리가 아픈글입니다. 1. 2025년 8월 15일 연준의 역레포잔고는 337억달러 남아있음. 2. 금액만 보면 많아보일수도 있음. 3. 하지만, 아래 그래프를 보면 감을 잡을 수 있을 것임. 4. 역레포(Reverse Repo,RRP)는 연준이 금융기관으로부터 돈을 빌리는 것을 말함. 5. 금융기관이 연준에 돈을 빌리는게 기본인데(Repo), 반대로 하니 역(Reverse)이라는 명칭이 붙은 것임. 6. 연준이 돈이 없어서 금융기관에게 돈을 빌리는 것이 아님. 7. 시장에 돈이 너무 많이 풀려있으면, 인플레이션이 발생할 수 있음. 8. 연준이 금융기관에 돈을 빌리면서 시장의 돈을 흡수하는 것임. 9. 역레포(RRP) 잔고가 늘....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MThfMTMw/MDAxNzU1NDU3Njk0NDMx.pRk-hcXuMqKcquhf1sdFzU1WcPv1N1s3R0LqWI2kBc8g.CVN93QlWioOqXPBpdFT-WoWKoPlWSCUCp1NPjzI_JfQg.PNG/image.png?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:21.002Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      },
+      {
+        "postId": "223974720460",
+        "title": "블로그 이웃 27만명, 블로그 키우는 법등",
+        "content": "판다랭크라는 곳이 있다고 이웃이 알려줬다. 들어가보니, 판다랭크의 카테고리별 채널 순위에서 네이버 블로그 1위로 되어 있었다. 블로그 이웃수 27.8만명이라... 2022년 3월말, 블로그에 글을 처음 쓰기 시작했고, 0명이었던 이웃이 3년 5개월 동안 27만명이상으로 늘어났다. 현재도 이웃은 하루에 200~500명선으로 꾸준하게 늘어나고 있다. 월로 보면, 매달 8천명정도 이웃이 늘어나고 있다. 일간현황을 보면, 아직 저녁시간인데 24만명이 조회했고,만개의 공감, 7백여개의 댓글이 달리고 있다. 블로그를 키운다는 이야기들을 많이 한다. 3년반만에 블로그 이웃 27만명이 넘는 블로그가 되었으니, 블로그를 어느정도 잘 키운축에 속할 것이다....... <img src=\"https://blogthumb.pstatic.net/MjAyNTA4MThfMTI1/MDAxNzU1NTEwOTMyOTI3.8CY3xmGoOihanGwq9g9E_9E-IkIWfGPjaOPThFj1CmQg.yehGz3_weQ3FCxVi0pS6TKGWoTKtMMhyHpDX0kMD5V8g.JPEG/jyv2j0x7.jpg?type=s3\" />",
+        "requestTime": "2025-08-27T06:19:21.004Z",
+        "analysisType": "manual_claude_analysis",
+        "instructions": [
+          "✅ Claude가 직접 포스트 내용을 읽고 분석",
+          "✅ mentioned_stocks: 언급된 종목 티커 식별",
+          "✅ investment_theme: 투자 주제/테마 식별",
+          "✅ sentiment_tone: 감정 톤 분석",
+          "❌ 자동화 키워드 매칭 사용 금지",
+          "❌ AI API 호출 금지",
+          "❌ 패턴 매칭 알고리즘 사용 금지"
+        ]
+      }
+    ],
+    "errors": []
+  },
+  "nextSteps": [
+    "🤖 Claude가 temp/claude-analysis-request.json 파일 확인",
+    "✅ Claude가 각 포스트를 직접 읽고 수동으로 분석",
+    "📝 mentioned_stocks, investment_theme, sentiment_tone 수동 입력",
+    "🔄 updatePostWithClaudeAnalysis() 메서드로 결과 반영"
+  ]
+}

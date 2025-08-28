@@ -42,7 +42,7 @@ test.afterEach(async ({ page }) => {
         console.log('✅ 테스트 페이지 정리 완료');
       }
     } catch (error) {
-      console.log('⚠️ 페이지 정리 중 오류:', error.message);
+      console.log('⚠️ 페이지 정리 중 오류:', error instanceof Error ? error.message : 'Unknown error');
     }
   }
   
@@ -59,7 +59,7 @@ test.afterEach(async ({ page }) => {
       }
     }
   } catch (error) {
-    console.log('⚠️ 컨텍스트 페이지 정리 중 오류:', error.message);
+    console.log('⚠️ 컨텍스트 페이지 정리 중 오류:', error instanceof Error ? error.message : 'Unknown error');
   }
   
   // 배열 초기화
@@ -79,7 +79,7 @@ test.afterAll(async () => {
         console.log('✅ 브라우저 인스턴스 정리 완료');
       }
     } catch (error) {
-      console.log('⚠️ 브라우저 정리 중 오류:', error.message);
+      console.log('⚠️ 브라우저 정리 중 오류:', error instanceof Error ? error.message : 'Unknown error');
     }
   }
   

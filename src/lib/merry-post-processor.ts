@@ -32,7 +32,6 @@ export interface MerryBlogPost {
 }
 
 export interface StockMention {
-  postId: number;
   logNo: string;
   title: string;
   date: number;
@@ -118,25 +117,31 @@ export class MerryPostProcessor {
     return allMentions;
   }
 
-  private groupMentionsByPost(mentions: StockMention[]): Map<number, StockMention[]> {
-    const grouped = new Map<number, StockMention[]>();
+  private groupMentionsByPost(mentions: StockMention[]): Map<string, StockMention[]> {
+    const grouped = new Map<string, StockMention[]>();
     
     mentions.forEach(mention => {
-      const postId = mention.postId;
-      if (!grouped.has(postId)) {
-        grouped.set(postId, []);
+      const logNo = mention.logNo;
+      if (!grouped.has(logNo)) {
+        grouped.set(logNo, []);
       }
-      grouped.get(postId)!.push(mention);
+      grouped.get(logNo)!.push(mention);
     });
     
     return grouped;
   }
 
-  private async createBlogPosts(groupedPosts: Map<number, StockMention[]>): Promise<MerryBlogPost[]> {
+  private async createBlogPosts(groupedPosts: Map<string, StockMention[]>): Promise<MerryBlogPost[]> {
     const blogPosts: MerryBlogPost[] = [];
     
-    for (const [postId, mentions] of groupedPosts) {
+    for (const [logNo, mentions] of groupedPosts) {
       const primaryMention = mentions[0]; // 첫 번째 언급을 기본으로 사용
+      
+      if (!primaryMention) {
+        console.warn(`No mentions found for post ${logNo}, skipping`);
+        continue;
+      }
+      
       const relatedTickers = [...new Set(mentions.map((m: any) => m.stockTicker))];
       
       // 포스트 내용 생성 (context를 확장하여 완전한 글로 변환)
@@ -146,8 +151,8 @@ export class MerryPostProcessor {
       const tags = this.generateTags(primaryMention, mentions);
       
       const blogPost: MerryBlogPost = {
-        id: postId,
-        slug: this.generateSlug(primaryMention.title, postId),
+        id: parseInt(logNo, 10),
+        slug: this.generateSlug(primaryMention.title, logNo),
         title: primaryMention.title,
         content,
         excerpt,
@@ -208,14 +213,14 @@ export class MerryPostProcessor {
     });
   }
 
-  private generateSlug(title: string, postId: number): string {
+  private generateSlug(title: string, logNo: string): string {
     const cleanTitle = title
       .toLowerCase()
       .replace(/[^\w\s가-힣]/g, '')
       .replace(/\s+/g, '-')
       .substring(0, 50);
     
-    return `${cleanTitle}-${postId}`;
+    return `${cleanTitle}-${logNo}`;
   }
 
   private generateFullContent(primaryMention: StockMention, allMentions: StockMention[]): string {
@@ -223,17 +228,17 @@ export class MerryPostProcessor {
     const stockNames = stockTickers.map(ticker => this.stockMap.get(ticker)).filter(Boolean);
     
     // 주요 포스트들에 메르님 한 줄 요약 추가
-    const summaryMap: { [key: number]: string } = {
-      6: "국민연금의 미국 주식 포트폴리오 변화에서 테슬라, 넷플릭스, 아마존 비중 확대와 엔비디아 축소가 주목할 포인트입니다.",
-      11: "삼성전자의 애플 칩 수주와 테슬라 AI6 칩 23조원 공급 계약은 2나노 기술력 확보의 결실이며, 트럼프 반도체 관세 부과에도 불구하고 긍정적 신호입니다.",
-      16: "팔란티어는 트럼프 정부효율부(DOGE)와의 협력으로 정부 부문에서의 성장 기회를 확보했으며, 국방부를 첫 타깃으로 하는 AI 혁신이 기대됩니다.",
-      28: "트럼프 2기 행정부의 관세 협상에서 삼성전자 테일러팹과 테슬라 칩 수주 등 한국 기업의 미국 투자 확대가 협상 카드로 활용될 전망입니다.",
-      30: "일론 머스크가 핵융합 발전에 대한 관심을 보이며, 새로운 에너지 혁명의 가능성과 테슬라의 에너지 사업 확장에 대한 기대감이 높아지고 있습니다.",
-      33: "삼성전자의 평택캠퍼스와 텍사스 공장 확장, 테슬라 수주 등은 글로벌 반도체 공급망에서의 입지 강화를 위한 전략적 투자로 평가됩니다."
+    const summaryMap: { [key: string]: string } = {
+      "6": "국민연금의 미국 주식 포트폴리오 변화에서 테슬라, 넷플릭스, 아마존 비중 확대와 엔비디아 축소가 주목할 포인트입니다.",
+      "11": "삼성전자의 애플 칩 수주와 테슬라 AI6 칩 23조원 공급 계약은 2나노 기술력 확보의 결실이며, 트럼프 반도체 관세 부과에도 불구하고 긍정적 신호입니다.",
+      "16": "팔란티어는 트럼프 정부효율부(DOGE)와의 협력으로 정부 부문에서의 성장 기회를 확보했으며, 국방부를 첫 타깃으로 하는 AI 혁신이 기대됩니다.",
+      "28": "트럼프 2기 행정부의 관세 협상에서 삼성전자 테일러팹과 테슬라 칩 수주 등 한국 기업의 미국 투자 확대가 협상 카드로 활용될 전망입니다.",
+      "30": "일론 머스크가 핵융합 발전에 대한 관심을 보이며, 새로운 에너지 혁명의 가능성과 테슬라의 에너지 사업 확장에 대한 기대감이 높아지고 있습니다.",
+      "33": "삼성전자의 평택캠퍼스와 텍사스 공장 확장, 테슬라 수주 등은 글로벌 반도체 공급망에서의 입지 강화를 위한 전략적 투자로 평가됩니다."
     };
     
-    const summarySection = summaryMap[primaryMention.postId] ? 
-      `📝 **메르님 한 줄 요약**: ${summaryMap[primaryMention.postId]}
+    const summarySection = summaryMap[primaryMention.logNo] ? 
+      `📝 **메르님 한 줄 요약**: ${summaryMap[primaryMention.logNo]}
 
 ---
 

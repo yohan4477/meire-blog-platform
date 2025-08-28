@@ -327,7 +327,7 @@ export default memo(function StockPriceChart({
         console.log(`🎯 마커 활성화 완료:`, {
           totalPoints: enrichedData.length,
           markersWithData: markersWithData.length,
-          markerDates: markersWithData.map(p => p.date),
+          markerDates: markersWithData.map((p: any) => p.date),
           showMarkers: true
         });
         
@@ -573,10 +573,12 @@ export default memo(function StockPriceChart({
     const startIndex = Math.max(0, centerIndex - Math.floor(newRange / 2));
     const endIndex = Math.min(totalDays - 1, startIndex + newRange);
     
-    setZoomDomain({
-      start: filteredData[startIndex].date,
-      end: filteredData[endIndex].date
-    });
+    if (filteredData[startIndex] && filteredData[endIndex]) {
+      setZoomDomain({
+        start: filteredData[startIndex].date,
+        end: filteredData[endIndex].date
+      });
+    }
   }, [filteredData, zoomDomain]);
 
   const handleZoomOut = useCallback(() => {
@@ -602,10 +604,12 @@ export default memo(function StockPriceChart({
     const startIndex = Math.max(0, centerIndex - Math.floor(newRange / 2));
     const endIndex = Math.min(totalDays - 1, startIndex + newRange);
     
-    setZoomDomain({
-      start: filteredData[startIndex].date,
-      end: filteredData[endIndex].date
-    });
+    if (filteredData[startIndex] && filteredData[endIndex]) {
+      setZoomDomain({
+        start: filteredData[startIndex].date,
+        end: filteredData[endIndex].date
+      });
+    }
   }, [filteredData, zoomDomain]);
 
   const handleZoomReset = useCallback(() => {
@@ -613,8 +617,8 @@ export default memo(function StockPriceChart({
   }, []);
   
   // 두 점 간의 거리 계산 함수
-  const getDistance = (touches: TouchList) => {
-    if (touches.length < 2) return 0;
+  const getDistance = (touches: React.TouchList) => {
+    if (touches.length < 2 || !touches[0] || !touches[1]) return 0;
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx * dx + dy * dy);
@@ -640,6 +644,7 @@ export default memo(function StockPriceChart({
     if (e.touches.length === 1) {
       // 단일 터치 - 부드러운 스크롤을 위한 터치 상태 설정
       const touch = e.touches[0];
+      if (!touch) return;
       setTouchState({
         startX: touch.clientX,
         startY: touch.clientY,
@@ -691,6 +696,7 @@ export default memo(function StockPriceChart({
     } else if (e.touches.length === 1 && touchState.isTouch) {
       // 단일 터치 이동 - 차트 영역 선택 방지하고 자연스러운 스크롤 허용
       const touch = e.touches[0];
+      if (!touch) return;
       const deltaX = Math.abs(touch.clientX - (touchState.startX || 0));
       const deltaY = Math.abs(touch.clientY - (touchState.startY || 0));
       
@@ -909,14 +915,9 @@ export default memo(function StockPriceChart({
               <LineChart 
                 data={filteredData}
                 margin={{ top: 5, right: 40, left: 5, bottom: 5 }}
-                legend={false}
                 layout="horizontal"
                 className="recharts-no-legend"
                 syncId="stockChart"
-                onClick={undefined}
-                onMouseDown={undefined}
-                onMouseMove={undefined}
-                onMouseUp={undefined}
               >
               {/* 최소한의 그리드 (토스 스타일 - 다크모드 대응) */}
               <CartesianGrid 
@@ -1073,13 +1074,13 @@ export default memo(function StockPriceChart({
                 dot={(props: any) => {
                   // 🔥 마커가 있는 점에만 dot 표시
                   const point = filteredData[props.index];
-                  if (!point || !showMarkers) return null;
+                  if (!point || !showMarkers) return <g />;
                   
-                  const hasMerryMention = point.hasMention;
+                  const hasMerryMention = (point as any)?.hasMention;
                   const hasSentiments = point.sentiments && point.sentiments.length > 0;
                   
                   if (!hasMerryMention && !hasSentiments) {
-                    return null; // 마커 없음
+                    return <g />; // 마커 없음
                   }
                   
                   // 색상 결정 (감정 분석 우선, 없으면 파란색)

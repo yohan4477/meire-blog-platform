@@ -12,6 +12,7 @@ import {
   FileText, MessageSquare, Heart, Share2
 } from 'lucide-react';
 import Link from 'next/link';
+import { extractContentParts, formatForDisplay } from '@/lib/text-utils-safe';
 
 interface PostAnalysis {
   summary?: string;          // 핵심 한줄 요약
@@ -101,38 +102,12 @@ export default function MerryPostPage() {
   };
 
   const formatContent = (content: string) => {
-    if (!content) return '';
-    
-    return content
-      .replace(/\\n/g, '\n')
-      .replace(/\n/g, '<br/>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm">$1</code>');
+    return formatForDisplay(content);
   };
 
   const extractSummaryAndContent = (content: string) => {
-    let summary = '';
-    let mainContent = content;
-    
-    // 메르님 한 줄 요약 추출
-    const summaryMatch = content.match(/📝\s*\*\*메르님 한 줄 요약\*\*:\s*(.*?)(?=\n\n|$)/s);
-    if (summaryMatch) {
-      summary = summaryMatch[1].trim();
-      mainContent = content.replace(/📝\s*\*\*메르님 한 줄 요약\*\*:.*?(?=\n\n|$)/s, '').trim();
-    }
-    
-    // 한줄 코멘트 추출
-    const commentMatch = content.match(/한줄\s*코멘트\s*\n+(.+)$/s);
-    if (commentMatch && !summary) {
-      summary = commentMatch[1].trim();
-      mainContent = content.replace(/\n+한줄\s*코멘트\s*\n+.+$/s, '').trim();
-    }
-    
-    // 시작 부분 정리
-    mainContent = mainContent.replace(/^---\s*\n+/, '').trim();
-    
-    return { summary, content: mainContent };
+    const result = extractContentParts(content);
+    return { summary: result.summary, content: result.mainContent };
   };
 
   if (loading) {

@@ -79,7 +79,7 @@ export default function MerryStocksPage() {
   };
   
   const getSubSectors = (majorSector: string) => {
-    return majorSector === 'all' ? [] : sectorCategories[majorSector] || [];
+    return majorSector === 'all' ? [] : (sectorCategories as any)[majorSector] || [];
   };
 
   // ✅ FIXED 간단한 useEffect - 첫 페이지 로드
@@ -237,13 +237,13 @@ export default function MerryStocksPage() {
     
     let matchesRegion = true;
     if (regionFilter !== 'all') {
-      const regionMarkets = regionCategories[regionFilter] || [];
+      const regionMarkets = (regionCategories as any)[regionFilter] || [];
       matchesRegion = regionMarkets.includes(stock.market || 'NASDAQ');
     }
     
     let matchesMajorSector = true;
     if (majorSectorFilter !== 'all') {
-      const majorSectorList = sectorCategories[majorSectorFilter] || [];
+      const majorSectorList = (sectorCategories as any)[majorSectorFilter] || [];
       matchesMajorSector = majorSectorList.includes(stock.sector || '');
     }
     
@@ -264,13 +264,13 @@ export default function MerryStocksPage() {
     
     let matchesRegion = true;
     if (regionFilter !== 'all') {
-      const regionMarkets = regionCategories[regionFilter] || [];
+      const regionMarkets = (regionCategories as any)[regionFilter] || [];
       matchesRegion = regionMarkets.includes(stock.market || 'NASDAQ');
     }
     
     let matchesMajorSector = true;
     if (majorSectorFilter !== 'all') {
-      const majorSectorList = sectorCategories[majorSectorFilter] || [];
+      const majorSectorList = (sectorCategories as any)[majorSectorFilter] || [];
       matchesMajorSector = majorSectorList.includes(stock.sector || '');
     }
     
@@ -381,7 +381,7 @@ export default function MerryStocksPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체 세부분류</SelectItem>
-                  {getSubSectors(majorSectorFilter).map(subSector => (
+                  {getSubSectors(majorSectorFilter).map((subSector: string) => (
                     <SelectItem key={subSector} value={subSector}>{subSector}</SelectItem>
                   ))}
                 </SelectContent>

@@ -28,7 +28,7 @@ interface StockPrice {
 }
 
 interface PostMention {
-  post_id: number;
+  log_no: number;
   ticker: string;
   mention_sentiment: 'positive' | 'negative' | 'neutral';
   mention_context?: string;
@@ -163,12 +163,12 @@ export class StockMentionDB {
   // 메르 글-종목 언급 기록
   recordPostMention(mention: PostMention): void {
     const stmt = this.db.prepare(`
-      INSERT INTO merry_post_stock_mentions (post_id, ticker, mention_sentiment, mention_context)
+      INSERT INTO merry_post_stock_mentions (log_no, ticker, mention_sentiment, mention_context)
       VALUES (?, ?, ?, ?)
     `);
 
     stmt.run(
-      mention.post_id,
+      mention.log_no,
       mention.ticker,
       mention.mention_sentiment,
       mention.mention_context || null

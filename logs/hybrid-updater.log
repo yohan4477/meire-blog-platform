@@ -1,0 +1,125 @@
+[2025-08-27T06:19:10.615Z] INFO: 🚀 하이브리드 블로그 업데이트 시작
+[2025-08-27T06:19:10.621Z] INFO: 실행 시간: 2025-08-27T06:19:10.621Z
+[2025-08-27T06:19:10.622Z] INFO: 데이터베이스 연결 성공
+[2025-08-27T06:19:10.623Z] INFO: RSS 피드 가져오기 시작
+[2025-08-27T06:19:10.787Z] INFO: RSS에서 20개 포스트 발견
+[2025-08-27T06:19:10.809Z] INFO: ✅ 새 포스트 추가: 트럼프,내각회의에서 연준장악 발언을(feat 미란, 연준이사 리사 쿡)
+[2025-08-27T06:19:10.809Z] INFO: Claude 수동 분석 필요: "트럼프,내각회의에서 연준장악 발언을(feat 미란, 연준이사 리사 쿡)"
+[2025-08-27T06:19:10.810Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.831Z] INFO: ✅ 새 포스트 추가: 일본은행이 움직이기 시작하나? (feat 금리, 엔화)
+[2025-08-27T06:19:10.832Z] INFO: Claude 수동 분석 필요: "일본은행이 움직이기 시작하나? (feat 금리, 엔화)"
+[2025-08-27T06:19:10.833Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.834Z] INFO: ⏭️ 기존 포스트: 회담후 다른 자리에서 트럼프가 한 발언 및 보잉기 구매
+[2025-08-27T06:19:10.835Z] INFO: ⏭️ 기존 포스트: 한미 정상회담 양국 정상의 주요 발언 간단 정리(회담후 발언추가)
+[2025-08-27T06:19:10.835Z] INFO: ⏭️ 기존 포스트: (업데이트)트럼프, 대한민국에서 무슨 일이 일어나고 있는가?
+[2025-08-27T06:19:10.836Z] INFO: Claude 수동 분석 필요: "(업데이트)트럼프, 대한민국에서 무슨 일이 일어나고 있는가?"
+[2025-08-27T06:19:10.837Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.837Z] INFO: ⏭️ 기존 포스트: 트럼프의 입, 캐롤라인 레빗 백악관 대변인은 누구?
+[2025-08-27T06:19:10.838Z] INFO: Claude 수동 분석 필요: "트럼프의 입, 캐롤라인 레빗 백악관 대변인은 누구?"
+[2025-08-27T06:19:10.839Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.840Z] INFO: ⏭️ 기존 포스트: 비만치료제 전쟁에 새로운 변수?(feat 마운자로,위고비,비마그루맙)
+[2025-08-27T06:19:10.840Z] INFO: ⏭️ 기존 포스트: 어쩌면 AI 시대에는 문과가?
+[2025-08-27T06:19:10.841Z] INFO: Claude 수동 분석 필요: "어쩌면 AI 시대에는 문과가?"
+[2025-08-27T06:19:10.842Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.842Z] INFO: ⏭️ 기존 포스트: 세상에서 가장 비싼 것과 위험한 것은?
+[2025-08-27T06:19:10.843Z] INFO: Claude 수동 분석 필요: "세상에서 가장 비싼 것과 위험한 것은?"
+[2025-08-27T06:19:10.844Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.844Z] INFO: ⏭️ 기존 포스트: 한미 정상회담을 위해 미국으로 가는 경제사절단 뜯어보기
+[2025-08-27T06:19:10.845Z] INFO: ⏭️ 기존 포스트: 파월의 잭슨홀미팅 발표 근황 (feat 파둘기, 평균금리목표제 폐지)
+[2025-08-27T06:19:10.845Z] INFO: Claude 수동 분석 필요: "파월의 잭슨홀미팅 발표 근황 (feat 파둘기, 평균금리목표제 폐지)"
+[2025-08-27T06:19:10.846Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.847Z] INFO: ⏭️ 기존 포스트: 리사 쿡 연준이사는 "즉각 사퇴하라!" (feat 트럼프)
+[2025-08-27T06:19:10.847Z] INFO: Claude 수동 분석 필요: "리사 쿡 연준이사는 "즉각 사퇴하라!" (feat 트럼프)"
+[2025-08-27T06:19:10.849Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.849Z] INFO: ⏭️ 기존 포스트: 이제는 SMR(소형 모듈 원자로)이 아닐수도 있다?
+[2025-08-27T06:19:10.850Z] INFO: ⏭️ 기존 포스트: 포트폴리오 근황 업데이트 (feat 조선업, 은, 국장개별주 단타)
+[2025-08-27T06:19:10.850Z] INFO: ⏭️ 기존 포스트: 미장에 그날이 다가온다.
+[2025-08-27T06:19:10.851Z] INFO: Claude 수동 분석 필요: "미장에 그날이 다가온다."
+[2025-08-27T06:19:10.852Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.852Z] INFO: ⏭️ 기존 포스트: AI시대의 의대진학 A/S (feat 어떤 학과를 선택해야 할까?)
+[2025-08-27T06:19:10.853Z] INFO: Claude 수동 분석 필요: "AI시대의 의대진학 A/S (feat 어떤 학과를 선택해야 할까?)"
+[2025-08-27T06:19:10.854Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.854Z] INFO: ⏭️ 기존 포스트: 일본 종합상사 근황(feat 워렌 버핏 추매이후)
+[2025-08-27T06:19:10.855Z] INFO: Claude 수동 분석 필요: "일본 종합상사 근황(feat 워렌 버핏 추매이후)"
+[2025-08-27T06:19:10.856Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.857Z] INFO: ⏭️ 기존 포스트: 체코원전 A/S (feat 원전수출시 1조원 보장 논란,웨스팅하우스)
+[2025-08-27T06:19:10.857Z] INFO: ⏭️ 기존 포스트: 연준의 역레포 잔고가 드디어...
+[2025-08-27T06:19:10.858Z] INFO: Claude 수동 분석 필요: "연준의 역레포 잔고가 드디어..."
+[2025-08-27T06:19:10.859Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.860Z] INFO: ⏭️ 기존 포스트: 블로그 이웃 27만명, 블로그 키우는 법등
+[2025-08-27T06:19:10.860Z] INFO: Claude 수동 분석 필요: "블로그 이웃 27만명, 블로그 키우는 법등"
+[2025-08-27T06:19:10.861Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:10.863Z] INFO: ✅ 하이브리드 업데이트 완료
+[2025-08-27T06:19:10.863Z] INFO: 📊 최종 보고서
+{
+  "rssPostsFound": 20,
+  "newPostsAdded": 2,
+  "postsNeedingAnalysis": 13,
+  "claudeAnalysisRequired": 13,
+  "errors": 0
+}
+[2025-08-27T06:19:10.864Z] INFO: 📝 2개의 새 포스트 추가됨
+[2025-08-27T06:19:10.864Z] INFO: ⚠️  13개 포스트가 Claude 직접 분석 필요
+[2025-08-27T06:19:10.864Z] INFO: 📂 분석 요청 파일: temp/claude-analysis-request.json
+[2025-08-27T06:19:20.785Z] INFO: 🚀 하이브리드 블로그 업데이트 시작
+[2025-08-27T06:19:20.789Z] INFO: 실행 시간: 2025-08-27T06:19:20.789Z
+[2025-08-27T06:19:20.791Z] INFO: 데이터베이스 연결 성공
+[2025-08-27T06:19:20.791Z] INFO: RSS 피드 가져오기 시작
+[2025-08-27T06:19:20.950Z] INFO: RSS에서 20개 포스트 발견
+[2025-08-27T06:19:20.953Z] INFO: ⏭️ 기존 포스트: 트럼프,내각회의에서 연준장악 발언을(feat 미란, 연준이사 리사 쿡)
+[2025-08-27T06:19:20.953Z] INFO: Claude 수동 분석 필요: "트럼프,내각회의에서 연준장악 발언을(feat 미란, 연준이사 리사 쿡)"
+[2025-08-27T06:19:20.955Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.956Z] INFO: ⏭️ 기존 포스트: 일본은행이 움직이기 시작하나? (feat 금리, 엔화)
+[2025-08-27T06:19:20.956Z] INFO: Claude 수동 분석 필요: "일본은행이 움직이기 시작하나? (feat 금리, 엔화)"
+[2025-08-27T06:19:20.958Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.959Z] INFO: ⏭️ 기존 포스트: 회담후 다른 자리에서 트럼프가 한 발언 및 보잉기 구매
+[2025-08-27T06:19:20.960Z] INFO: ⏭️ 기존 포스트: 한미 정상회담 양국 정상의 주요 발언 간단 정리(회담후 발언추가)
+[2025-08-27T06:19:20.961Z] INFO: ⏭️ 기존 포스트: (업데이트)트럼프, 대한민국에서 무슨 일이 일어나고 있는가?
+[2025-08-27T06:19:20.961Z] INFO: Claude 수동 분석 필요: "(업데이트)트럼프, 대한민국에서 무슨 일이 일어나고 있는가?"
+[2025-08-27T06:19:20.963Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.964Z] INFO: ⏭️ 기존 포스트: 트럼프의 입, 캐롤라인 레빗 백악관 대변인은 누구?
+[2025-08-27T06:19:20.964Z] INFO: Claude 수동 분석 필요: "트럼프의 입, 캐롤라인 레빗 백악관 대변인은 누구?"
+[2025-08-27T06:19:20.965Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.966Z] INFO: ⏭️ 기존 포스트: 비만치료제 전쟁에 새로운 변수?(feat 마운자로,위고비,비마그루맙)
+[2025-08-27T06:19:20.966Z] INFO: ⏭️ 기존 포스트: 어쩌면 AI 시대에는 문과가?
+[2025-08-27T06:19:20.967Z] INFO: Claude 수동 분석 필요: "어쩌면 AI 시대에는 문과가?"
+[2025-08-27T06:19:20.968Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.969Z] INFO: ⏭️ 기존 포스트: 세상에서 가장 비싼 것과 위험한 것은?
+[2025-08-27T06:19:20.969Z] INFO: Claude 수동 분석 필요: "세상에서 가장 비싼 것과 위험한 것은?"
+[2025-08-27T06:19:20.970Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.971Z] INFO: ⏭️ 기존 포스트: 한미 정상회담을 위해 미국으로 가는 경제사절단 뜯어보기
+[2025-08-27T06:19:20.972Z] INFO: ⏭️ 기존 포스트: 파월의 잭슨홀미팅 발표 근황 (feat 파둘기, 평균금리목표제 폐지)
+[2025-08-27T06:19:20.972Z] INFO: Claude 수동 분석 필요: "파월의 잭슨홀미팅 발표 근황 (feat 파둘기, 평균금리목표제 폐지)"
+[2025-08-27T06:19:20.973Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.974Z] INFO: ⏭️ 기존 포스트: 리사 쿡 연준이사는 "즉각 사퇴하라!" (feat 트럼프)
+[2025-08-27T06:19:20.974Z] INFO: Claude 수동 분석 필요: "리사 쿡 연준이사는 "즉각 사퇴하라!" (feat 트럼프)"
+[2025-08-27T06:19:20.976Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.977Z] INFO: ⏭️ 기존 포스트: 이제는 SMR(소형 모듈 원자로)이 아닐수도 있다?
+[2025-08-27T06:19:20.977Z] INFO: ⏭️ 기존 포스트: 포트폴리오 근황 업데이트 (feat 조선업, 은, 국장개별주 단타)
+[2025-08-27T06:19:20.978Z] INFO: ⏭️ 기존 포스트: 미장에 그날이 다가온다.
+[2025-08-27T06:19:20.978Z] INFO: Claude 수동 분석 필요: "미장에 그날이 다가온다."
+[2025-08-27T06:19:20.980Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.980Z] INFO: ⏭️ 기존 포스트: AI시대의 의대진학 A/S (feat 어떤 학과를 선택해야 할까?)
+[2025-08-27T06:19:20.981Z] INFO: Claude 수동 분석 필요: "AI시대의 의대진학 A/S (feat 어떤 학과를 선택해야 할까?)"
+[2025-08-27T06:19:20.982Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:20.983Z] INFO: ⏭️ 기존 포스트: 일본 종합상사 근황(feat 워렌 버핏 추매이후)
+[2025-08-27T06:19:20.996Z] INFO: Claude 수동 분석 필요: "일본 종합상사 근황(feat 워렌 버핏 추매이후)"
+[2025-08-27T06:19:21.000Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:21.001Z] INFO: ⏭️ 기존 포스트: 체코원전 A/S (feat 원전수출시 1조원 보장 논란,웨스팅하우스)
+[2025-08-27T06:19:21.001Z] INFO: ⏭️ 기존 포스트: 연준의 역레포 잔고가 드디어...
+[2025-08-27T06:19:21.002Z] INFO: Claude 수동 분석 필요: "연준의 역레포 잔고가 드디어..."
+[2025-08-27T06:19:21.003Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:21.003Z] INFO: ⏭️ 기존 포스트: 블로그 이웃 27만명, 블로그 키우는 법등
+[2025-08-27T06:19:21.004Z] INFO: Claude 수동 분석 필요: "블로그 이웃 27만명, 블로그 키우는 법등"
+[2025-08-27T06:19:21.005Z] INFO: Claude 분석 요청 저장: C:\Users\y\meire-blog-platform\temp\claude-analysis-request.json
+[2025-08-27T06:19:21.006Z] INFO: ✅ 하이브리드 업데이트 완료
+[2025-08-27T06:19:21.006Z] INFO: 📊 최종 보고서
+{
+  "rssPostsFound": 20,
+  "newPostsAdded": 0,
+  "postsNeedingAnalysis": 13,
+  "claudeAnalysisRequired": 13,
+  "errors": 0
+}
+[2025-08-27T06:19:21.007Z] INFO: ⚠️  13개 포스트가 Claude 직접 분석 필요
+[2025-08-27T06:19:21.007Z] INFO: 📂 분석 요청 파일: temp/claude-analysis-request.json

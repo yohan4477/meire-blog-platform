@@ -225,7 +225,7 @@ export class InputValidationManager {
       if (error instanceof z.ZodError) {
         return {
           valid: false,
-          errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`),
+          errors: (error as any).errors.map((err: any) => `${err.path.join('.')}: ${err.message}`),
         };
       }
       return {
@@ -274,7 +274,7 @@ export class CORSManager {
 
 // 인증 관리자
 export class AuthenticationManager {
-  private static readonly JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
+  private static readonly JWT_SECRET = process.env['JWT_SECRET'] || 'fallback-secret-key';
   private static readonly SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24시간
 
   // JWT 토큰 검증
@@ -303,7 +303,7 @@ export class AuthenticationManager {
   // API 키 검증
   static verifyAPIKey(apiKey: string): { valid: boolean; metadata?: any } {
     // 환경변수에서 유효한 API 키 목록 가져오기
-    const validAPIKeys = process.env.VALID_API_KEYS?.split(',') || [];
+    const validAPIKeys = process.env['VALID_API_KEYS']?.split(',') || [];
     
     if (validAPIKeys.includes(apiKey)) {
       return {
@@ -439,9 +439,8 @@ export class SecurityMiddlewareFactory {
   private static getClientIP(request: NextRequest): string {
     const forwardedFor = request.headers.get('x-forwarded-for');
     const realIP = request.headers.get('x-real-ip');
-    const clientIP = request.ip;
 
-    return forwardedFor?.split(',')[0] || realIP || clientIP || 'unknown';
+    return forwardedFor?.split(',')[0] || realIP || 'unknown';
   }
 
   // 인증 확인
@@ -481,10 +480,13 @@ export class SecurityMiddlewareFactory {
     if (sessionCookie) {
       const sessionResult = AuthenticationManager.verifySession(sessionCookie);
       if (sessionResult.valid) {
-        return {
-          authenticated: true,
-          userId: sessionResult.userId,
+        const result: any = {
+          authenticated: true
         };
+        if (sessionResult.userId !== undefined) {
+          result.userId = sessionResult.userId;
+        }
+        return result;
       }
     }
 

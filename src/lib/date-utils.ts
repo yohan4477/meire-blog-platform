@@ -54,7 +54,7 @@ export function getCurrentKoreanDatetime(): string {
  */
 export function formatKoreanDateString(dateString: string): string {
   const [year, month, day] = dateString.split('-');
-  return `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`;
+  return `${year}년 ${parseInt(month || '1')}월 ${parseInt(day || '1')}일`;
 }
 
 /**

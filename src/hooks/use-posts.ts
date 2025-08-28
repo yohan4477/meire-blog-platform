@@ -266,7 +266,7 @@ export function useInfinitePosts(
       return fetchPosts({
         ...filters,
         limit: pageSize,
-        offset: pageParam * pageSize,
+        offset: (pageParam as number) * pageSize,
       });
     },
     

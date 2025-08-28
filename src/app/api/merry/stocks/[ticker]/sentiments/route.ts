@@ -18,8 +18,9 @@ export async function GET(
     
     // 티커 매핑 확인 및 변경
     const originalTicker = ticker;
-    if (TICKER_MAPPING[ticker]) {
-      ticker = TICKER_MAPPING[ticker];
+    const mappedTicker = TICKER_MAPPING[ticker];
+    if (mappedTicker) {
+      ticker = mappedTicker;
       console.log(`🔄 Sentiments API Ticker mapping: ${originalTicker} → ${ticker}`);
     }
     const { searchParams } = new URL(request.url);

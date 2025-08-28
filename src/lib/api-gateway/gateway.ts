@@ -577,7 +577,7 @@ export class APIGateway {
 
       return {
         success: true,
-        data: data || undefined,
+        data: data as T,
         metadata: {
           requestId,
           timestamp: new Date().toISOString(),
@@ -615,9 +615,9 @@ export class APIGateway {
   private analyzeNPSComparison(stocks: any[], npsInvestments: any[]): any {
     // 간단한 NPS 비교 분석 로직
     const analysis = {
-      commonHoldings: [],
-      uniqueHoldings: [],
-      weightComparison: {}
+      commonHoldings: [] as any[],
+      uniqueHoldings: [] as any[],
+      weightComparison: {} as any
     };
 
     // 공통 보유 종목 찾기

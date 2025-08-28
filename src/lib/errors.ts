@@ -15,7 +15,7 @@ export class WhaleWisdomError extends Error {
 export class RateLimitError extends WhaleWisdomError {
   constructor(message: string = 'Rate limit exceeded', retryAfter?: number) {
     super(message, 'RATE_LIMIT_EXCEEDED', 429);
-    this.retryAfter = retryAfter;
+    if (retryAfter !== undefined) this.retryAfter = retryAfter;
   }
   
   public retryAfter?: number;
@@ -67,7 +67,7 @@ export function handleApiError(error: unknown): WhaleWisdomError {
 
 export function isRetryableError(error: WhaleWisdomError): boolean {
   return error instanceof RateLimitError || 
-         (error instanceof APIError && error.statusCode && error.statusCode >= 500);
+         (error instanceof APIError && !!error.statusCode && error.statusCode >= 500);
 }
 
 export async function withRetry<T>(

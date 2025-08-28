@@ -7,7 +7,7 @@ conn = sqlite3.connect('database.db')
 cursor = conn.cursor()
 
 # 포스트 512에 대한 삼성전자 감정 분석
-post_id = 512
+log_no = 512
 ticker = '005930'
 
 # Claude AI 스타일 분석 결과
@@ -38,12 +38,12 @@ analysis = {
 try:
     cursor.execute("""
         INSERT INTO sentiments (
-            post_id, ticker, sentiment, sentiment_score, key_reasoning,
+            log_no, ticker, sentiment, sentiment_score, key_reasoning,
             supporting_evidence, investment_perspective, investment_timeframe,
             conviction_level, uncertainty_factors, mention_context, analysis_date
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE('now'))
     """, (
-        post_id,
+        log_no,
         ticker,
         analysis['sentiment'],
         analysis['sentiment_score'],
@@ -57,7 +57,7 @@ try:
     ))
     
     conn.commit()
-    print(f"Post {post_id} Samsung analysis completed")
+    print(f"Post {log_no} Samsung analysis completed")
     print(f"   Sentiment: {analysis['sentiment']} (Score: {analysis['sentiment_score']})")
     print(f"   Key reasoning: {analysis['key_reasoning']}")
     

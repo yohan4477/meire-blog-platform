@@ -98,8 +98,8 @@ async function fetchStockPriceData(ticker: string, period: string) {
       // DB 데이터를 차트 형식으로 변환 (한국 종목은 원화로 처리)
       const isKoreanStock = ticker.length === 6 && !isNaN(Number(ticker));
       
-      // 🆕 누락된 날짜 채우기 및 전날 가격으로 보완
-      const processedData = fillMissingDates(records, startDateStr, isKoreanStock, ticker);
+      // 🆕 누락된 날짜 채우기 및 전날 가격으로 보간
+      const processedData = fillMissingDates(records, startDateStr || '', isKoreanStock, ticker);
       
       return processedData;
       

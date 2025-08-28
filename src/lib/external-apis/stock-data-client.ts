@@ -308,36 +308,56 @@ class AlphaVantageClient {
       
       for (const income of incomeReports.slice(0, 5)) { // 최근 5개 보고서
         const reportDate = income.fiscalDateEnding;
-        const balance = balanceReports.find(b => b.fiscalDateEnding === reportDate);
-        const cash = cashReports.find(c => c.fiscalDateEnding === reportDate);
+        const balance = balanceReports.find((b: any) => b.fiscalDateEnding === reportDate);
+        const cash = cashReports.find((c: any) => c.fiscalDateEnding === reportDate);
 
-        financials.push({
+        const statement: FinancialStatement = {
           symbol,
           companyName: symbol,
           reportType,
           fiscalYear: new Date(reportDate).getFullYear(),
-          fiscalQuarter: reportType === 'quarterly' ? Math.ceil((new Date(reportDate).getMonth() + 1) / 3) : undefined,
           reportDate,
-          currency: income.reportedCurrency || 'USD',
-          
-          // 손익계산서
-          revenue: this.parseNumber(income.totalRevenue),
-          grossProfit: this.parseNumber(income.grossProfit),
-          operatingIncome: this.parseNumber(income.operatingIncome),
-          netIncome: this.parseNumber(income.netIncome),
-          ebitda: this.parseNumber(income.ebitda),
-          
-          // 재무상태표
-          totalAssets: balance ? this.parseNumber(balance.totalAssets) : undefined,
-          totalLiabilities: balance ? this.parseNumber(balance.totalLiabilities) : undefined,
-          totalEquity: balance ? this.parseNumber(balance.totalShareholderEquity) : undefined,
-          cashAndEquivalents: balance ? this.parseNumber(balance.cashAndCashEquivalentsAtCarryingValue) : undefined,
-          
-          // 현금흐름표
-          operatingCashFlow: cash ? this.parseNumber(cash.operatingCashflow) : undefined,
-          investingCashFlow: cash ? this.parseNumber(cash.cashflowFromInvestment) : undefined,
-          financingCashFlow: cash ? this.parseNumber(cash.cashflowFromFinancing) : undefined
-        });
+          currency: income.reportedCurrency || 'USD'
+        };
+        
+        // Add fiscalQuarter only for quarterly reports
+        if (reportType === 'quarterly') {
+          statement.fiscalQuarter = Math.ceil((new Date(reportDate).getMonth() + 1) / 3);
+        }
+        
+        // Add optional fields only if they have values
+        const revenue = this.parseNumber(income.totalRevenue);
+        if (revenue !== undefined) statement.revenue = revenue;
+        const grossProfit = this.parseNumber(income.grossProfit);
+        if (grossProfit !== undefined) statement.grossProfit = grossProfit;
+        const operatingIncome = this.parseNumber(income.operatingIncome);
+        if (operatingIncome !== undefined) statement.operatingIncome = operatingIncome;
+        const netIncome = this.parseNumber(income.netIncome);
+        if (netIncome !== undefined) statement.netIncome = netIncome;
+        const ebitda = this.parseNumber(income.ebitda);
+        if (ebitda !== undefined) statement.ebitda = ebitda;
+        
+        if (balance) {
+          const totalAssets = this.parseNumber(balance.totalAssets);
+          if (totalAssets !== undefined) statement.totalAssets = totalAssets;
+          const totalLiabilities = this.parseNumber(balance.totalLiabilities);
+          if (totalLiabilities !== undefined) statement.totalLiabilities = totalLiabilities;
+          const totalEquity = this.parseNumber(balance.totalShareholderEquity);
+          if (totalEquity !== undefined) statement.totalEquity = totalEquity;
+          const cashAndEquivalents = this.parseNumber(balance.cashAndCashEquivalentsAtCarryingValue);
+          if (cashAndEquivalents !== undefined) statement.cashAndEquivalents = cashAndEquivalents;
+        }
+        
+        if (cash) {
+          const operatingCashFlow = this.parseNumber(cash.operatingCashflow);
+          if (operatingCashFlow !== undefined) statement.operatingCashFlow = operatingCashFlow;
+          const investingCashFlow = this.parseNumber(cash.cashflowFromInvestment);
+          if (investingCashFlow !== undefined) statement.investingCashFlow = investingCashFlow;
+          const financingCashFlow = this.parseNumber(cash.cashflowFromFinancing);
+          if (financingCashFlow !== undefined) statement.financingCashFlow = financingCashFlow;
+        }
+        
+        financials.push(statement);
       }
 
       return financials;
@@ -515,16 +535,16 @@ export class StockDataAPIClient {
     
     try {
       await this.yahooClient.getQuote('AAPL');
-      results.yahoo_finance = true;
+      results['yahoo_finance'] = true;
     } catch {
-      results.yahoo_finance = false;
+      results['yahoo_finance'] = false;
     }
 
     try {
       await this.alphaVantageClient.getQuote('AAPL');
-      results.alpha_vantage = true;
+      results['alpha_vantage'] = true;
     } catch {
-      results.alpha_vantage = false;
+      results['alpha_vantage'] = false;
     }
 
     return results;
@@ -533,7 +553,7 @@ export class StockDataAPIClient {
 
 // 싱글톤 인스턴스 생성 함수
 export function createStockDataAPIClient(): StockDataAPIClient {
-  const alphaVantageApiKey = process.env.ALPHA_VANTAGE_API_KEY || '';
+  const alphaVantageApiKey = process.env['ALPHA_VANTAGE_API_KEY'] || '';
   
   if (!alphaVantageApiKey) {
     console.warn('Warning: ALPHA_VANTAGE_API_KEY environment variable is not set');

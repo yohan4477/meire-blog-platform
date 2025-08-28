@@ -125,7 +125,15 @@
       "Bash(DEV_PORT=3004 timeout 60 npx playwright test tests/individual-post-functionality-test.spec.ts --project=chromium --headed)",
       "Bash(DEV_PORT=3004 timeout 45 npx playwright test tests/individual-post-functionality-test.spec.ts --project=chromium --headed)",
       "Read(/C:\\c\\Users\\y\\meire-blog-platform\\src\\app/**)",
-      "Bash(DEV_PORT=3004 npx playwright test tests/merry-stocks-complete-data-test.spec.ts --project=chromium --headed)"
+      "Bash(DEV_PORT=3004 npx playwright test tests/merry-stocks-complete-data-test.spec.ts --project=chromium --headed)",
+      "WebFetch(domain:blog.naver.com)",
+      "Bash(npm run:*)",
+      "Bash(CLAUDE_SERVER_URL=http://localhost:3005 npm run scheduler)",
+      "WebFetch(domain:finance.yahoo.com)",
+      "WebFetch(domain:m.blog.naver.com)",
+      "Bash(pm2 start:*)",
+      "Bash(pm2 save:*)",
+      "Bash(pm2 status:*)"
     ],
     "deny": [],
     "ask": [],

@@ -66,7 +66,7 @@ class DirectClaudeAnalyzer:
             'PG': ['P&G', '프록터앤갬블'],
 # 제거: V는 vs, very 등으로 오인식 가능
             'MA': ['마스터카드', 'Mastercard'],
-            'HD': ['홈디포', 'Home Depot'],
+            'HD': ['HD현대중공업', 'HD Hyundai Heavy Industries'],
             'DIS': ['디즈니', 'Disney'],
             'NFLX': ['넷플릭스', 'Netflix'],
             'CRM': ['세일즈포스', 'Salesforce'],
@@ -265,18 +265,18 @@ class DirectClaudeAnalyzer:
         
         return factors[:3] if factors else []
 
-    def save_to_db(self, post_id, ticker, analysis):
+    def save_to_db(self, log_no, ticker, analysis):
         """분석 결과를 DB에 저장"""
         try:
             self.cursor.execute("""
                 INSERT INTO sentiments (
-                    id, post_id, ticker, sentiment, sentiment_score, key_reasoning,
+                    id, log_no, ticker, sentiment, sentiment_score, key_reasoning,
                     supporting_evidence, investment_perspective, investment_timeframe,
                     conviction_level, uncertainty_factors, mention_context, analysis_date
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE('now'))
             """, (
                 self.next_id,
-                post_id,
+                log_no,
                 ticker,
                 analysis['sentiment'],
                 analysis['sentiment_score'],
@@ -304,7 +304,7 @@ class DirectClaudeAnalyzer:
             SELECT DISTINCT bp.id, bp.title, bp.content, bp.created_date
             FROM blog_posts bp
             WHERE bp.id NOT IN (
-                SELECT DISTINCT post_id FROM sentiments
+                SELECT DISTINCT log_no FROM sentiments
             )
             ORDER BY bp.created_date DESC
         """)
@@ -314,7 +314,7 @@ class DirectClaudeAnalyzer:
         
         total_analyses = 0
         
-        for i, (post_id, title, content, created_date) in enumerate(posts):
+        for i, (log_no, title, content, created_date) in enumerate(posts):
             print(f"\n[{i+1}/{len(posts)}] 분석 중: {title[:50]}...")
             
             # 종목 찾기
@@ -324,8 +324,8 @@ class DirectClaudeAnalyzer:
                 for stock in mentioned_stocks:
                     # 이미 분석된 종목인지 확인
                     self.cursor.execute(
-                        "SELECT id FROM sentiments WHERE post_id = ? AND ticker = ?",
-                        (post_id, stock['ticker'])
+                        "SELECT id FROM sentiments WHERE log_no = ? AND ticker = ?",
+                        (log_no, stock['ticker'])
                     )
                     if self.cursor.fetchone():
                         continue
@@ -339,7 +339,7 @@ class DirectClaudeAnalyzer:
                     )
                     
                     # DB 저장
-                    if self.save_to_db(post_id, stock['ticker'], analysis):
+                    if self.save_to_db(log_no, stock['ticker'], analysis):
                         total_analyses += 1
                         print(f"  - {stock['ticker']}: {analysis['sentiment']} ({analysis['sentiment_score']})")
         

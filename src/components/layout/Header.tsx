@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, BarChart3, BookOpen, User, PieChart, Brain, Bot, Home, TrendingUp, Activity, Menu, X, Bell, Settings, Shield } from 'lucide-react';
+import { Search, BarChart3, BookOpen, User, PieChart, Brain, Bot, Home, TrendingUp, Activity, Menu, X, Bell, Settings, Shield, FileText, Calendar, ListFilter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -117,7 +117,9 @@ export default function Header() {
 
   const navigationItems = [
     { href: "/", label: "홈", icon: Home },
-    { href: "/merry", label: "메르 블로그", icon: User },
+    { href: "/merry", label: "메르 포스트", icon: User },
+    { href: "/merry?tab=analysis", label: "종목 리스트", icon: ListFilter },
+    { href: "/merry?tab=calendar", label: "주요 일정", icon: Calendar },
   ];
   
   return (
@@ -137,20 +139,19 @@ export default function Header() {
 
           {/* 네비게이션 */}
           <nav className="hidden xl:flex items-center space-x-1">
-            <Link 
-              href="/" 
-              className="px-3 py-2 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors flex items-center space-x-1"
-            >
-              <Home className="h-4 w-4" />
-              <span>홈</span>
-            </Link>
-            <Link 
-              href="/merry" 
-              className="px-3 py-2 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors flex items-center space-x-1"
-            >
-              <User className="h-4 w-4" />
-              <span>메르 블로그</span>
-            </Link>
+            {navigationItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="px-3 py-2 text-sm font-medium hover:text-primary hover:bg-accent rounded-md transition-colors flex items-center space-x-1"
+                >
+                  <IconComponent className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
             
             {/* 관리자 버튼 */}
             <Dialog open={isAdminDialogOpen} onOpenChange={setIsAdminDialogOpen}>
@@ -292,11 +293,6 @@ export default function Header() {
                       >
                         <IconComponent className="h-5 w-5" />
                         <span className="flex-1">{item.label}</span>
-                        {item.badge && (
-                          <Badge variant="secondary" className="text-xs px-2 py-0.5 h-auto">
-                            {item.badge}
-                          </Badge>
-                        )}
                       </Link>
                     );
                   })}

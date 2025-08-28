@@ -48,6 +48,7 @@ async function analyzeRecommendationPatterns() {
     // 늦생시 포스트들 조회
     const lateStartPosts = await query<{
       id: number;
+      log_no: string;
       title: string;
       content: string;
       created_date: string;

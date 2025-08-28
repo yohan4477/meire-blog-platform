@@ -47,7 +47,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({
       error,
       errorInfo
@@ -79,13 +79,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   handleRetry = () => {
     this.setState({
       hasError: false,
-      error: undefined,
-      errorInfo: undefined,
       errorId: this.generateErrorId()
     });
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       // Use custom fallback if provided
       if (this.props.fallback) {
@@ -95,12 +93,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       // Default error UI based on level
       return (
         <ErrorFallback
-          error={this.state.error}
-          errorInfo={this.state.errorInfo}
+          error={this.state.error!}
+          errorInfo={this.state.errorInfo!}
           errorId={this.state.errorId}
           onRetry={this.handleRetry}
-          showDetails={this.props.showDetails}
-          level={this.props.level}
+          showDetails={this.props.showDetails ?? false}
+          level={this.props.level ?? 'component'}
         />
       );
     }

@@ -5,7 +5,7 @@ conn = sqlite3.connect('database.db')
 cursor = conn.cursor()
 
 # 포스트 12에 대한 삼성전자 감정 분석
-post_id = 12
+log_no = 12
 ticker = '005930'
 
 analysis = {
@@ -35,12 +35,12 @@ analysis = {
 try:
     cursor.execute("""
         INSERT INTO sentiments (
-            post_id, ticker, sentiment, sentiment_score, key_reasoning,
+            log_no, ticker, sentiment, sentiment_score, key_reasoning,
             supporting_evidence, investment_perspective, investment_timeframe,
             conviction_level, uncertainty_factors, mention_context, analysis_date
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE('now'))
     """, (
-        post_id, ticker, analysis['sentiment'], analysis['sentiment_score'],
+        log_no, ticker, analysis['sentiment'], analysis['sentiment_score'],
         analysis['key_reasoning'],
         json.dumps(analysis['supporting_evidence'], ensure_ascii=False),
         json.dumps(analysis['investment_perspective'], ensure_ascii=False),
@@ -50,7 +50,7 @@ try:
     ))
     
     conn.commit()
-    print(f"Post {post_id} Samsung analysis completed")
+    print(f"Post {log_no} Samsung analysis completed")
     
 except Exception as e:
     print(f"Error: {e}")

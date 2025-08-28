@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Brain, TrendingUp, AlertTriangle, Clock, Target, ArrowRight, ChevronDown, ChevronUp, FileText, ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import CausalChainVisualization from '@/components/merry/CausalChainVisualization';
+// import CausalChainVisualization from '@/components/merry/CausalChainVisualization';
 import { useRouter } from 'next/navigation';
 
 interface CausalChain {
@@ -285,13 +285,17 @@ export default function MerryAnalysisPage() {
                   </Card>
                 ))
               ) : (
-                // 새로운 상세 시각화 형태
+                // 새로운 상세 시각화 형태 - 임시 비활성화
                 analysisData?.chains.map((chain) => (
-                  <CausalChainVisualization
-                    key={chain.id}
-                    chain={{...chain, steps: [], correlations: []}}
-                    onViewPost={handleViewPost}
-                  />
+                  <Card key={chain.id} className="p-6">
+                    <h3 className="text-lg font-semibold mb-2">{chain.chain_title}</h3>
+                    <p className="text-muted-foreground">시각화 컴포넌트 재구축 예정</p>
+                  </Card>
+                  // <CausalChainVisualization
+                  //   key={chain.id}
+                  //   chain={{...chain, steps: [], correlations: []}}
+                  //   onViewPost={handleViewPost}
+                  // />
                 ))
               )}
             </div>

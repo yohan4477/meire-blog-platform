@@ -24,7 +24,7 @@ export interface StockMention {
   timestamp: number;
   price: number | null;
   postTitle: string;
-  postId: number;
+  logNo: number;
   sentiment?: 'positive' | 'neutral' | 'negative';
   confidence?: number;
   context?: string;

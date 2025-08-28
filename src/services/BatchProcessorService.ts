@@ -306,10 +306,10 @@ export class BatchProcessorService {
         5 // 감정 분석은 동시 5개
       );
 
-      Object.entries(batchResults).forEach(([postId, result]) => {
+      Object.entries(batchResults).forEach(([logNo, result]) => {
         if (result.success && result.data) {
-          cacheService.setSentiment(postId, result.data);
-          results[postId] = result.data;
+          cacheService.setSentiment(logNo, result.data);
+          results[logNo] = result.data;
         }
       });
     }

@@ -182,7 +182,7 @@ export class PublicDataAPIClient {
 
     // 파라미터 검증
     const validatedParams = NPSInvestmentParamsSchema.parse({
-      serviceKey: this.apiKeys.nps,
+      serviceKey: this.apiKeys['nps'],
       ...params
     });
 
@@ -255,7 +255,7 @@ export class PublicDataAPIClient {
     }
 
     const validatedParams = KRXMarketParamsSchema.parse({
-      serviceKey: this.apiKeys.krx,
+      serviceKey: this.apiKeys['krx'],
       ...params
     });
 
@@ -327,7 +327,7 @@ export class PublicDataAPIClient {
     }
 
     const validatedParams = FSSDisclosureParamsSchema.parse({
-      crtfc_key: this.apiKeys.fss,
+      crtfc_key: this.apiKeys['fss'],
       ...params
     });
 
@@ -385,39 +385,49 @@ export class PublicDataAPIClient {
    * 국민연금 데이터 변환
    */
   private transformNPSData(items: any[]): NPSInvestmentData[] {
-    return items.map(item => ({
-      dataDate: item.basDt || '',
-      fundCode: item.fundCd || '',
-      fundName: item.fundNm || '',
-      stockCode: item.isu_cd || undefined,
-      stockName: item.isu_nm || undefined,
-      shares: item.hldg_qty ? parseInt(item.hldg_qty) : undefined,
-      marketValue: item.evlu_amt ? parseFloat(item.evlu_amt) : undefined,
-      ratio: item.hldg_wt ? parseFloat(item.hldg_wt) : undefined,
-      changeFromPrev: item.prv_evlu_amt_cha ? parseFloat(item.prv_evlu_amt_cha) : undefined,
-      sector: item.sector || undefined,
-      industry: item.industry || undefined
-    }));
+    return items.map(item => {
+      const result: NPSInvestmentData = {
+        dataDate: item.basDt || '',
+        fundCode: item.fundCd || '',
+        fundName: item.fundNm || ''
+      };
+      
+      if (item.isu_cd) result.stockCode = item.isu_cd;
+      if (item.isu_nm) result.stockName = item.isu_nm;
+      if (item.hldg_qty) result.shares = parseInt(item.hldg_qty);
+      if (item.evlu_amt) result.marketValue = parseFloat(item.evlu_amt);
+      if (item.hldg_wt) result.ratio = parseFloat(item.hldg_wt);
+      if (item.prv_evlu_amt_cha) result.changeFromPrev = parseFloat(item.prv_evlu_amt_cha);
+      if (item.sector) result.sector = item.sector;
+      if (item.industry) result.industry = item.industry;
+      
+      return result;
+    });
   }
 
   /**
    * 한국거래소 데이터 변환
    */
   private transformKRXData(items: any[]): KRXMarketData[] {
-    return items.map(item => ({
-      dataDate: item.basDt || '',
-      marketType: item.mrktCtg || 'KOSPI',
-      stockCode: item.srtnCd || '',
-      stockName: item.itmsNm || '',
-      closingPrice: item.clpr ? parseFloat(item.clpr) : undefined,
-      openingPrice: item.mkp ? parseFloat(item.mkp) : undefined,
-      highPrice: item.hipr ? parseFloat(item.hipr) : undefined,
-      lowPrice: item.lopr ? parseFloat(item.lopr) : undefined,
-      volume: item.trqu ? parseInt(item.trqu) : undefined,
-      transactionAmount: item.trPrc ? parseFloat(item.trPrc) : undefined,
-      marketCap: item.mrktTotAmt ? parseFloat(item.mrktTotAmt) : undefined,
-      listedShares: item.lstgStCnt ? parseInt(item.lstgStCnt) : undefined
-    }));
+    return items.map(item => {
+      const result: KRXMarketData = {
+        dataDate: item.basDt || '',
+        marketType: item.mrktCtg || 'KOSPI',
+        stockCode: item.srtnCd || '',
+        stockName: item.itmsNm || ''
+      };
+      
+      if (item.clpr) result.closingPrice = parseFloat(item.clpr);
+      if (item.mkp) result.openingPrice = parseFloat(item.mkp);
+      if (item.hipr) result.highPrice = parseFloat(item.hipr);
+      if (item.lopr) result.lowPrice = parseFloat(item.lopr);
+      if (item.trqu) result.volume = parseInt(item.trqu);
+      if (item.trPrc) result.transactionAmount = parseFloat(item.trPrc);
+      if (item.mrktTotAmt) result.marketCap = parseFloat(item.mrktTotAmt);
+      if (item.lstgStCnt) result.listedShares = parseInt(item.lstgStCnt);
+      
+      return result;
+    });
   }
 
   /**
@@ -472,9 +482,9 @@ export class PublicDataAPIClient {
 // 싱글톤 인스턴스 생성 함수
 export function createPublicDataAPIClient(): PublicDataAPIClient {
   const apiKeys = {
-    nps: process.env.NPS_API_KEY || '',
-    krx: process.env.KRX_API_KEY || '',
-    fss: process.env.FSS_API_KEY || ''
+    nps: process.env['NPS_API_KEY'] || '',
+    krx: process.env['KRX_API_KEY'] || '',
+    fss: process.env['FSS_API_KEY'] || ''
   };
 
   // API 키 검증

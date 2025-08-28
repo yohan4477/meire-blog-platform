@@ -109,10 +109,10 @@ async function extractStocks() {
             
             const mention = stockMentions.get(stock.ticker);
             // 중복 체크 (같은 포스트에서 여러 번 언급되어도 한 번만 기록)
-            const alreadyAdded = mention.mentions.some(m => m.postId === post.id);
+            const alreadyAdded = mention.mentions.some(m => m.logNo === post.id);
             if (!alreadyAdded) {
               mention.mentions.push({
-                postId: post.id,
+                logNo: post.id,
                 logNo: post.log_no,
                 title: post.title.substring(0, 50),
                 date: post.created_date,

@@ -16,8 +16,9 @@ export async function GET(
     
     // 티커 매핑 확인 및 변경
     const originalTicker = ticker;
-    if (TICKER_MAPPING[ticker]) {
-      ticker = TICKER_MAPPING[ticker];
+    const mappedTicker = TICKER_MAPPING[ticker];
+    if (mappedTicker) {
+      ticker = mappedTicker;
       console.log(`🔄 Ticker mapping: ${originalTicker} → ${ticker}`);
     }
     
@@ -192,10 +193,16 @@ export async function GET(
           'AAPL': ['애플', 'Apple']
         };
         
-        if (isKoreanStock && koreanStockNames[ticker]) {
-          searchTerms = searchTerms.concat(koreanStockNames[ticker]);
-        } else if (usStockNames[ticker]) {
-          searchTerms = searchTerms.concat(usStockNames[ticker]);
+        if (isKoreanStock) {
+          const koreanNames = koreanStockNames[ticker];
+          if (koreanNames) {
+            searchTerms = searchTerms.concat(koreanNames);
+          }
+        } else {
+          const usNames = usStockNames[ticker];
+          if (usNames) {
+            searchTerms = searchTerms.concat(usNames);
+          }
         }
         
         // 검색 쿼리 생성

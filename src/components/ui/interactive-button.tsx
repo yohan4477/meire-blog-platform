@@ -1,7 +1,13 @@
 import * as React from "react"
 import { Loader2 } from "lucide-react"
-import { Button, type ButtonProps } from "./button"
+import { Button } from "./button"
 import { cn } from "@/lib/utils"
+
+type ButtonProps = React.ComponentProps<"button"> & {
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+  size?: "default" | "sm" | "lg" | "icon"
+  asChild?: boolean
+}
 
 export interface InteractiveButtonProps extends ButtonProps {
   loading?: boolean

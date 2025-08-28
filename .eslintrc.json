@@ -1,0 +1,40 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "no-console": "off",
+    "prefer-const": "error",
+    
+    // 텍스트 처리 원칙 강제
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.property.name='replace'] CallExpression[arguments.length>2]",
+        "message": "복잡한 연쇄 replace는 금지됩니다. text-utils.ts의 함수를 사용하세요."
+      },
+      {
+        "selector": "Literal[value=/\\.\\+/]",
+        "message": ".+ 패턴은 위험합니다. 구체적인 패턴을 사용하거나 text-utils.ts 함수를 사용하세요."
+      },
+      {
+        "selector": "Property[key.name='created_date'][value.type='CallExpression'][value.callee.object.name='Date'][value.callee.property.name='now']",
+        "message": "created_date에 Date.now() 사용 금지! 문자열 형식을 사용하세요: new Date().toISOString().slice(0, 19).replace('T', ' ')"
+      },
+      {
+        "selector": "AssignmentExpression[left.property.name='created_date'][right.type='CallExpression'][right.callee.object.name='Date'][right.callee.property.name='now']",
+        "message": "created_date에 Date.now() 사용 금지! 문자열 형식을 사용하세요: new Date().toISOString().slice(0, 19).replace('T', ' ')"
+      }
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/text-processing*", "**/format-content*"],
+            "message": "직접 텍스트 처리 대신 @/lib/text-utils를 사용하세요."
+          }
+        ]
+      }
+    ]
+  }
+}

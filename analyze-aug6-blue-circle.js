@@ -60,7 +60,7 @@ async function analyzeAug6BlueCircle() {
             postSentimentPairs: aug6Sentiments?.postSentimentPairs?.length || 0,
             sentiments: aug6Sentiments?.sentiments?.length || 0,
             details: aug6Sentiments?.postSentimentPairs?.map(pair => ({
-              post_id: pair.post?.id,
+              log_no: pair.post?.id,
               sentiment: pair.sentiment?.sentiment,
               confidence: pair.sentiment?.confidence
             })) || []
@@ -87,7 +87,7 @@ async function analyzeAug6BlueCircle() {
     if (aug6Analysis.sentiments.exists) {
       console.log('\n🎯 8월 6일 감정 분석 상세:');
       aug6Analysis.sentiments.details.forEach((detail, index) => {
-        console.log(`  ${index + 1}. 포스트 ID: ${detail.post_id}, 감정: ${detail.sentiment}, 신뢰도: ${detail.confidence}`);
+        console.log(`  ${index + 1}. 포스트 ID: ${detail.log_no}, 감정: ${detail.sentiment}, 신뢰도: ${detail.confidence}`);
       });
     } else {
       console.log('\n❌ 8월 6일 감정 분석 데이터 없음!');

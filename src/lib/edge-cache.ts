@@ -159,8 +159,8 @@ export async function handleCacheInvalidation(request: NextRequest) {
     // Invalidate specific keys
     if (keys?.length) {
       for (const key of keys) {
-        if (edgeCache.cache.has(key)) {
-          edgeCache.cache.delete(key);
+        if ((edgeCache as any).cache.has(key)) {
+          (edgeCache as any).cache.delete(key);
           invalidated++;
         }
       }

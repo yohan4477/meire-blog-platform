@@ -159,12 +159,12 @@ export class CacheService {
   /**
    * 감정 분석 캐시
    */
-  getSentiment(postId: string): any | null {
-    return this.get<any>(`sentiment_${postId}`);
+  getSentiment(logNo: string): any | null {
+    return this.get<any>(`sentiment_${logNo}`);
   }
 
-  setSentiment(postId: string, data: any): void {
-    this.set(`sentiment_${postId}`, data, 'SENTIMENT');
+  setSentiment(logNo: string, data: any): void {
+    this.set(`sentiment_${logNo}`, data, 'SENTIMENT');
   }
 
   /**

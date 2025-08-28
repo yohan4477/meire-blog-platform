@@ -170,6 +170,7 @@
 - **Claude 직접 수행**: F12 네트워크 탭 방식으로 Claude가 직접 데이터 수집
 - **자동 트리거**: 시스템이 자동으로 Claude에게 업데이트 요청
 - **핵심 문서**: `@docs/update-requirements.md` - Claude가 이 문서를 참조하여 업데이트 수행
+- **메르 블로그 URL**: https://m.blog.naver.com/ranto28 (모바일 버전 우선 사용)
 
 #### Claude 업데이트 프로세스 (`update-requirements.md` 기준):
 1. **포스트 크롤링**: Claude가 F12 네트워크 방식으로 메르 블로그 직접 분석
@@ -177,6 +178,23 @@
 3. **메르's Pick 갱신**: Claude가 최근 언급 종목 자동 업데이트
 4. **종가 데이터 수집**: Claude가 메르가 언급한 종목의 주가 데이터 수집
 5. **감정 분석**: Claude가 포스트 내용을 직접 분석하여 감정 판단
+6. **🔥 메르님 한줄 코멘트 분석**: Claude가 메르님의 한줄 코멘트에서 핵심 투자 관점 추출
+7. **💡 투자 인사이트 도출**: Claude가 포스트 전체에서 투자 테마, 리스크, 기회요인 분석
+
+#### 🚨 **"분석해줘" 요청 시 필수 수행 8단계 (절대 생략 불가)**:
+
+**📋 완전 분석 프로세스** (`post-analysis-automation.md` 참조):
+
+1. **📝 포스트 크롤링**: RSS 피드에서 새 포스트 발견 및 database.db 저장
+2. **🏢 종목 추출**: stocks 테이블에 종목 추가/업데이트, mention_count 갱신
+3. **💭 감정 분석**: post_stock_analysis 테이블에 Claude 직접 분석 결과 저장
+4. **🔥 메르님 한줄 코멘트**: 포스트 끝 "한 줄 코멘트:" 추출하여 excerpt 저장
+5. **💡 투자 인사이트**: 투자 테마, 경쟁 구도, 기회/리스크 요소 분석
+6. **🗄️ post_analysis 저장**: summary(한줄코멘트) + investment_insight 테이블 저장
+7. **📈 메르's Pick 확인**: /api/merry/picks에서 새 종목 반영 검증
+8. **🌐 웹사이트 검증**: /api/today-merry-quote에서 "오늘의 메르님 말씀" 표시 확인
+
+**🎯 성공 기준**: `start http://localhost:3004` 메인 페이지에서 메르님 한줄 코멘트와 투자 인사이트 즉시 확인 가능
 
 #### CLAUDE.md 철학 준수:
 - **✅ 허용**: Claude 직접 분석, F12 네트워크 방식, 사용자 요청 및 자동 트리거 기반 작업
@@ -204,7 +222,7 @@
 COUNT(psa.id) as analyzed_count
 
 -- ✅ 올바른 방식 (DISTINCT 사용)  
-COUNT(DISTINCT psa.post_id) as analyzed_count,
+COUNT(DISTINCT psa.log_no) as analyzed_count,
 (SELECT COUNT(DISTINCT bp.id) FROM blog_posts bp 
  WHERE bp.title LIKE '%' || s.ticker || '%' OR bp.content LIKE '%' || s.ticker || '%') as actual_mention_count
 ```
@@ -222,7 +240,7 @@ mention_count: stock.mention_count
 1. **DISTINCT 사용**: 모든 COUNT 쿼리에서 중복 제거
 2. **실제 언급 수 확인**: blog_posts에서 직접 조회
 3. **논리적 일관성**: `mention_count >= analyzed_count` 항상 보장
-4. **중복 방지**: 같은 post_id + ticker 조합 중복 금지
+4. **중복 방지**: 같은 log_no + ticker 조합 중복 금지
 5. **테스트 검증**: API 응답에서 데이터 정합성 확인
 
 ### 6. 🧪 Playwright 테스트로 모든 테스트 완료 (필수)
@@ -623,7 +641,7 @@ src/
 - 종목 테이블: 메르 언급 여부 플래그 관리
 - 종가 테이블: ticker, date, close_price, volume 저장
 - **감정 분석 테이블** (`post_stock_sentiments`): 포스트별 종목별 감정 분석 결과 저장
-  - post_id, ticker, sentiment, sentiment_score, confidence, keywords, context_snippet
+  - log_no, ticker, sentiment, sentiment_score, confidence, keywords, context_snippet
 - 자동 데이터 정리: 6개월 이전 데이터 삭제 스케줄링
 - 메르 글 연동: 언급된 종목 자동 추가, 미언급 종목 저장 중단
 
@@ -1154,7 +1172,7 @@ SuperClaude v3.0.0.2가 설치되어 있으므로 다음 명령어들도 활용�
 -- Claude 직접 분석 전용 테이블 (stock-page-requirements.md 규격)
 CREATE TABLE post_stock_analysis (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    post_id INTEGER NOT NULL,
+    log_no INTEGER NOT NULL,
     ticker TEXT NOT NULL,
     sentiment TEXT NOT NULL CHECK (sentiment IN ('positive', 'negative', 'neutral')),
     sentiment_score DECIMAL(4,3) NOT NULL,
@@ -1162,8 +1180,8 @@ CREATE TABLE post_stock_analysis (
     reasoning TEXT NOT NULL, -- 핵심 근거 (필수) - 포스트별로 독립적이어야 함
     context_snippet TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
-    UNIQUE(post_id, ticker)
+    FOREIGN KEY (log_no) REFERENCES blog_posts(id) ON DELETE CASCADE,
+    UNIQUE(log_no, ticker)
 );
 ```
 
@@ -1180,7 +1198,7 @@ CREATE TABLE post_stock_analysis (
   - ❌ **금지**: 일반적이고 포괄적인 reasoning ("메모리 반도체는 중요하다" 등)
   - ✅ **필수**: 해당 포스트의 구체적인 내용과 맥락을 반영한 독립적 reasoning
   - ✅ **예시**: "트럼프의 반도체 관세 정책으로 삼성전자가 애플 수주에서 유리한 위치"
-- **🔗 Post-Log 매칭**: `post_id`는 `blog_posts.log_no`와 매칭되어야 함 (ID 기반이 아닌 log_no 기반)
+- **🔗 Post-Log 매칭**: `log_no`는 `blog_posts.log_no`와 매칭되어야 함 (ID 기반이 아닌 log_no 기반)
 
 ### 📈 **차트 통합 표시**
 

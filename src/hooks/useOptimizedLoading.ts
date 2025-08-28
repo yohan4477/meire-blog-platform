@@ -37,10 +37,10 @@ export function useOptimizedLoading(options: LoadingOptions = {}) {
   });
 
   const startTimeRef = useRef<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const progressIntervalRef = useRef<NodeJS.Timeout>();
-  const minTimeTimeoutRef = useRef<NodeJS.Timeout>();
-  const abortControllerRef = useRef<AbortController>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const minTimeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const abortControllerRef = useRef<AbortController | undefined>(undefined);
 
   // 🎯 로딩 시작
   const startLoading = useCallback(() => {
@@ -247,9 +247,9 @@ export function useMultiLoading<T extends string>(keys: readonly T[]) {
     });
   }, [updateState, states]);
 
-  const isAnyLoading = Object.values(states).some(state => state.isLoading);
-  const hasAnyError = Object.values(states).some(state => state.error);
-  const allCompleted = Object.values(states).every(state => !state.isLoading);
+  const isAnyLoading = Object.values(states).some((state: any) => state.isLoading);
+  const hasAnyError = Object.values(states).some((state: any) => state.error);
+  const allCompleted = Object.values(states).every((state: any) => !state.isLoading);
 
   return {
     states,

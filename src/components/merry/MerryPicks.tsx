@@ -44,25 +44,45 @@ export default function MerryPicks({
     retryAttempts: 3
   });
 
-  useEffect(() => {
-    fetchMerryPicks();
-  }, [limit, loading.retryCount]);
+  const [picks, setPicks] = React.useState<MerryPickStock[]>([]);
+  const [lastUpdateTime, setLastUpdateTime] = React.useState<string>('');
 
   const fetchMerryPicks = async () => {
+    const timestamp = Date.now();
     const result = await loading.fetchWithLoading<{success: boolean, data: {picks: MerryPickStock[]}}>(
-      `/api/merry/picks?limit=${limit}&t=${Date.now()}`, // 캐시 버스터 추가
-      { method: 'GET' }
+      `/api/merry/picks?limit=${limit}&t=${timestamp}`, // 강력한 캐시 버스터
+      { 
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      }
     );
 
     if (result?.success && result.data?.picks) {
-      console.log(`⭐ Loaded ${result.data.picks.length} Merry's picks`);
-      console.log('📊 Merry\'s Pick 순서:', result.data.picks.map((p: any, i: number) => 
-        `${i+1}. ${p.name}(${p.ticker}) - ${new Date(p.last_mentioned_at).toLocaleDateString('ko-KR')} - ${p.mention_count}번`
+      console.log(`⭐ [${new Date().toLocaleTimeString()}] Loaded ${result.data.picks.length} Merry's picks`);
+      console.log('🔄 메르\'s Pick 감정 랭킹 순서:', result.data.picks.map((p: any, i: number) => 
+        `${i+1}. ${p.name}(${p.ticker}) - 감정: ${p.sentiment}(${p.sentiment_score?.toFixed(2)}) - ${new Date(p.last_mentioned_at).toLocaleDateString('ko-KR')} - ${p.mention_count}번`
       ));
+      setPicks(result.data.picks);
+      setLastUpdateTime(new Date().toLocaleTimeString());
     }
 
     return result?.data?.picks || [];
   };
+
+  useEffect(() => {
+    fetchMerryPicks();
+  }, [limit]);
+  
+  // 재시도 전용 useEffect 분리
+  useEffect(() => {
+    if (loading.retryCount > 0) {
+      fetchMerryPicks();
+    }
+  }, [loading.retryCount]);
 
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
@@ -114,15 +134,6 @@ export default function MerryPicks({
     }
   };
 
-  // picks 데이터를 로딩 결과에서 가져오기 위해 임시 상태 추가
-  const [picks, setPicks] = React.useState<MerryPickStock[]>([]);
-
-  React.useEffect(() => {
-    if (!loading.isLoading && !loading.error) {
-      fetchMerryPicks().then(setPicks);
-    }
-  }, [loading.isLoading, loading.error, loading.retryCount]);
-
   return (
     <Card className="w-full">
       {showTitle && (
@@ -133,7 +144,8 @@ export default function MerryPicks({
               메르's Pick
             </CardTitle>
             <Badge variant="outline" className="text-xs">
-              최신 언급일 기준 랭킹
+              감정 기준 랭킹 (긍정 우선)
+              {lastUpdateTime && ` • ${lastUpdateTime} 업데이트`}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -153,7 +165,7 @@ export default function MerryPicks({
             size: "md"
           }}
           errorConfig={{
-            error: loading.error || undefined,
+            ...(loading.error && { error: loading.error }),
             canRetry: loading.canRetry,
             onRetry: () => {
               loading.retry();

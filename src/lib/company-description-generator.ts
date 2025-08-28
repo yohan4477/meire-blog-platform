@@ -41,7 +41,7 @@ export class CompanyDescriptionGenerator {
         mms.mentioned_date,
         mms.mention_type
       FROM merry_mentioned_stocks mms
-      JOIN blog_posts bp ON mms.post_id = bp.id
+      JOIN blog_posts bp ON mms.log_no = bp.id
       WHERE mms.ticker = ?
       ORDER BY mms.mentioned_date DESC
       LIMIT 10

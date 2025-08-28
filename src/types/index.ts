@@ -42,7 +42,7 @@ export interface MerryTag {
 
 export interface MerryComment {
   id: number;
-  post_id: number;
+  log_no: number;
   author_name: string;
   author_email?: string;
   content: string;
@@ -54,7 +54,7 @@ export interface MerryComment {
 
 export interface MerryLike {
   id: number;
-  post_id: number;
+  log_no: number;
   user_ip: string;
   user_agent?: string;
   created_at: string;

@@ -32,6 +32,7 @@ export interface LogEntry {
 
 // 로그 컨텍스트
 export interface LogContext {
+  requestId?: string;
   method?: string;
   url?: string;
   userAgent?: string;
@@ -182,7 +183,7 @@ export class RemoteTransport implements LogTransport {
     flushInterval?: number;
   }) {
     this.endpoint = config.endpoint;
-    this.apiKey = config.apiKey;
+    if (config.apiKey !== undefined) this.apiKey = config.apiKey;
     this.level = config.level || LogLevel.INFO;
     this.batchSize = config.batchSize || 100;
     this.flushInterval = config.flushInterval || 30000; // 30초
@@ -479,10 +480,11 @@ export class AdvancedLogger {
       name,
       type,
       value,
-      timestamp: new Date().toISOString(),
-      labels,
-      unit,
+      timestamp: new Date().toISOString()
     };
+    
+    if (labels !== undefined) metric.labels = labels;
+    if (unit !== undefined) metric.unit = unit;
 
     const existingMetrics = this.metrics.get(name) || [];
     existingMetrics.push(metric);
@@ -620,11 +622,12 @@ export class AdvancedLogger {
       timestamp: new Date().toISOString(),
       level,
       message,
-      component,
-      metadata,
-      stack,
-      context: this.getCurrentContext(),
+      context: this.getCurrentContext()
     };
+    
+    if (component !== undefined) entry.component = component;
+    if (metadata !== undefined) entry.metadata = metadata;
+    if (stack !== undefined) entry.stack = stack;
 
     // 모든 전송에 로그 전송
     this.transports.forEach(transport => {
@@ -719,25 +722,33 @@ export function createLoggingMiddleware() {
     });
 
     // 요청 로깅
-    logger.logHTTPRequest({
+    const httpRequest: any = {
       method: req.method,
-      url: req.url,
-      userAgent: req.headers?.['user-agent'],
-      ip: req.ip || req.connection?.remoteAddress,
-      userId: req.user?.id,
-      requestSize: req.headers?.['content-length'] ? parseInt(req.headers['content-length'], 10) : undefined,
-    });
+      url: req.url
+    };
+    
+    if (req.headers?.['user-agent']) httpRequest.userAgent = req.headers['user-agent'];
+    if (req.ip || req.connection?.remoteAddress) httpRequest.ip = req.ip || req.connection?.remoteAddress;
+    if (req.user?.id) httpRequest.userId = req.user.id;
+    if (req.headers?.['content-length']) httpRequest.requestSize = parseInt(req.headers['content-length'], 10);
+    
+    logger.logHTTPRequest(httpRequest);
 
     // 응답 완료 시 로깅
     res.on('finish', () => {
       const duration = Date.now() - startTime;
       
-      logger.logHTTPResponse({
+      const httpResponse: any = {
         statusCode: res.statusCode,
         duration,
-        requestId,
-        responseSize: res.get?.('content-length') ? parseInt(res.get('content-length'), 10) : undefined,
-      });
+        requestId
+      };
+      
+      if (res.get?.('content-length')) {
+        httpResponse.responseSize = parseInt(res.get('content-length'), 10);
+      }
+      
+      logger.logHTTPResponse(httpResponse);
 
       // 컨텍스트 제거
       logger.popContext();
@@ -790,12 +801,17 @@ if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
   logger.addTransport(new FileTransport('/var/log/app.log', LogLevel.INFO));
   
   // 원격 로그 서비스 설정 (환경 변수 기반)
-  if (process.env.LOG_ENDPOINT) {
-    logger.addTransport(new RemoteTransport({
-      endpoint: process.env.LOG_ENDPOINT,
-      apiKey: process.env.LOG_API_KEY,
-      level: LogLevel.WARN, // 원격으로는 중요한 로그만
-    }));
+  if (process.env['LOG_ENDPOINT']) {
+    const transportConfig: any = {
+      endpoint: process.env['LOG_ENDPOINT'],
+      level: LogLevel.WARN // 원격으로는 중요한 로그만
+    };
+    
+    if (process.env['LOG_API_KEY']) {
+      transportConfig.apiKey = process.env['LOG_API_KEY'];
+    }
+    
+    logger.addTransport(new RemoteTransport(transportConfig));
   }
 }
 

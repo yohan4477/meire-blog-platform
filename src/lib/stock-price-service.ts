@@ -18,7 +18,7 @@ class AlphaVantageProvider implements StockDataProvider {
   private lastCallTime = 0;
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.ALPHA_VANTAGE_API_KEY || 'demo';
+    this.apiKey = apiKey || process.env['ALPHA_VANTAGE_API_KEY'] || 'demo';
   }
 
   async getQuote(symbol: string): Promise<StockQuote | null> {
@@ -94,7 +94,7 @@ class IEXCloudProvider implements StockDataProvider {
   private baseUrl = 'https://cloud.iexapis.com/stable';
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.IEX_CLOUD_API_KEY || '';
+    this.apiKey = apiKey || process.env['IEX_CLOUD_API_KEY'] || '';
   }
 
   async getQuote(symbol: string): Promise<StockQuote | null> {
@@ -402,7 +402,7 @@ export class StockPriceService {
       // 주식 ID 가져오기
       const stocks = await query<{ id: number }>('SELECT id FROM stocks WHERE symbol = ?', [symbol]);
       
-      if (stocks.length === 0) {
+      if (stocks.length === 0 || !stocks[0]) {
         console.warn(`Stock not found in database: ${symbol}`);
         return;
       }

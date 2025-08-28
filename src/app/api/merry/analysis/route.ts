@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMerryInsightAI, CausalChain } from '@/lib/merry-insight-ai';
-import { query } from '@/lib/database';
 
 /**
  * 메르 논리체인 분석 API
  * GET: 기존 분석 결과 조회
  * POST: 새로운 포스트 분석
+ * 
+ * 현재 상태: AI 인사이트 시스템 재구축 예정
  */
 
 export async function GET(request: NextRequest) {
@@ -14,18 +14,15 @@ export async function GET(request: NextRequest) {
     const logNo = searchParams.get('logNo');
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    const merryAI = getMerryInsightAI();
-    const chains = await merryAI.getCausalChains(
-      logNo || undefined, 
-      limit
-    );
+    // 임시 스텁: AI 인사이트 시스템 재구축 예정
+    const chains: any[] = [];
 
     return NextResponse.json({
       success: true,
       data: {
         chains,
         total: chains.length,
-        message: `${chains.length}개의 논리체인을 찾았습니다.`
+        message: `AI 인사이트 시스템이 재구축 예정입니다.`
       }
     });
 
@@ -50,181 +47,18 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 1. 포스트 정보 가져오기
-    const posts = await query<{
-      id: number;
-      title: string;
-      content: string;
-      excerpt: string;
-    }>('SELECT id, log_no, title, content, excerpt FROM blog_posts WHERE log_no = ?', [logNo]);
-
-    if (posts.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: '포스트를 찾을 수 없습니다.'
-      }, { status: 404 });
-    }
-
-    const post = posts[0];
-    
-    if (!post) {
-      return NextResponse.json({
-        success: false,
-        error: '포스트를 찾을 수 없습니다.',
-        data: null
-      }, { status: 404 });
-    }
-
-    // 2. 기존 분석이 있는지 확인
-    if (!forceReAnalysis) {
-      const existingChains = await query<{id: number}>(
-        'SELECT id FROM causal_chains WHERE source_log_no = ?', 
-        [logNo]
-      );
-
-      if (existingChains.length > 0) {
-        return NextResponse.json({
-          success: true,
-          data: {
-            message: '이미 분석된 포스트입니다.',
-            existing: true,
-            chainCount: existingChains.length
-          }
-        });
-      }
-    }
-
-    // 3. 논리체인 추출 실행
-    console.log(`🧠 [API] 포스트 ${logNo} 논리체인 분석 시작`);
-    
-    const merryAI = getMerryInsightAI();
-    const causalChain = await merryAI.extractCausalChain(
-      logNo, 
-      post.content || post.excerpt, 
-      post.title
-    );
-
-    if (!causalChain) {
-      return NextResponse.json({
-        success: false,
-        error: '이 포스트에서 의미있는 논리체인을 찾을 수 없습니다.',
-        data: {
-          analyzed: true,
-          chainFound: false
-        }
-      });
-    }
-
-    console.log(`✅ [API] 포스트 ${logNo} 논리체인 분석 완료`);
-
+    // 임시 스텁: AI 인사이트 시스템 재구축 예정
     return NextResponse.json({
-      success: true,
-      data: {
-        chain: causalChain,
-        message: `논리체인 추출 완료: ${causalChain.steps.length}단계, 신뢰도 ${causalChain.confidence_score}`,
-        analyzed: true,
-        chainFound: true
-      }
-    });
+      success: false,
+      error: 'AI 인사이트 분석 시스템이 재구축 예정입니다.',
+      data: { message: '새로운 크롤링 시스템 구축 후 지원 예정' }
+    }, { status: 501 }); // Not Implemented
 
   } catch (error) {
     console.error('논리체인 분석 실패:', error);
     return NextResponse.json({
       success: false,
-      error: '논리체인 분석에 실패했습니다.',
-      details: error instanceof Error ? error.message : String(error)
-    }, { status: 500 });
-  }
-}
-
-// PUT: 논리체인 업데이트
-export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { chainId, updates } = body;
-
-    if (!chainId || !updates) {
-      return NextResponse.json({
-        success: false,
-        error: 'chainId와 updates가 필요합니다.'
-      }, { status: 400 });
-    }
-
-    // 허용된 업데이트 필드들
-    const allowedFields = ['confidence_score', 'prediction_horizon', 'investment_thesis'];
-    const updateFields = [];
-    const updateValues = [];
-
-    for (const [field, value] of Object.entries(updates)) {
-      if (allowedFields.includes(field)) {
-        updateFields.push(`${field} = ?`);
-        updateValues.push(value);
-      }
-    }
-
-    if (updateFields.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: '업데이트할 유효한 필드가 없습니다.'
-      }, { status: 400 });
-    }
-
-    updateValues.push(chainId);
-
-    await query(
-      `UPDATE causal_chains SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      updateValues
-    );
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        message: '논리체인이 업데이트되었습니다.',
-        updatedFields: Object.keys(updates).filter(f => allowedFields.includes(f))
-      }
-    });
-
-  } catch (error) {
-    console.error('논리체인 업데이트 실패:', error);
-    return NextResponse.json({
-      success: false,
-      error: '논리체인 업데이트에 실패했습니다.'
-    }, { status: 500 });
-  }
-}
-
-// DELETE: 논리체인 삭제
-export async function DELETE(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const chainId = searchParams.get('chainId');
-
-    if (!chainId) {
-      return NextResponse.json({
-        success: false,
-        error: 'chainId가 필요합니다.'
-      }, { status: 400 });
-    }
-
-    // CASCADE 삭제로 관련 단계와 연관성도 자동 삭제됨
-    const result = await query(
-      'DELETE FROM causal_chains WHERE id = ?',
-      [parseInt(chainId)]
-    );
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        message: '논리체인이 삭제되었습니다.',
-        deletedChainId: chainId
-      }
-    });
-
-  } catch (error) {
-    console.error('논리체인 삭제 실패:', error);
-    return NextResponse.json({
-      success: false,
-      error: '논리체인 삭제에 실패했습니다.'
+      error: '논리체인 분석에 실패했습니다.'
     }, { status: 500 });
   }
 }

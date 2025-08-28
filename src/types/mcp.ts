@@ -232,10 +232,18 @@ export interface MCPClient {
 // MCP 클라이언트 싱글톤
 class MCPClientImpl implements MCPClient {
   memory = {
-    createEntities: mcp__memory__create_entities,
-    addObservations: mcp__memory__add_observations,
-    searchNodes: mcp__memory__search_nodes,
-    createRelations: mcp__memory__create_relations
+    createEntities: async (entities: MCPEntity[]) => {
+      return await mcp__memory__create_entities({ entities });
+    },
+    addObservations: async (observations: MCPObservation[]) => {
+      return await mcp__memory__add_observations({ observations });
+    },
+    searchNodes: async (query: string) => {
+      return await mcp__memory__search_nodes({ query });
+    },
+    createRelations: async (relations: MCPRelation[]) => {
+      return await mcp__memory__create_relations({ relations });
+    }
   };
   
   fetch = {

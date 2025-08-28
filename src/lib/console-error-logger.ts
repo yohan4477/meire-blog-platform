@@ -155,7 +155,7 @@ class ConsoleErrorLogger {
 
       const errorData = this.buildErrorData(message, {
         level,
-        stack: args.find(arg => arg instanceof Error)?.stack
+        stack: args.find(arg => arg instanceof Error)?.stack || ''
       });
 
       this.processError(errorData);
@@ -189,7 +189,7 @@ class ConsoleErrorLogger {
     
     const errorData = this.buildErrorData(`Unhandled Promise Rejection: ${message}`, {
       level: 'error',
-      stack: reason instanceof Error ? reason.stack : undefined
+      stack: reason instanceof Error ? reason.stack || '' : ''
     });
     
     this.processError(errorData);
@@ -227,10 +227,10 @@ class ConsoleErrorLogger {
     
     return {
       message: message.substring(0, 1000), // 메시지 길이 제한
-      source: options.source,
-      lineno: options.lineno,
-      colno: options.colno,
-      stack: options.stack,
+      source: options.source || '',
+      lineno: options.lineno || 0,
+      colno: options.colno || 0,
+      stack: options.stack || '',
       timestamp: new Date().toISOString(),
       url: window.location.href,
       userAgent: navigator.userAgent,
@@ -267,13 +267,13 @@ class ConsoleErrorLogger {
     // React 컴포넌트명 추출
     const componentMatch = stack.match(/at\s+([A-Z][a-zA-Z0-9]*)\s+/);
     if (componentMatch) {
-      return componentMatch[1];
+      return componentMatch[1] || 'Unknown';
     }
     
     // 파일명에서 컴포넌트 추측
     const fileMatch = stack.match(/\/([A-Z][a-zA-Z0-9]*)\.[jt]sx?:/);
     if (fileMatch) {
-      return fileMatch[1];
+      return fileMatch[1] || 'Unknown';
     }
     
     return 'Unknown';
@@ -319,7 +319,7 @@ class ConsoleErrorLogger {
     // 큐 크기 관리
     if (this.errorQueue.size > this.maxQueueSize) {
       const firstKey = this.errorQueue.values().next().value;
-      this.errorQueue.delete(firstKey);
+      if (firstKey) this.errorQueue.delete(firstKey);
     }
     
     // Debounce 후 제거
@@ -424,8 +424,8 @@ class ConsoleErrorLogger {
   public destroy(): void {
     if (!this.isInitialized) return;
     
-    console.error = this.originalConsoleError;
-    console.warn = this.originalConsoleWarn;
+    console.error = this.originalConsoleError as any;
+    console.warn = this.originalConsoleWarn as any;
     
     // 이벤트 리스너는 컴포넌트 언마운트 시 자동 정리됨
     this.isInitialized = false;

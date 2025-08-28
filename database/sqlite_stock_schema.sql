@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS stock_daily_prices (
 -- 메르 글-종목 언급 매핑 테이블
 CREATE TABLE IF NOT EXISTS merry_post_stock_mentions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  post_id INTEGER NOT NULL, -- 포스트 ID
+  log_no INTEGER NOT NULL, -- 포스트 ID
   ticker VARCHAR(20) NOT NULL, -- 종목 코드
   mention_sentiment VARCHAR(10) DEFAULT 'neutral', -- 언급 감정 (positive, negative, neutral)
   mention_context TEXT, -- 언급 맥락 (메르 글에서 해당 종목이 언급된 문단)
@@ -52,7 +52,7 @@ CREATE INDEX IF NOT EXISTS idx_last_mentioned ON merry_mentioned_stocks(last_men
 CREATE INDEX IF NOT EXISTS idx_ticker_date ON stock_daily_prices(ticker, trade_date);
 CREATE INDEX IF NOT EXISTS idx_trade_date ON stock_daily_prices(trade_date);
 
-CREATE INDEX IF NOT EXISTS idx_post_mentions_post_id ON merry_post_stock_mentions(post_id);
+CREATE INDEX IF NOT EXISTS idx_post_mentions_log_no ON merry_post_stock_mentions(log_no);
 CREATE INDEX IF NOT EXISTS idx_post_mentions_ticker ON merry_post_stock_mentions(ticker);
 CREATE INDEX IF NOT EXISTS idx_post_mentions_sentiment ON merry_post_stock_mentions(mention_sentiment);
 

@@ -42,14 +42,14 @@ CREATE TABLE IF NOT EXISTS stock_daily_prices (
 -- 메르 글-종목 언급 매핑 테이블
 CREATE TABLE IF NOT EXISTS merry_post_stock_mentions (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  post_id INT NOT NULL COMMENT '포스트 ID',
+  log_no INT NOT NULL COMMENT '포스트 ID',
   ticker VARCHAR(20) NOT NULL COMMENT '종목 코드',
   mention_sentiment ENUM('positive', 'negative', 'neutral') DEFAULT 'neutral' COMMENT '언급 감정',
   mention_context TEXT COMMENT '언급 맥락 (메르 글에서 해당 종목이 언급된 문단)',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (log_no) REFERENCES posts(id) ON DELETE CASCADE,
   FOREIGN KEY (ticker) REFERENCES merry_mentioned_stocks(ticker) ON DELETE CASCADE,
-  INDEX idx_post_id (post_id),
+  INDEX idx_log_no (log_no),
   INDEX idx_ticker (ticker),
   INDEX idx_sentiment (mention_sentiment)
 ) COMMENT='메르 글에서 종목 언급 상세 정보';
@@ -83,11 +83,11 @@ INSERT INTO merry_mentioned_stocks (ticker, name, market, currency, first_mentio
 ('NVDA', 'NVIDIA Corporation', 'NASDAQ', 'USD', '2024-11-12 13:45:00', '2024-12-28 10:15:00');
 
 -- 샘플 포스트-종목 언급 매핑
-INSERT INTO merry_post_stock_mentions (post_id, ticker, mention_sentiment, mention_context) 
+INSERT INTO merry_post_stock_mentions (log_no, ticker, mention_sentiment, mention_context) 
 SELECT p.id, 'AAPL', 'positive', '애플의 최신 AI 기능이 인상적이다. 장기적으로 성장 가능성이 높다고 본다.'
 FROM posts p WHERE p.title LIKE '%투자에 대한 메르의 생각%' AND p.blog_type = 'merry';
 
-INSERT INTO merry_post_stock_mentions (post_id, ticker, mention_sentiment, mention_context)
+INSERT INTO merry_post_stock_mentions (log_no, ticker, mention_sentiment, mention_context)
 SELECT p.id, 'TSLA', 'neutral', '테슬라의 자율주행 기술은 혁신적이지만 아직 상용화까지는 시간이 필요해 보인다.'
 FROM posts p WHERE p.title LIKE '%투자에 대한 메르의 생각%' AND p.blog_type = 'merry';
 

@@ -44,7 +44,7 @@ export async function GET(
         m.mention_type,
         
         -- 실제 포스트 정보
-        b.id as post_id,
+        b.id as log_no,
         b.title,
         b.excerpt,
         b.views,
@@ -55,7 +55,7 @@ export async function GET(
         DATE(m.mentioned_date) as date_key
         
       FROM merry_mentioned_stocks m
-      LEFT JOIN blog_posts b ON m.post_id = b.id
+      LEFT JOIN blog_posts b ON m.log_no = b.id
       WHERE m.ticker = ?
         AND m.mentioned_date >= ?
         AND m.mentioned_date <= ?
@@ -84,8 +84,8 @@ export async function GET(
     // 데이터 가공
     const posts = results.map(row => ({
       // 기본 포스트 정보
-      id: row.post_id || row.mention_id,
-      title: row.title || `메르 포스트 #${row.post_id} - ${ticker} 언급`,
+      id: row.log_no || row.mention_id,
+      title: row.title || `메르 포스트 #${row.log_no} - ${ticker} 언급`,
       excerpt: row.excerpt || row.mention_context || `${ticker} 관련 메르 포스트`,
       views: row.views || 0,
       category: row.category || '투자분석',

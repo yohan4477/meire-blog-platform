@@ -126,7 +126,7 @@ export async function getRealStockMentions(limit: number = 10): Promise<any[]> {
         
         SELECT 
           '267250' as ticker,
-          'HD현대' as company_name,
+          'HD현대중공업' as company_name,
           created_date
         FROM blog_posts 
         WHERE (content LIKE '%HD현대%' OR content LIKE '%267250%' OR content LIKE '%현대중공업%' OR title LIKE '%HD현대%' OR title LIKE '%267250%')

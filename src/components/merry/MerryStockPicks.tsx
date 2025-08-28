@@ -46,8 +46,8 @@ export default function MerryStockPicks() {
     try {
       console.log('📊 1단계: 메르스 픽 기본 정보 로딩 시작...');
       
-      // 1단계: 기본 정보만 먼저 로드 (빠른 렌더링)
-      const basicResponse = await fetch(`/api/merry/stocks?limit=5&pricesOnly=false`, {
+      // 1단계: 메르's Pick 감정 랭킹 로드 (빠른 렌더링)
+      const basicResponse = await fetch(`/api/merry/picks?limit=5&t=${Date.now()}`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
@@ -59,54 +59,36 @@ export default function MerryStockPicks() {
       }
       
       const basicData = await basicResponse.json();
-      console.log('📊 1단계 완료:', basicData.data?.stocks?.length, '개 종목');
+      console.log('📊 1단계 완료:', basicData.data?.picks?.length, '개 메르\'s Pick (감정 랭킹)');
+      console.log('🔄 감정 랭킹 순서:', basicData.data?.picks?.map((p: any, i: number) => 
+        `${i+1}. ${p.name}(${p.ticker}) - 감정: ${p.sentiment}(${p.sentiment_score?.toFixed(2)})`
+      ).join(', '));
       
-      if (basicData.success && basicData.data && basicData.data.stocks) {
-        // 1단계 데이터로 즉시 화면 렌더링 (가격 정보 없음)
-        setStocks(basicData.data.stocks.map((stock: any) => ({
+      if (basicData.success && basicData.data && basicData.data.picks) {
+        // 1단계 데이터로 즉시 화면 렌더링 (감정 기반 랭킹 적용)
+        setStocks(basicData.data.picks.map((stock: any) => ({
           ...stock,
-          currentPrice: null,
-          priceChange: null
+          company_name: stock.name, // API 구조 매핑
+          mention_count: stock.mention_count || 0,
+          analyzed_count: stock.analyzed_count || 0,
+          last_mentioned_at: stock.last_mentioned_at,
+          sentiment: stock.sentiment,
+          description: stock.description || '',
+          currentPrice: stock.current_price || null,
+          priceChange: stock.price_change || null,
+          currency: stock.currency || 'USD'
         })));
-        setLoading(false); // 기본 정보 로딩 완료
-        
-        // 2단계: 가격 정보 추가 로딩 (백그라운드)
-        console.log('📊 2단계: 가격 정보 로딩 시작...');
-        setPricesLoading(true);
-        
-        try {
-          const pricesResponse = await fetch(`/api/merry/stocks?limit=5&pricesOnly=true`, {
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (pricesResponse.ok) {
-            const pricesData = await pricesResponse.json();
-            console.log('📊 2단계 완료: 가격 정보 업데이트');
-            
-            if (pricesData.success && pricesData.data && pricesData.data.stocks) {
-              // 기존 데이터에 가격 정보만 업데이트
-              setStocks(prevStocks => 
-                prevStocks.map(stock => {
-                  const updatedStock = pricesData.data.stocks.find((s: any) => s.ticker === stock.ticker);
-                  return updatedStock ? { ...stock, ...updatedStock } : stock;
-                })
-              );
-            }
-          } else {
-            console.warn('📊 가격 정보 로딩 실패, 기본 정보만 표시');
-          }
-        } catch (priceError) {
-          console.warn('📊 가격 정보 로딩 에러:', priceError);
-        } finally {
-          setPricesLoading(false);
-        }
+        setLoading(false); // 메르's Pick 감정 랭킹 로딩 완료
+        console.log('✅ 메르\'s Pick 감정 랭킹 로딩 완료!');
         
       } else {
-        console.error('📊 종목 데이터 구조 오류:', basicData);
-        setError('종목 데이터를 불러올 수 없습니다.');
+        console.error('📊 메르\'s Pick 데이터 구조 문제:', {
+          success: basicData.success,
+          hasData: !!basicData.data,
+          hasPicks: !!basicData.data?.picks,
+          picksLength: basicData.data?.picks?.length || 0
+        });
+        setError('메르\'s Pick 데이터를 불러올 수 없습니다.');
         setLoading(false);
       }
     } catch (err) {
@@ -263,7 +245,7 @@ export default function MerryStockPicks() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          (최신 언급일 순, 같은 날짜는 언급 적은 순)
+          (감정 점수 기준 랭킹 - 긍정적 감정이 높을수록 상위 노출)
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -326,8 +308,16 @@ export default function MerryStockPicks() {
                           {stock.currency === 'USD' ? '$' : '₩'}{stock.currentPrice?.toLocaleString()}
                         </span>
                         {stock.priceChange && (
-                          <span className={`text-xs flex-shrink-0 ${stock.priceChange?.startsWith('+') ? 'text-green-500' : stock.priceChange?.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
-                            {stock.priceChange}
+                          <span className={`text-xs flex-shrink-0 ${
+                            typeof stock.priceChange === 'number' ? 
+                              (stock.priceChange > 0 ? 'text-green-500' : stock.priceChange < 0 ? 'text-red-500' : 'text-gray-500') :
+                              (typeof stock.priceChange === 'string' && stock.priceChange.startsWith('+') ? 'text-green-500' : 
+                               typeof stock.priceChange === 'string' && stock.priceChange.startsWith('-') ? 'text-red-500' : 'text-gray-500')
+                          }`}>
+                            {typeof stock.priceChange === 'number' ? 
+                              (stock.priceChange > 0 ? `+${stock.priceChange}` : stock.priceChange.toString()) :
+                              stock.priceChange
+                            }
                           </span>
                         )}
                       </>
@@ -342,9 +332,9 @@ export default function MerryStockPicks() {
                     <span className="truncate">
                       언급 {stock.mention_count}개 · 분석 {stock.analyzed_count}개
                       {/* 실제 언급 수 정보 표시 (개발 환경에서만) */}
-                      {process.env.NODE_ENV === 'development' && stock.actual_mention_count !== undefined && (
-                        <span className="ml-1 text-gray-400 text-xs" title={`실제 블로그 포스트에서 언급된 횟수: ${stock.actual_mention_count}`}>
-                          (실제: {stock.actual_mention_count})
+                      {process.env.NODE_ENV === 'development' && (stock as any).actual_mention_count !== undefined && (
+                        <span className="ml-1 text-gray-400 text-xs" title={`실제 블로그 포스트에서 언급된 횟수: ${(stock as any).actual_mention_count}`}>
+                          (실제: {(stock as any).actual_mention_count})
                         </span>
                       )}
                     </span>

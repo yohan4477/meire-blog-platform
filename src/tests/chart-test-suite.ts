@@ -130,7 +130,7 @@ export class ChartTestSuite {
       if (!historical.length || historical.length < 10) {
         throw new Error('충분한 과거 데이터 없음');
       }
-      return `${historical.length}개 데이터 포인트, 기간: ${historical[0].date} ~ ${historical[historical.length-1].date}`;
+      return `${historical.length}개 데이터 포인트, 기간: ${(historical[0] || {}).date || 'N/A'} ~ ${(historical[historical.length-1] || {}).date || 'N/A'}`;
     }));
 
     return this.createTestSuite('Stock Price API Tests', tests, startTime);
@@ -171,7 +171,7 @@ export class ChartTestSuite {
         await this.stockService.getStockPrice('INVALID_TICKER');
         throw new Error('잘못된 티커에 대한 에러 처리 실패');
       } catch (error) {
-        if (error.message.includes('잘못된 티커')) {
+        if (error instanceof Error && error.message.includes('잘못된 티커')) {
           throw error;
         }
         return '에러 정상 처리됨';
@@ -238,7 +238,9 @@ export class ChartTestSuite {
       let gains = 0, losses = 0;
       
       for (let i = 1; i < last14.length; i++) {
-        const change = last14[i].price - last14[i-1].price;
+        const current = last14[i] || { price: 0 };
+        const previous = last14[i-1] || { price: 0 };
+        const change = current.price - previous.price;
         if (change > 0) gains += change;
         else losses -= change;
       }
@@ -335,7 +337,7 @@ export class ChartTestSuite {
           results.push(result.price.price);
           await new Promise(resolve => setTimeout(resolve, 200));
         } catch (error) {
-          throw new Error(`${i+1}번째 요청 실패: ${error.message}`);
+          throw new Error(`${i+1}번째 요청 실패: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
       return `${results.length}개 연속 요청 성공`;
@@ -413,7 +415,8 @@ export class ChartTestSuite {
         await this.stockService.getStockPrice('');
         throw new Error('빈 티커에 대한 에러 처리 누락');
       } catch (error) {
-        if (!error.message || error.message.length < 10) {
+        const message = error instanceof Error ? error.message : '';
+        if (!message || message.length < 10) {
           throw new Error('에러 메시지가 너무 짧음');
         }
         return '에러 메시지 품질 양호';
@@ -436,7 +439,7 @@ export class ChartTestSuite {
         await this.stockService.getStockPrice('INVALID_TICKER_123');
         throw new Error('잘못된 티커에 대한 에러 처리 실패');
       } catch (error) {
-        if (error.message.includes('에러 처리 실패')) {
+        if (error instanceof Error && error.message.includes('에러 처리 실패')) {
           throw error;
         }
         return '에러 정상 처리됨';
@@ -488,7 +491,7 @@ export class ChartTestSuite {
         name,
         status: 'failed',
         duration,
-        message: error.message || '알 수 없는 오류',
+        message: error instanceof Error ? error.message : '알 수 없는 오류',
         details: error
       };
     }

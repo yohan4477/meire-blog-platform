@@ -9,9 +9,9 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const postId = parseInt(id);
+    const logNo = parseInt(id);
 
-    if (isNaN(postId)) {
+    if (isNaN(logNo)) {
       return NextResponse.json({
         success: false,
         error: {
@@ -99,10 +99,10 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 export async function PUT(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const postId = parseInt(id);
+    const logNo = parseInt(id);
     const body = await request.json();
 
-    if (isNaN(postId)) {
+    if (isNaN(logNo)) {
       return NextResponse.json({
         success: false,
         error: {
@@ -141,7 +141,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams): Promis
 
     if (updateFields.length > 0) {
       updateFields.push('updated_at = NOW()');
-      updateValues.push(postId);
+      updateValues.push(logNo);
 
       await query(`
         UPDATE posts SET ${updateFields.join(', ')}
@@ -152,7 +152,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams): Promis
     // 태그 업데이트
     if (Array.isArray(tags)) {
       // 기존 태그 관계 삭제
-      await query('DELETE FROM merry_post_tags WHERE post_id = ?', [postId]);
+      await query('DELETE FROM merry_post_tags WHERE post_id = ?', [logNo]);
 
       // 새 태그 추가
       if (tags.length > 0) {
@@ -165,14 +165,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams): Promis
         `, tags);
 
         for (const { id: tagId } of tagIds) {
-          await query('INSERT INTO merry_post_tags (post_id, tag_id) VALUES (?, ?)', [postId, tagId]);
+          await query('INSERT INTO merry_post_tags (post_id, tag_id) VALUES (?, ?)', [logNo, tagId]);
         }
       }
     }
 
     return NextResponse.json({
       success: true,
-      data: { id: postId, message: '메르 블로그 포스트가 업데이트되었습니다' }
+      data: { id: logNo, message: '메르 블로그 포스트가 업데이트되었습니다' }
     });
 
   } catch (error) {
@@ -191,9 +191,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams): Promis
 export async function DELETE(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const postId = parseInt(id);
+    const logNo = parseInt(id);
 
-    if (isNaN(postId)) {
+    if (isNaN(logNo)) {
       return NextResponse.json({
         success: false,
         error: {
@@ -207,7 +207,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams): Pro
     // 포스트 삭제 (CASCADE로 관련 데이터도 자동 삭제)
     const result = await query(
       'DELETE FROM posts WHERE id = ? AND blog_type = \'merry\'',
-      [postId]
+      [logNo]
     );
 
     if ((result as any).affectedRows === 0) {

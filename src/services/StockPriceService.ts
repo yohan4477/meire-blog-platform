@@ -487,8 +487,8 @@ export class StockPriceService {
             currency: this.isKoreanStock(ticker) ? 'KRW' : 'USD'
           };
         })
-        .filter((item): item is HistoricalPrice => item !== null)
-        .sort((a, b) => a.timestamp - b.timestamp);
+        .filter((item: any): item is HistoricalPrice => item !== null)
+        .sort((a: HistoricalPrice, b: HistoricalPrice) => a.timestamp - b.timestamp);
 
       // 캐시 저장 (과거 데이터는 더 오래 캐시)
       this.cache.set(cacheKey, {

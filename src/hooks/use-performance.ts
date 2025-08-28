@@ -71,17 +71,17 @@ export function usePerformance() {
 
   // Measure Core Web Vitals
   useEffect(() => {
-    if (!isSupported) return;
+    if (!isSupported) return undefined;
 
     // Initialize basic navigation metrics
     const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     if (navigation) {
       setMetrics(prev => ({
         ...prev,
-        navigationStart: navigation.loadEventStart - navigation.navigationStart,
-        domContentLoaded: navigation.domContentLoadedEventEnd - navigation.navigationStart,
-        loadComplete: navigation.loadEventEnd - navigation.navigationStart,
-        ttfb: navigation.responseStart - navigation.navigationStart,
+        navigationStart: navigation.loadEventStart - (navigation as any).navigationStart,
+        domContentLoaded: navigation.domContentLoadedEventEnd - (navigation as any).navigationStart,
+        loadComplete: navigation.loadEventEnd - (navigation as any).navigationStart,
+        ttfb: navigation.responseStart - (navigation as any).navigationStart,
       }));
     }
 
@@ -144,6 +144,8 @@ export function usePerformance() {
         clsObserver.disconnect();
       };
     }
+    
+    return undefined;
   }, [isSupported]);
 
   // Monitor memory usage
@@ -157,7 +159,7 @@ export function usePerformance() {
         const memInfo = performance.memory;
         setMetrics(prev => ({
           ...prev,
-          memoryUsage: memInfo.usedJSHeapSize / (1024 * 1024), // Convert to MB
+          memoryUsage: (memInfo as any).usedJSHeapSize / (1024 * 1024), // Convert to MB
         }));
       }
     };
@@ -174,16 +176,17 @@ export function usePerformance() {
       // @ts-ignore
       const connection = navigator.connection;
       if (connection) {
-        setMetrics(prev => ({ ...prev, connectionType: connection.effectiveType }));
+        setMetrics(prev => ({ ...prev, connectionType: (connection as any).effectiveType }));
         
         const updateConnection = () => {
-          setMetrics(prev => ({ ...prev, connectionType: connection.effectiveType }));
+          setMetrics(prev => ({ ...prev, connectionType: (connection as any).effectiveType }));
         };
 
-        connection.addEventListener('change', updateConnection);
-        return () => connection.removeEventListener('change', updateConnection);
+        (connection as any).addEventListener('change', updateConnection);
+        return () => (connection as any).removeEventListener('change', updateConnection);
       }
     }
+    return undefined;
   }, []);
 
   // Monitor React Query performance
@@ -197,7 +200,7 @@ export function usePerformance() {
       
       // Calculate average query time (simplified)
       const totalTime = queries.reduce((acc, query) => {
-        const fetchTime = query.state.dataUpdatedAt - query.state.dataUpatedAt;
+        const fetchTime = query.state.dataUpdatedAt - (query.state as any).dataFetchedAt;
         return acc + (fetchTime > 0 ? fetchTime : 0);
       }, 0);
       

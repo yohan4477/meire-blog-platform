@@ -342,10 +342,10 @@ export class MemoryMCPClient extends MCPClient {
     
     // 결과를 분석하여 투자 관련 인사이트 추출
     const insights = {
-      relevantStocks: [],
-      marketTrends: [],
-      riskFactors: [],
-      opportunities: []
+      relevantStocks: [] as any[],
+      marketTrends: [] as any[],
+      riskFactors: [] as any[],
+      opportunities: [] as any[]
     };
 
     // 간단한 키워드 기반 분류
@@ -661,9 +661,9 @@ let mcpManagerInstance: MCPManager | null = null;
 export function getMCPManager(): MCPManager {
   if (!mcpManagerInstance) {
     mcpManagerInstance = new MCPManager(
-      process.env.MCP_FETCH_URL,
-      process.env.MCP_MEMORY_URL,
-      process.env.MCP_TIME_URL
+      process.env['MCP_FETCH_URL'],
+      process.env['MCP_MEMORY_URL'],
+      process.env['MCP_TIME_URL']
     );
   }
   return mcpManagerInstance;

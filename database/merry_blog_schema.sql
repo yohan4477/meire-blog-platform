@@ -38,20 +38,20 @@ CREATE TABLE IF NOT EXISTS merry_tags (
 -- 메르 블로그 포스트-태그 관계 테이블
 CREATE TABLE IF NOT EXISTS merry_post_tags (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  post_id INT NOT NULL,
+  log_no INT NOT NULL,
   tag_id INT NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (log_no) REFERENCES posts(id) ON DELETE CASCADE,
   FOREIGN KEY (tag_id) REFERENCES merry_tags(id) ON DELETE CASCADE,
-  UNIQUE KEY unique_post_tag (post_id, tag_id),
-  INDEX idx_post_id (post_id),
+  UNIQUE KEY unique_post_tag (log_no, tag_id),
+  INDEX idx_log_no (log_no),
   INDEX idx_tag_id (tag_id)
 ) COMMENT='메르 블로그 포스트-태그 관계';
 
 -- 메르 블로그 댓글 테이블
 CREATE TABLE IF NOT EXISTS merry_comments (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  post_id INT NOT NULL,
+  log_no INT NOT NULL,
   author_name VARCHAR(100) NOT NULL,
   author_email VARCHAR(255),
   content TEXT NOT NULL,
@@ -59,9 +59,9 @@ CREATE TABLE IF NOT EXISTS merry_comments (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_deleted BOOLEAN DEFAULT FALSE,
-  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (log_no) REFERENCES posts(id) ON DELETE CASCADE,
   FOREIGN KEY (parent_id) REFERENCES merry_comments(id) ON DELETE CASCADE,
-  INDEX idx_post_id (post_id),
+  INDEX idx_log_no (log_no),
   INDEX idx_created_at (created_at),
   INDEX idx_parent_id (parent_id)
 ) COMMENT='메르 블로그 댓글';
@@ -69,13 +69,13 @@ CREATE TABLE IF NOT EXISTS merry_comments (
 -- 메르 블로그 좋아요 테이블
 CREATE TABLE IF NOT EXISTS merry_likes (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  post_id INT NOT NULL,
+  log_no INT NOT NULL,
   user_ip VARCHAR(45) NOT NULL COMMENT 'IP 주소로 중복 방지',
   user_agent TEXT COMMENT '브라우저 정보',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-  UNIQUE KEY unique_post_ip (post_id, user_ip),
-  INDEX idx_post_id (post_id),
+  FOREIGN KEY (log_no) REFERENCES posts(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_post_ip (log_no, user_ip),
+  INDEX idx_log_no (log_no),
   INDEX idx_created_at (created_at)
 ) COMMENT='메르 블로그 좋아요';
 
@@ -142,25 +142,25 @@ INSERT INTO merry_tags (name) VALUES
 ('독서'), ('피터린치'), ('투자철학'), ('책리뷰'), ('요리'), ('주말'), ('도전'), ('라이프');
 
 -- 포스트-태그 관계 샘플 데이터
-INSERT INTO merry_post_tags (post_id, tag_id) SELECT 
+INSERT INTO merry_post_tags (log_no, tag_id) SELECT 
   p.id, t.id 
 FROM posts p, merry_tags t 
 WHERE p.blog_type = 'merry' AND p.title = '우리형 메르의 첫 번째 이야기' 
   AND t.name IN ('소개', '첫글', '일상');
 
-INSERT INTO merry_post_tags (post_id, tag_id) SELECT 
+INSERT INTO merry_post_tags (log_no, tag_id) SELECT 
   p.id, t.id 
 FROM posts p, merry_tags t 
 WHERE p.blog_type = 'merry' AND p.title = '투자에 대한 메르의 생각' 
   AND t.name IN ('투자', '시장분석', '개인견해');
 
-INSERT INTO merry_post_tags (post_id, tag_id) SELECT 
+INSERT INTO merry_post_tags (log_no, tag_id) SELECT 
   p.id, t.id 
 FROM posts p, merry_tags t 
 WHERE p.blog_type = 'merry' AND p.title = '메르의 독서 노트 - 피터 린치의 투자 철학' 
   AND t.name IN ('독서', '피터린치', '투자철학', '책리뷰');
 
-INSERT INTO merry_post_tags (post_id, tag_id) SELECT 
+INSERT INTO merry_post_tags (log_no, tag_id) SELECT 
   p.id, t.id 
 FROM posts p, merry_tags t 
 WHERE p.blog_type = 'merry' AND p.title = '메르의 주말 요리 도전기' 

@@ -122,18 +122,21 @@ export async function validateData<T>(
     return { success: true, data: validatedData };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
+      const firstError = (error as any).errors[0];
       return {
         success: false,
         error: firstError.message,
         field: fieldName || firstError.path.join('.')
       };
     }
-    return {
+    const result: any = {
       success: false,
-      error: 'Validation failed',
-      field: fieldName
+      error: 'Validation failed'
     };
+    if (fieldName !== undefined) {
+      result.field = fieldName;
+    }
+    return result;
   }
 }
 
@@ -167,7 +170,7 @@ export function validateQueryParams<T>(
     return { success: true, data: validatedData };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
+      const firstError = (error as any).errors[0];
       return {
         success: false,
         error: firstError.message,

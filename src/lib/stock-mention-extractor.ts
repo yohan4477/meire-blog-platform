@@ -7,7 +7,7 @@ import { query } from './database';
 
 interface StockMention {
   ticker: string;
-  post_id: number;
+  log_no: number;
   mentioned_date: string;
   mention_type: 'analysis' | 'news' | 'opinion' | 'prediction';
   context: string;
@@ -42,10 +42,10 @@ export class StockMentionExtractor {
     },
     {
       ticker: '267250',
-      name: 'HD현대',
+      name: 'HD현대중공업',
       market: 'KOSPI',
       currency: 'KRW',
-      keywords: ['HD현대', '현대중공업', 'HD', '현대']
+      keywords: ['HD현대중공업', '현대중공업', 'HD현대', 'HD', '현대']
     },
     {
       ticker: '010620',
@@ -123,25 +123,25 @@ export class StockMentionExtractor {
   /**
    * 포스트 내용에서 종목 언급 추출
    */
-  async extractMentions(postContent: string, postId: number, postDate: string): Promise<StockMention[]> {
+  async extractMentions(postContent: string, logNo: number, postDate: string): Promise<StockMention[]> {
     const mentions: StockMention[] = [];
     const content = postContent.toLowerCase();
 
-    console.log(`🔍 종목 언급 추출 시작 - Post ID: ${postId}`);
+    console.log(`🔍 종목 언급 추출 시작 - Log No: ${logNo}`);
 
     for (const stock of this.stockMappings) {
       const mentionedKeywords = stock.keywords.filter(keyword => 
         content.includes(keyword.toLowerCase())
       );
 
-      if (mentionedKeywords.length > 0) {
+      if (mentionedKeywords.length > 0 && mentionedKeywords[0]) {
         const context = this.extractContext(postContent, mentionedKeywords[0]);
         const mentionType = this.determineMentionType(context);
         const confidence = this.calculateConfidence(mentionedKeywords, content);
 
         mentions.push({
           ticker: stock.ticker,
-          post_id: postId,
+          log_no: logNo,
           mentioned_date: postDate,
           mention_type: mentionType,
           context: context,
@@ -216,9 +216,9 @@ export class StockMentionExtractor {
         // 1. merry_mentioned_stocks 테이블에 추가
         await query(`
           INSERT OR IGNORE INTO merry_mentioned_stocks 
-          (ticker, post_id, mentioned_date, mention_type, context) 
+          (ticker, log_no, mentioned_date, mention_type, context) 
           VALUES (?, ?, ?, ?, ?)
-        `, [mention.ticker, mention.post_id, mention.mentioned_date, mention.mention_type, mention.context]);
+        `, [mention.ticker, mention.log_no, mention.mentioned_date, mention.mention_type, mention.context]);
 
         // 2. stocks 테이블에 종목이 없으면 추가
         await this.ensureStockExists(mention.ticker);
@@ -294,10 +294,10 @@ export class StockMentionExtractor {
   /**
    * 특정 포스트의 종목 언급 처리 (메인 함수)
    */
-  async processPost(postId: number, title: string, content: string, createdDate: string): Promise<number> {
-    console.log(`🚀 포스트 처리 시작: "${title}" (ID: ${postId})`);
+  async processPost(logNo: number, title: string, content: string, createdDate: string): Promise<number> {
+    console.log(`🚀 포스트 처리 시작: "${title}" (Log No: ${logNo})`);
 
-    const mentions = await this.extractMentions(content, postId, createdDate);
+    const mentions = await this.extractMentions(content, logNo, createdDate);
     
     if (mentions.length > 0) {
       await this.saveMentions(mentions);
@@ -319,8 +319,8 @@ export class StockMentionExtractor {
     const unprocessedPosts = await query(`
       SELECT bp.id, bp.title, bp.content, bp.created_date
       FROM blog_posts bp
-      LEFT JOIN merry_mentioned_stocks mms ON bp.id = mms.post_id
-      WHERE mms.post_id IS NULL
+      LEFT JOIN merry_mentioned_stocks mms ON bp.id = mms.log_no
+      WHERE mms.log_no IS NULL
       ORDER BY bp.created_date DESC
       LIMIT 50
     `);

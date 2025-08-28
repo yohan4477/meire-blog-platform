@@ -123,6 +123,10 @@ export async function getMultipleStockQuotes(symbols: string[]): Promise<StockAp
     for (let i = 0; i < uniqueSymbols.length; i++) {
       const symbol = uniqueSymbols[i];
       
+      if (!symbol) {
+        continue;
+      }
+      
       try {
         const quote = await getStockQuote(symbol);
         if (quote) {
@@ -140,11 +144,16 @@ export async function getMultipleStockQuotes(symbols: string[]): Promise<StockAp
       }
     }
 
-    return {
+    const result: any = {
       success: true,
-      data: quotes,
-      error: errors.length > 0 ? `Some symbols failed: ${errors.join(', ')}` : undefined
+      data: quotes
     };
+    
+    if (errors.length > 0) {
+      result.error = `Some symbols failed: ${errors.join(', ')}`;
+    }
+    
+    return result;
 
   } catch (error) {
     console.error('❌ Batch stock quote error:', error);

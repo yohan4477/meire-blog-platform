@@ -142,7 +142,7 @@ export function TodayMerryQuote() {
             <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1 mt-1">
               <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="truncate">
-                {quotesData?.quotes?.length && quotesData.quotes.length > 0 && new Date(quotesData.quotes[0].date).toLocaleDateString('ko-KR', {
+                {quotesData?.quotes?.length && quotesData.quotes.length > 0 && quotesData.quotes[0]?.date && new Date(quotesData.quotes[0].date).toLocaleDateString('ko-KR', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
@@ -157,7 +157,7 @@ export function TodayMerryQuote() {
         </div>
         <div className="flex items-center gap-1 text-primary text-xs sm:text-sm font-medium bg-primary/10 px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto">
           <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-          <span>{quotesData?.quotes?.length && quotesData.quotes.length > 0 ? quotesData.quotes[0].readTime : '3분 읽기'}</span>
+          <span>{quotesData?.quotes?.length && quotesData.quotes.length > 0 ? quotesData.quotes[0]?.readTime : '3분 읽기'}</span>
         </div>
       </div>
 
@@ -169,17 +169,17 @@ export function TodayMerryQuote() {
             className="block"
           >
             <div className={`space-y-4 ${index > 0 ? 'pt-6 border-t border-border' : ''} bg-muted/10 rounded-lg p-4 border border-border/50`}>
-            {/* 포스트 제목 (다중일 때만 표시) */}
-            {quotesData?.quotes && quotesData.quotes.length > 1 && (
-              <div className="mb-3">
-                <h4 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2 group-hover:text-primary transition-colors">
+            {/* 포스트 제목 (항상 표시) */}
+            <div className="mb-3">
+              <h4 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2 hover:text-primary transition-colors">
+                {quotesData?.quotes && quotesData.quotes.length > 1 && (
                   <span className="w-6 h-6 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center flex-shrink-0">
                     {index + 1}
                   </span>
-                  {quote.title}
-                </h4>
-              </div>
-            )}
+                )}
+                <span className="line-clamp-2">{quote.title}</span>
+              </h4>
+            </div>
             
             {/* 핵심 한줄 요약 */}
             <div className="relative">
@@ -204,10 +204,15 @@ export function TodayMerryQuote() {
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span>🎯 투자 인사이트</span>
               </h3>
-              <p 
+              <div 
                 className="text-sm sm:text-base text-foreground leading-relaxed break-keep"
                 dangerouslySetInnerHTML={{ 
-                  __html: highlightStockNames(quote.insight, quote.relatedTickers).replace(/\\n/g, '<br />').replace(/\n/g, '<br />') 
+                  __html: highlightStockNames(quote.insight, quote.relatedTickers)
+                    .replace(/\n\n/g, '<br class="mb-3" />')  // 빈 줄(섹션 구분)을 줄바꿈으로
+                    .replace(/\n/g, ' ')   // 일반 줄바꿈은 공백으로
+                    .replace(/\s+/g, ' ')  // 연속된 공백을 하나로 합치기
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-primary">$1</strong>')  // **텍스트** → 굵게
+                    .replace(/- (.*?)(?=\s|<br|$)/g, '<span class="inline-flex items-center gap-1 mr-2"><span class="text-primary text-xs">•</span><span>$1</span></span>')  // - 리스트를 인라인으로
                 }}
               />
             </div>

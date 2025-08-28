@@ -245,7 +245,7 @@ export function DataStateHandler({
         size="md"
         variant="spinner"
         {...loadingConfig}
-        className={className}
+        className={className || ''}
       />
     );
   }
@@ -256,7 +256,7 @@ export function DataStateHandler({
         hasError={true}
         canRetry={true}
         {...errorConfig}
-        className={className}
+        className={className || ''}
       />
     );
   }
@@ -266,7 +266,7 @@ export function DataStateHandler({
       <EmptyState
         message="표시할 데이터가 없습니다"
         {...emptyConfig}
-        className={className}
+        className={className || ''}
       />
     );
   }

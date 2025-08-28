@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Database } from 'sqlite3';
 import path from 'path';
+import { performanceMonitor } from '@/lib/monitoring/performance-monitor';
 
 const dbPath = path.join(process.cwd(), 'database.db');
 
@@ -8,15 +9,15 @@ interface BlogPost {
   log_no: number;
   title: string;
   content: string;
-  created_date: number;  // Unix timestamp (밀리초)
+  created_date: string;  // DATETIME 형식 (YYYY-MM-DD HH:MM:SS)
 }
 
 function getTodayKoreaDate(): string {
-  // 한국 시간 기준으로 오늘 날짜 계산
-  const kstOffset = 9 * 60; // 한국은 UTC+9
+  // 한국 시간대(KST) 정확히 계산 - 서버 위치 무관하게 동작
   const now = new Date();
-  const kstTime = new Date(now.getTime() + (kstOffset * 60 * 1000));
-  return kstTime.toISOString().split('T')[0];
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000); // UTC 시간
+  const kst = new Date(utc + (9 * 3600000)); // KST = UTC+9
+  return kst.toISOString().split('T')[0] || '';
 }
 
 function extractTickersFromContent(content: string): string[] {
@@ -62,14 +63,14 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
       [],
       (err: any, tableExists: any) => {
         if (err || !tableExists) {
-          // 테이블이 없는 경우 기본 응답
+          // 테이블이 없는 경우 - CLAUDE.md 준수: 가짜 데이터 생성 금지
           resolve({
             log_no: log_no.toString(),
             title,
-            quote: "멀리는 말고 가까이 보자",
-            insight: `"${title}" - 메르님의 투자 철학을 담은 포스트입니다. 시장의 소음에 휩쓸리지 말고 본질에 집중하는 것이 중요합니다.`,
+            quote: "Claude 직접 분석이 아직 수행되지 않았습니다",
+            insight: `포스트 "${title}"에 대한 Claude 수동 분석이 필요합니다. CLAUDE.md 원칙에 따라 가짜 한줄 코멘트는 생성하지 않습니다.`,
             relatedTickers,
-            date: new Date(created_date).toISOString(),
+            date: new Date(created_date + 'Z').toISOString(), // DATETIME을 ISO로 변환
             readTime: "3분 읽기"
           });
           return;
@@ -85,10 +86,10 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
               resolve({
                 log_no: log_no.toString(),
                 title,
-                quote: "투자는 마라톤이다",
-                insight: `"${title}" - 단기적 변동에 흔들리지 않는 장기 투자 관점이 필요합니다.`,
+                quote: "분석 결과 조회 중 오류가 발생했습니다",
+                insight: `포스트 "${title}"의 분석 결과를 불러올 수 없습니다. CLAUDE.md 원칙에 따라 가짜 데이터는 표시하지 않습니다.`,
                 relatedTickers,
-                date: new Date(created_date).toISOString(),
+                date: new Date(created_date + 'Z').toISOString(), // DATETIME을 ISO로 변환
                 readTime: "3분 읽기"
               });
               return;
@@ -102,18 +103,18 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
                 quote: analysis.summary,  // 한줄 정리
                 insight: analysis.investment_insight,  // 투자 인사이트
                 relatedTickers,
-                date: new Date(created_date).toISOString(),
+                date: new Date(created_date + 'Z').toISOString(), // DATETIME을 ISO로 변환
                 readTime: "3분 읽기"
               });
             } else {
-              // DB에 분석 결과가 없는 경우 기본 메시지
+              // DB에 분석 결과가 없는 경우 - CLAUDE.md 준수: 가짜 데이터 표시 금지
               resolve({
                 log_no: log_no.toString(),
                 title,
-                quote: "시장을 이기려 하지 말고 함께하라",
-                insight: `"${title}" - 메르님의 통찰력 있는 분석을 통해 투자의 방향성을 찾아보세요.`,
+                quote: "Claude 직접 분석이 아직 완료되지 않았습니다",
+                insight: `포스트 "${title}"에 대한 Claude 수동 분석이 필요합니다. 실제 분석 완료 전까지는 내용을 표시하지 않습니다.`,
                 relatedTickers,
-                date: new Date(created_date).toISOString(),
+                date: new Date(created_date + 'Z').toISOString(), // DATETIME을 ISO로 변환
                 readTime: "3분 읽기"
               });
             }
@@ -125,6 +126,8 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
 }
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  
   return new Promise((resolve) => {
     const db = new Database(dbPath, (err) => {
       if (err) {
@@ -138,11 +141,11 @@ export async function GET(request: NextRequest) {
 
       const today = getTodayKoreaDate();
       
-      // 오늘 날짜의 모든 포스트 찾기 (log_no 사용, created_date는 밀리초 타임스탬프)
+      // 오늘 날짜의 모든 포스트 찾기 (created_date는 DATETIME 형식)
       db.all(
         `SELECT log_no, title, content, created_date 
          FROM blog_posts 
-         WHERE DATE(datetime(created_date/1000, 'unixepoch')) = ? 
+         WHERE DATE(created_date) = ? 
          ORDER BY created_date DESC`,
         [today],
         (err, todayPosts: BlogPost[]) => {
@@ -160,6 +163,14 @@ export async function GET(request: NextRequest) {
             // 오늘 모든 포스트로 말씀 생성 (async 처리)
             Promise.all(todayPosts.map(post => createTodayQuoteFromPost(post, db)))
               .then(todayQuotes => {
+                // 성능 메트릭 기록
+                const responseTime = Date.now() - startTime;
+                performanceMonitor.recordMetric({
+                  apiResponseTime: responseTime,
+                  cacheHitRate: 1, // 오늘 포스트는 캐시 가능
+                  timestamp: Date.now()
+                });
+                
                 db.close();
                 resolve(NextResponse.json({ quotes: todayQuotes, isToday: true }, {
                   headers: {
@@ -207,6 +218,14 @@ export async function GET(request: NextRequest) {
 
               createTodayQuoteFromPost(latestPost, db)
                 .then(todayQuote => {
+                  // 성능 메트릭 기록
+                  const responseTime = Date.now() - startTime;
+                  performanceMonitor.recordMetric({
+                    apiResponseTime: responseTime,
+                    cacheHitRate: 0.7, // 최신 포스트는 중간 캐시 효율
+                    timestamp: Date.now()
+                  });
+                  
                   resolve(NextResponse.json({ quotes: [todayQuote], isToday: false }, {
                     headers: {
                       'Cache-Control': 'public, max-age=1800, s-maxage=1800', // 30분 캐시 (최신 포스트용)

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { AlertCircle, TrendingUp, Clock, Shield, Component, BarChart3, Calendar, AlertTriangle } from 'lucide-react';
-import { ErrorCategorizer, ErrorCategory, ErrorSeverity } from '@/lib/error-categorizer';
+// import { ErrorCategorizer, ErrorCategory, ErrorSeverity, getErrorCategorizer } from '@/lib/error-categorizer';
 
 interface ErrorData {
   id: string;
@@ -75,8 +75,8 @@ export default function ErrorVisualizationDashboard() {
     
     errors.forEach(error => {
       const component = error.component_name || 'Unknown';
-      const classification = ErrorCategorizer.categorizeError(error);
-      const category = classification.category;
+      // 임시 간단한 분류 로직 (error-categorizer 재구축 예정)
+      const category = 'general';
       const severityLevel = error.severity || 'medium';
       
       if (!componentMap.has(component)) {
@@ -107,13 +107,22 @@ export default function ErrorVisualizationDashboard() {
     return Array.from(componentMap.entries()).map(([component, data]) => {
       // 심각도 레벨 확인 및 기본값 설정
       const severityLevel = data.severityLevel || 'medium';
-      let colors;
-      try {
-        colors = ErrorCategorizer.getSeverityColor(severityLevel as ErrorSeverity);
-      } catch (error) {
-        console.warn('Severity color error:', error);
-        colors = { primary: '#8884d8', background: '#f3f4f6', icon: '⚡' };
-      }
+      // 임시 색상 매핑 (ErrorCategorizer 재구축 예정)
+      const severityColors: Record<string, string> = {
+        low: '#22c55e',
+        medium: '#f59e0b', 
+        high: '#ef4444',
+        critical: '#dc2626'
+      };
+      const colorHex = severityColors[severityLevel] || '#8884d8';
+
+      // 심각도별 아이콘
+      const severityIcons: Record<string, string> = {
+        critical: '🚨',
+        high: '⚠️', 
+        medium: '🔶',
+        low: 'ℹ️'
+      };
       
       return {
         component,
@@ -121,8 +130,8 @@ export default function ErrorVisualizationDashboard() {
         lastOccurred: data.lastOccurred,
         categories: Array.from(data.categories),
         severityLevel,
-        color: colors.primary,
-        icon: colors.icon
+        color: colorHex,
+        icon: severityIcons[severityLevel] || '⚡'
       };
     }).sort((a, b) => b.count - a.count);
   }, [errors]);
@@ -138,18 +147,34 @@ export default function ErrorVisualizationDashboard() {
     const categoryMap = new Map<string, number>();
     
     errors.forEach(error => {
-      const classification = ErrorCategorizer.categorizeError(error);
-      const category = classification.category;
+      // 임시 간단한 분류 로직 (error-categorizer 재구축 예정)
+      const category = 'general';
       categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
     });
 
     return Array.from(categoryMap.entries()).map(([category, count]) => {
-      const colors = ErrorCategorizer.getCategoryColor(category);
+      // 임시 색상 매핑 (ErrorCategorizer 재구축 예정)
+      const categoryColors: Record<string, string> = {
+        general: '#8884d8',
+        ui: '#82ca9d',
+        api: '#ffc658',
+        data: '#ff7c7c'
+      };
+      const colorHex = categoryColors[category] || '#8884d8';
+      const categoryIcons: Record<string, string> = {
+        DATABASE: '🗄️',
+        API: '🌐',
+        NETWORK: '📡',
+        BUILD: '🔨',
+        VALIDATION: '✅',
+        AUTHENTICATION: '🔐',
+        RUNTIME: '⚠️'
+      };
       return {
         category,
         count,
-        color: colors.primary,
-        icon: colors.icon
+        color: colorHex,
+        icon: categoryIcons[category] || '⚡'
       };
     }).sort((a, b) => b.count - a.count);
   }, [errors]);
@@ -181,12 +206,25 @@ export default function ErrorVisualizationDashboard() {
     });
 
     return Array.from(severityMap.entries()).map(([severity, count]) => {
-      const colors = ErrorCategorizer.getSeverityColor(severity as ErrorSeverity);
+      // 임시 색상 매핑 (ErrorCategorizer 재구축 예정)
+      const severityColors: Record<string, string> = {
+        low: '#22c55e',
+        medium: '#f59e0b',
+        high: '#ef4444', 
+        critical: '#dc2626'
+      };
+      const colorHex = severityColors[severity] || '#8884d8';
+      const severityIcons: Record<string, string> = {
+        critical: '🚨',
+        high: '⚠️', 
+        medium: '🔶',
+        low: 'ℹ️'
+      };
       return {
         severity,
         count,
-        color: colors.primary,
-        icon: colors.icon
+        color: colorHex,
+        icon: severityIcons[severity] || '⚡'
       };
     });
   }, [errors]);

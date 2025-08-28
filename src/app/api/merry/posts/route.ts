@@ -16,6 +16,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const stockFilter = searchParams.get('stocks'); // '1' for stock-related posts
     const macroFilter = searchParams.get('macro'); // '1' for macro-related posts
     const tickerFilter = searchParams.get('ticker'); // specific ticker for filtering
+    const searchQuery = searchParams.get('search'); // search in title and content
 
     console.log('🚀 Loading Merry posts from database...');
 
@@ -96,6 +97,46 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           WHERE ticker = ?
         )`);
         params.push(tickerFilter);
+      }
+
+      // 검색 쉽어 필터링 (제목, 내용, 종목명에서 검색)
+      if (searchQuery && searchQuery.trim()) {
+        const searchTerm = searchQuery.trim();
+        
+        // 주식 종목명 매핑 (ticker -> 한글명)
+        const stockNameMap: { [key: string]: string } = {
+          'TSLA': '테슬라',
+          '005930': '삼성전자',
+          'INTC': '인텔',
+          'LLY': '일라이릴리',
+          'UNH': '유나이티드헬스케어',
+          'NVDA': '엔비디아',
+          'AAPL': '애플',
+          'GOOGL': '구글',
+          'MSFT': '마이크로소프트',
+          'META': '매타',
+          'AMD': 'AMD',
+          '042660': '한화오션',
+          '267250': 'HD현대중공업',
+          '010620': '현대미포조선',
+          'HD': 'HD현대중공업'
+        };
+        
+        // 검색어가 종목 코드인지 확인
+        const koreanName = stockNameMap[searchTerm.toUpperCase()];
+        
+        if (koreanName) {
+          // 종목 코드로 검색한 경우: 코드와 한글명 둘 다 검색
+          conditions.push(`(
+            bp.title LIKE ? OR bp.content LIKE ? OR 
+            bp.title LIKE ? OR bp.content LIKE ?
+          )`);
+          params.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${koreanName}%`, `%${koreanName}%`);
+        } else {
+          // 일반 검색어인 경우: 제목과 내용에서 검색
+          conditions.push('(bp.title LIKE ? OR bp.content LIKE ?)');
+          params.push(`%${searchTerm}%`, `%${searchTerm}%`);
+        }
       }
 
       if (conditions.length > 0) {

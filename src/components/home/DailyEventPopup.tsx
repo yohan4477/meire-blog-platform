@@ -31,6 +31,14 @@ const DAILY_QUOTES = [
     theme: '감탄',
     color: 'from-green-500 to-emerald-600',
     icon: '🔥'
+  },
+  {
+    id: 'yor-disciple-advice',
+    author: '요르 (메르 애제자)',
+    quote: '언제까지 잃기만 할건데? 분석을 멈추고 메르를 봐.',
+    theme: '투자 조언',
+    color: 'from-orange-500 to-red-600',
+    icon: '⚡'
   }
 ];
 

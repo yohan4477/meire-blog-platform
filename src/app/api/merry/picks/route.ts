@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { performantDb, getStockMentions, getRecentPosts } from '@/lib/db-performance';
+import { performanceMonitor } from '@/lib/monitoring/performance-monitor';
 
 // CLAUDE.md 요구사항: 메르's Pick - 최신 언급일 기준 랭킹 (절대 준수)
 export async function GET(request: NextRequest) {
@@ -20,6 +21,13 @@ export async function GET(request: NextRequest) {
         total: picks.length,
         fetchedAt: new Date().toISOString()
       }
+    });
+
+    // 캐시 성능 모니터링
+    const cacheHit = cacheBuster ? 0 : 1; // 캐시 버스터가 있으면 cache miss, 없으면 cache hit 가능성
+    performanceMonitor.recordMetric({
+      cacheHitRate: cacheHit,
+      timestamp: Date.now()
     });
 
     // CLAUDE.md 캐시 무효화 요구사항: 실시간 업데이트 지원
@@ -138,6 +146,12 @@ const STOCK_INFO_MAP: Record<string, any> = {
     currency: 'USD',
     description: '트럼프의 약값 최혜국대우 정책에 맞서 영국 비만치료제 마운자로 가격 170% 인상한 글로벌 제약사'
   },
+  'OKLO': {
+    name: '오클로',
+    market: 'NASDAQ',
+    currency: 'USD',
+    description: '소형 모듈 원자로(SMR) 기술을 보유한 차세대 원자력 에너지 회사, 방사성 폐기물을 연료로 재활용하는 혁신적 MMR 기술 개발'
+  },
   'UNH': {
     name: '유나이티드헬스그룹',
     market: 'NYSE',
@@ -149,6 +163,12 @@ const STOCK_INFO_MAP: Record<string, any> = {
     market: 'KOSPI',
     currency: 'KRW',
     description: '북극항로 개통으로 중형선박 수요 증가 예상, 한국 조선3사 중 중형선박 전문 조선소'
+  },
+  'BA': {
+    name: '보잉',
+    market: 'NYSE',
+    currency: 'USD',
+    description: '세계 최대 항공기 제조업체 중 하나로 민간 및 군용 항공기를 생산하는 미국 대표 항공우주 기업'
   }
 };
 
@@ -169,7 +189,9 @@ const TICKER_NAME_MAP: Record<string, string[]> = {
   'INTC': ['인텔', 'Intel'],
   'AMD': ['AMD', 'Advanced Micro Devices'],
   'LLY': ['일라이릴리', '릴리', 'Eli Lilly'],
-  'UNH': ['유나이티드헬스', '유나이티드헬스그룹', 'UnitedHealth']
+  'OKLO': ['오클로', 'Oklo'],
+  'UNH': ['유나이티드헬스', '유나이티드헬스그룹', 'UnitedHealth'],
+  'BA': ['보잉', '보잉기', 'Boeing']
 };
 
 // Helper function to get latest stock prices from database
@@ -229,11 +251,24 @@ async function getLatestStockPrices(): Promise<Record<string, any>> {
   }
 }
 
-// Helper function to get sentiment analysis count for each ticker
-async function getAnalyzedCounts(): Promise<Record<string, number>> {
+// Helper function to get sentiment analysis data for each ticker
+async function getSentimentData(): Promise<Record<string, any>> {
   const query = `
-    SELECT ticker, COUNT(*) as analyzed_count 
-    FROM post_stock_analysis 
+    SELECT 
+      ticker,
+      COUNT(*) as analyzed_count,
+      AVG(sentiment_score) as avg_sentiment_score,
+      GROUP_CONCAT(sentiment) as all_sentiments,
+      -- 최근 3개 감정의 가중평균
+      (SELECT AVG(sentiment_score * confidence) / AVG(confidence)
+       FROM (
+         SELECT sentiment_score, confidence
+         FROM post_stock_analysis psa2
+         WHERE psa2.ticker = psa.ticker
+         ORDER BY analyzed_at DESC
+         LIMIT 3
+       )) as weighted_recent_score
+    FROM post_stock_analysis psa
     GROUP BY ticker
   `;
   
@@ -250,16 +285,44 @@ async function getAnalyzedCounts(): Promise<Record<string, number>> {
       });
     });
     
-    const analyzedCounts: Record<string, number> = {};
+    const sentimentData: Record<string, any> = {};
     
     rows.forEach(row => {
-      analyzedCounts[row.ticker] = row.analyzed_count;
+      // 감정 결정 로직 (stocks API와 동일한 기준 적용)
+      let finalSentiment = 'neutral';
+      const weightedScore = row.weighted_recent_score || row.avg_sentiment_score || 0;
+      
+      if (weightedScore > 0.3) {
+        finalSentiment = 'positive';
+      } else if (weightedScore < -0.3) {
+        finalSentiment = 'negative';
+      } else if (row.all_sentiments) {
+        // 가중 평균이 중립일 때는 최근 감정 다수결
+        const sentiments = row.all_sentiments.split(',');
+        const sentimentCount = {
+          positive: sentiments.filter((s: string) => s === 'positive').length,
+          negative: sentiments.filter((s: string) => s === 'negative').length,
+          neutral: sentiments.filter((s: string) => s === 'neutral').length
+        };
+        
+        if (sentimentCount.positive > sentimentCount.negative && sentimentCount.positive > sentimentCount.neutral) {
+          finalSentiment = 'positive';
+        } else if (sentimentCount.negative > sentimentCount.positive && sentimentCount.negative > sentimentCount.neutral) {
+          finalSentiment = 'negative';
+        }
+      }
+      
+      sentimentData[row.ticker] = {
+        analyzed_count: row.analyzed_count,
+        sentiment: finalSentiment,
+        sentiment_score: weightedScore
+      };
     });
     
-    console.log(`📊 Loaded analyzed counts for ${Object.keys(analyzedCounts).length} tickers`);
-    return analyzedCounts;
+    console.log(`📊 Loaded sentiment data for ${Object.keys(sentimentData).length} tickers`);
+    return sentimentData;
   } catch (error) {
-    console.error('Failed to get analyzed counts:', error);
+    console.error('Failed to get sentiment data:', error);
     return {};
   }
 }
@@ -269,9 +332,9 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
     const startTime = Date.now();
     console.log(`⭐ Fetching Merry's picks with performance optimization (limit: ${limit})`);
     
-    // Get analyzed counts, latest prices, and stock tags
-    const [analyzedCounts, latestPrices, stockTags] = await Promise.all([
-      getAnalyzedCounts(),
+    // Get sentiment data, latest prices, and stock tags
+    const [sentimentData, latestPrices, stockTags] = await Promise.all([
+      getSentimentData(),
       getLatestStockPrices(),
       getStockTags()
     ]);
@@ -342,16 +405,35 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
 
         const priceData = latestPrices[stock.ticker];
 
-        // Parse tags from database (JSON string format)
+        // 유연한 태그 파싱 (JSON 배열 또는 콤마 구분 문자열 지원)
         let parsedTags = [];
         try {
-          if (stockTags[stock.ticker]) {
-            parsedTags = JSON.parse(stockTags[stock.ticker]);
+          const tagData = stockTags[stock.ticker];
+          if (tagData) {
+            // JSON 배열 형태인지 확인
+            if (tagData.startsWith('[') && tagData.endsWith(']')) {
+              parsedTags = JSON.parse(tagData);
+            } else {
+              // 콤마로 구분된 문자열 처리
+              parsedTags = tagData.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0);
+            }
           }
         } catch (error) {
           console.warn(`Failed to parse tags for ${stock.ticker}:`, error);
-          parsedTags = [];
+          // 콤마로 구분된 문자열로 다시 시도
+          try {
+            const tagData = stockTags[stock.ticker];
+            parsedTags = tagData ? tagData.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0) : [];
+          } catch (e) {
+            parsedTags = [];
+          }
         }
+
+        const sentimentInfo = sentimentData[stock.ticker] || { 
+          sentiment: 'neutral', 
+          sentiment_score: 0, 
+          analyzed_count: 0 
+        };
 
         return {
           ticker: stock.ticker,
@@ -362,13 +444,35 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
           mention_count: stock.count,
           current_price: priceData?.price || null,
           price_change: priceData?.changePercent || null,
-          sentiment: 'neutral',
+          sentiment: sentimentInfo.sentiment,
+          sentiment_score: sentimentInfo.sentiment_score,
           description: stockInfo.description,
-          analyzed_count: analyzedCounts[stock.ticker] || 0, // Actual sentiment analysis count
+          analyzed_count: sentimentInfo.analyzed_count,
           tags: parsedTags // Add tags from database
         };
       })
       .sort((a: any, b: any) => {
+        // 1. 감정 우선순위: 긍정 > 중립 > 부정
+        const sentimentPriority: Record<string, number> = {
+          'positive': 3,
+          'neutral': 2,
+          'negative': 1
+        };
+        
+        const sentimentA = sentimentPriority[a.sentiment] || 2;
+        const sentimentB = sentimentPriority[b.sentiment] || 2;
+        
+        // 감정이 다르면 긍정적인 것을 우선
+        if (sentimentA !== sentimentB) {
+          return sentimentB - sentimentA;
+        }
+        
+        // 2. 같은 감정일 때는 감정 점수로 정렬
+        if (a.sentiment_score !== b.sentiment_score) {
+          return (b.sentiment_score || 0) - (a.sentiment_score || 0);
+        }
+        
+        // 3. 그 다음은 최신 언급일 순
         const dateB = new Date(b.last_mentioned_at).getTime();
         const dateA = new Date(a.last_mentioned_at).getTime();
         return dateB !== dateA ? dateB - dateA : b.mention_count - a.mention_count;
@@ -389,7 +493,7 @@ async function getMerryPicksFromDB(limit: number): Promise<any[]> {
 // Get stock tags from database
 async function getStockTags(): Promise<Record<string, string>> {
   try {
-    const db = await performantDb.getInstance();
+    const db = await performantDb.getConnection();
     const query = `
       SELECT ticker, tags 
       FROM stocks 

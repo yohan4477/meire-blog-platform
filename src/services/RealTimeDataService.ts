@@ -123,9 +123,12 @@ export class RealTimeDataService {
       id,
       tickers,
       callback,
-      filters,
       lastUpdate: Date.now()
     };
+    
+    if (filters !== undefined) {
+      subscription.filters = filters;
+    }
 
     this.subscriptions.set(id, subscription);
     this.activeStreams.add(id);
@@ -458,7 +461,7 @@ export class RealTimeDataService {
       callback({
         type: 'historical_error',
         ticker,
-        data: { error: error.message },
+        data: { error: error instanceof Error ? error.message : 'Unknown error' },
         progress: 0,
         timestamp: Date.now()
       });

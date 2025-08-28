@@ -76,14 +76,15 @@ export class StructuredError extends Error {
     this.level = level;
     this.category = category;
     this.code = code;
-    this.originalError = options.originalError;
-    this.statusCode = options.statusCode;
     this.isOperational = options.isOperational ?? true;
+    
+    if (options.originalError !== undefined) this.originalError = options.originalError;
+    if (options.statusCode !== undefined) this.statusCode = options.statusCode;
     
     this.context = {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
-      version: process.env.APP_VERSION || '1.0.0',
+      version: process.env['APP_VERSION'] || '1.0.0',
       ...context
     };
 
@@ -388,10 +389,25 @@ export class ErrorHandler {
     let structuredError: StructuredError;
 
     if (error instanceof StructuredError) {
-      structuredError = error;
-      // 컨텍스트 병합
-      if (context) {
-        structuredError.context = { ...structuredError.context, ...context };
+      // 컨텍스트 병합이 필요한 경우 새로운 StructuredError 생성
+      if (context && Object.keys(context).length > 0) {
+        const options: any = {
+          isOperational: error.isOperational
+        };
+        
+        if (error.originalError !== undefined) options.originalError = error.originalError;
+        if (error.statusCode !== undefined) options.statusCode = error.statusCode;
+        
+        structuredError = new StructuredError(
+          error.message,
+          error.level,
+          error.category,
+          error.code,
+          { ...error.context, ...context },
+          options
+        );
+      } else {
+        structuredError = error;
       }
     } else {
       // 일반 Error를 StructuredError로 변환
@@ -641,9 +657,9 @@ export function getGlobalErrorHandler(): ErrorHandler {
     globalErrorHandler = new ErrorHandler();
     
     // Slack 알림 설정 (환경 변수가 있는 경우)
-    if (process.env.SLACK_WEBHOOK_URL) {
+    if (process.env['SLACK_WEBHOOK_URL']) {
       globalErrorHandler.addNotificationService(
-        new SlackNotificationService(process.env.SLACK_WEBHOOK_URL)
+        new SlackNotificationService(process.env['SLACK_WEBHOOK_URL'])
       );
     }
   }

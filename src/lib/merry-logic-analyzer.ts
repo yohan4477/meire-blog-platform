@@ -52,6 +52,10 @@ export class MerryLogicAnalyzer {
     // 실제 포스트 내용을 가져와서 분석
     const post = await this.getPostContent(postId);
     
+    if (!post) {
+      throw new Error(`Post ${postId} not found`);
+    }
+    
     return {
       id: `late-start-${postId}`,
       title: post.title,
@@ -389,7 +393,7 @@ export class MerryLogicAnalyzer {
   
   private extractTicker(text: string): string {
     const tickerMatch = text.match(/([A-Z]{2,5})/);
-    return tickerMatch ? tickerMatch[1] : '';
+    return tickerMatch ? (tickerMatch[1] || '') : '';
   }
   
   private getCompanyName(ticker: string): string {
@@ -454,11 +458,11 @@ export class MerryLogicAnalyzer {
     const { query } = require('./database');
     
     try {
-      const posts = await query<{
+      const posts = await query('SELECT title, content, created_date FROM blog_posts WHERE id = ?', [postId]) as {
         title: string;
         content: string;
         created_date: string;
-      }>('SELECT title, content, created_date FROM blog_posts WHERE id = ?', [postId]);
+      }[];
       
       if (posts.length > 0) {
         return posts[0];
@@ -554,6 +558,10 @@ export class MerryLogicAnalyzer {
    */
   async analyzeActualLateStartPost(postId: number): Promise<LogicPattern> {
     const post = await this.getPostContent(postId);
+    
+    if (!post) {
+      throw new Error(`Post ${postId} not found`);
+    }
     
     // 실제 "늦생시" 포스트 패턴에 맞춘 분석
     const analysis = {
