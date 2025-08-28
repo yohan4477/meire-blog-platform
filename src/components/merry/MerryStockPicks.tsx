@@ -46,8 +46,8 @@ export default function MerryStockPicks() {
     try {
       console.log('📊 1단계: 메르스 픽 기본 정보 로딩 시작...');
       
-      // 1단계: 메르's Pick 감정 랭킹 로드 (빠른 렌더링)
-      const basicResponse = await fetch(`/api/merry/picks?limit=5&t=${Date.now()}`, {
+      // 1단계: 메르's Pick 감정 랭킹 로드 (빠른 렌더링, 캐시 활용)
+      const basicResponse = await fetch(`/api/merry/picks?limit=5`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'

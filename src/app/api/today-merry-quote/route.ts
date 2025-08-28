@@ -5,6 +5,38 @@ import { performanceMonitor } from '@/lib/monitoring/performance-monitor';
 
 const dbPath = path.join(process.cwd(), 'database.db');
 
+// ⚡ 메모리 캐시 (5분 TTL)
+let cachedQuoteData: any = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5분
+
+// 🚀 DB 연결 풀링 최적화
+let dbConnection: Database | null = null;
+
+function getDbConnection(): Promise<Database> {
+  return new Promise((resolve, reject) => {
+    if (dbConnection) {
+      return resolve(dbConnection);
+    }
+    
+    const db = new Database(dbPath, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        // 성능 최적화 PRAGMA 설정
+        db.serialize(() => {
+          db.run("PRAGMA journal_mode = WAL;");
+          db.run("PRAGMA synchronous = NORMAL;");
+          db.run("PRAGMA cache_size = 10000;");
+          db.run("PRAGMA temp_store = MEMORY;");
+        });
+        dbConnection = db;
+        resolve(db);
+      }
+    });
+  });
+}
+
 interface BlogPost {
   log_no: number;
   title: string;
@@ -128,121 +160,116 @@ async function createTodayQuoteFromPost(post: BlogPost, db: any): Promise<any> {
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
   
-  return new Promise((resolve) => {
-    const db = new Database(dbPath, (err) => {
-      if (err) {
-        console.error('데이터베이스 연결 실패:', err);
-        resolve(NextResponse.json(
-          { error: '데이터베이스 연결 실패' },
-          { status: 500 }
-        ));
-        return;
-      }
-
-      const today = getTodayKoreaDate();
+  try {
+    // ⚡ 캐시 확인 (5분 TTL)
+    const now = Date.now();
+    if (cachedQuoteData && (now - cacheTimestamp) < CACHE_TTL) {
+      console.log(`🚀 캐시 히트: ${now - cacheTimestamp}ms ago`);
       
-      // 오늘 날짜의 모든 포스트 찾기 (created_date는 DATETIME 형식)
+      performanceMonitor.recordMetric({
+        apiResponseTime: Date.now() - startTime,
+        cacheHitRate: 1.0,
+        timestamp: Date.now()
+      });
+      
+      return NextResponse.json(cachedQuoteData, {
+        headers: {
+          'Cache-Control': 'public, max-age=300, s-maxage=300', // 5분 캐시
+          'X-Cache': 'HIT'
+        }
+      });
+    }
+
+    // 🚀 DB 연결 최적화
+    const db = await getDbConnection();
+    const today = getTodayKoreaDate();
+    
+    // Promise 기반으로 변환하여 성능 최적화
+    const result = await new Promise<any>((resolve, reject) => {
+      // 오늘 날짜의 모든 포스트 찾기 (인덱스 활용)
       db.all(
         `SELECT log_no, title, content, created_date 
          FROM blog_posts 
          WHERE DATE(created_date) = ? 
-         ORDER BY created_date DESC`,
+         ORDER BY created_date DESC LIMIT 5`,
         [today],
-        (err, todayPosts: BlogPost[]) => {
+        async (err, todayPosts: BlogPost[]) => {
           if (err) {
-            console.error('오늘 포스트 조회 실패:', err);
-            db.close();
-            resolve(NextResponse.json(
-              { error: '포스트 조회 실패' },
-              { status: 500 }
-            ));
+            reject(err);
             return;
           }
 
-          if (todayPosts && todayPosts.length > 0) {
-            // 오늘 모든 포스트로 말씀 생성 (async 처리)
-            Promise.all(todayPosts.map(post => createTodayQuoteFromPost(post, db)))
-              .then(todayQuotes => {
-                // 성능 메트릭 기록
-                const responseTime = Date.now() - startTime;
-                performanceMonitor.recordMetric({
-                  apiResponseTime: responseTime,
-                  cacheHitRate: 1, // 오늘 포스트는 캐시 가능
-                  timestamp: Date.now()
-                });
-                
-                db.close();
-                resolve(NextResponse.json({ quotes: todayQuotes, isToday: true }, {
-                  headers: {
-                    'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1시간 캐시
-                  },
-                }));
-              })
-              .catch(error => {
-                console.error('포스트 분석 처리 오류:', error);
-                db.close();
-                resolve(NextResponse.json(
-                  { error: '포스트 분석 처리 실패' },
-                  { status: 500 }
-                ));
-              });
-            return;
-          }
-
-          // 오늘 포스트가 없으면 가장 최근 포스트 사용
-          db.get(
-            `SELECT log_no, title, content, created_date 
-             FROM blog_posts 
-             ORDER BY created_date DESC 
-             LIMIT 1`,
-            [],
-            (err, latestPost: BlogPost | undefined) => {
-              db.close();
+          try {
+            if (todayPosts && todayPosts.length > 0) {
+              // 병렬 처리로 성능 최적화
+              const todayQuotes = await Promise.all(
+                todayPosts.map(post => createTodayQuoteFromPost(post, db))
+              );
               
-              if (err) {
-                console.error('최신 포스트 조회 실패:', err);
-                resolve(NextResponse.json(
-                  { error: '포스트 조회 실패' },
-                  { status: 500 }
-                ));
-                return;
-              }
+              resolve({ quotes: todayQuotes, isToday: true });
+            } else {
+              // 캐시된 최신 포스트 조회
+              db.get(
+                `SELECT log_no, title, content, created_date 
+                 FROM blog_posts 
+                 ORDER BY created_date DESC 
+                 LIMIT 1`,
+                [],
+                async (err, latestPost: BlogPost | undefined) => {
+                  if (err) {
+                    reject(err);
+                    return;
+                  }
 
-              if (!latestPost) {
-                resolve(NextResponse.json(
-                  { error: '포스트를 찾을 수 없음' },
-                  { status: 404 }
-                ));
-                return;
-              }
+                  if (!latestPost) {
+                    resolve({ quotes: [], isToday: false });
+                    return;
+                  }
 
-              createTodayQuoteFromPost(latestPost, db)
-                .then(todayQuote => {
-                  // 성능 메트릭 기록
-                  const responseTime = Date.now() - startTime;
-                  performanceMonitor.recordMetric({
-                    apiResponseTime: responseTime,
-                    cacheHitRate: 0.7, // 최신 포스트는 중간 캐시 효율
-                    timestamp: Date.now()
-                  });
-                  
-                  resolve(NextResponse.json({ quotes: [todayQuote], isToday: false }, {
-                    headers: {
-                      'Cache-Control': 'public, max-age=1800, s-maxage=1800', // 30분 캐시 (최신 포스트용)
-                    },
-                  }));
-                })
-                .catch(error => {
-                  console.error('최신 포스트 분석 오류:', error);
-                  resolve(NextResponse.json(
-                    { error: '최신 포스트 분석 실패' },
-                    { status: 500 }
-                  ));
-                });
+                  try {
+                    const todayQuote = await createTodayQuoteFromPost(latestPost, db);
+                    resolve({ quotes: [todayQuote], isToday: false });
+                  } catch (error) {
+                    reject(error);
+                  }
+                }
+              );
             }
-          );
+          } catch (error) {
+            reject(error);
+          }
         }
       );
     });
-  });
+
+    // ⚡ 캐시 저장
+    cachedQuoteData = result;
+    cacheTimestamp = now;
+
+    // 성능 메트릭 기록
+    const responseTime = Date.now() - startTime;
+    performanceMonitor.recordMetric({
+      apiResponseTime: responseTime,
+      cacheHitRate: 0,
+      timestamp: Date.now()
+    });
+
+    console.log(`⚡ Today Merry Quote API: ${responseTime}ms`);
+
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'public, max-age=300, s-maxage=300', // 5분 캐시
+        'X-Cache': 'MISS',
+        'X-Response-Time': `${responseTime}ms`
+      }
+    });
+
+  } catch (error) {
+    console.error('Today Merry Quote API 에러:', error);
+    
+    return NextResponse.json(
+      { error: 'API 처리 실패', message: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
 }

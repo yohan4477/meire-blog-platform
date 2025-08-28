@@ -2,33 +2,71 @@ import { NextRequest, NextResponse } from 'next/server';
 import { performantDb, getStockMentions, getRecentPosts } from '@/lib/db-performance';
 import { performanceMonitor } from '@/lib/monitoring/performance-monitor';
 
+// ⚡ 메모리 캐시 (2분 TTL)
+let cachedPicksData: any = null;
+let picksTimestamp: number = 0;
+const PICKS_CACHE_TTL = 2 * 60 * 1000; // 2분
+
 // CLAUDE.md 요구사항: 메르's Pick - 최신 언급일 기준 랭킹 (절대 준수)
 export async function GET(request: NextRequest) {
   try {
+    const startTime = Date.now();
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '8');
     const cacheBuster = searchParams.get('t');
 
+    // ⚡ 캐시 확인 (강제 캐시 버스터가 없을 때만)
+    const now = Date.now();
+    if (!cacheBuster && cachedPicksData && (now - picksTimestamp) < PICKS_CACHE_TTL) {
+      console.log(`🚀 Merry's Picks 캐시 히트: ${now - picksTimestamp}ms ago`);
+      
+      performanceMonitor.recordMetric({
+        apiResponseTime: Date.now() - startTime,
+        cacheHitRate: 1.0,
+        timestamp: Date.now()
+      });
+      
+      return NextResponse.json(cachedPicksData, {
+        headers: {
+          'Cache-Control': 'public, max-age=120, s-maxage=120', // 2분 캐시
+          'X-Cache': 'HIT',
+          'X-Response-Time': `${Date.now() - startTime}ms`
+        }
+      });
+    }
+
     console.log(`⭐ Fetching Merry's picks from DB (limit: ${limit})`);
+    console.log(`⭐ Fetching Merry's picks with performance optimization (limit: ${limit})`);
 
     // 실시간 데이터베이스에서 메르가 최근에 언급한 종목들을 가져오기
     const picks = await getMerryPicksFromDB(limit);
 
-    const response = NextResponse.json({
+    const responseData = {
       success: true,
       data: {
         picks,
         total: picks.length,
         fetchedAt: new Date().toISOString()
       }
-    });
+    };
 
-    // 캐시 성능 모니터링
-    const cacheHit = cacheBuster ? 0 : 1; // 캐시 버스터가 있으면 cache miss, 없으면 cache hit 가능성
+    // ⚡ 캐시 저장
+    if (!cacheBuster) {
+      cachedPicksData = responseData;
+      picksTimestamp = now;
+    }
+
+    const response = NextResponse.json(responseData);
+
+    // 성능 메트릭 기록
+    const responseTime = Date.now() - startTime;
     performanceMonitor.recordMetric({
-      cacheHitRate: cacheHit,
+      apiResponseTime: responseTime,
+      cacheHitRate: 0,
       timestamp: Date.now()
     });
+
+    console.log(`⚡ Merry's Picks API: ${responseTime}ms`);
 
     // CLAUDE.md 캐시 무효화 요구사항: 실시간 업데이트 지원
     if (cacheBuster) {
@@ -36,11 +74,14 @@ export async function GET(request: NextRequest) {
       response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       response.headers.set('Pragma', 'no-cache');
       response.headers.set('Expires', '0');
+      response.headers.set('X-Cache', 'BUST');
       console.log('🔄 Cache invalidated due to cache buster parameter');
     } else {
-      // 기본: 짧은 캐시 (30초) - 실시간성과 성능의 균형
-      response.headers.set('Cache-Control', 'public, max-age=30, s-maxage=30, must-revalidate');
-      console.log('⚡ Short cache applied (30s)');
+      // 기본: 중간 캐시 (2분) - 실시간성과 성능의 균형
+      response.headers.set('Cache-Control', 'public, max-age=120, s-maxage=120, must-revalidate');
+      response.headers.set('X-Cache', 'MISS');
+      response.headers.set('X-Response-Time', `${responseTime}ms`);
+      console.log('⚡ Medium cache applied (2min)');
     }
 
     return response;

@@ -88,7 +88,10 @@ export function TodayMerryQuote() {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/today-merry-quote?t=${Date.now()}`);
+      // ⚡ 캐시된 데이터 먼저 시도 (5분 캐시)
+      const response = await fetch(`/api/today-merry-quote`, {
+        next: { revalidate: 300 } // 5분 revalidation
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -96,6 +99,12 @@ export function TodayMerryQuote() {
       
       const result = await response.json();
       setQuotesData(result);
+      
+      // 캐시 상태 로깅
+      const cacheStatus = response.headers.get('X-Cache') || 'UNKNOWN';
+      const responseTime = response.headers.get('X-Response-Time') || '0ms';
+      console.log(`⚡ Today Merry Quote 로딩: ${responseTime} (${cacheStatus})`);
+      
     } catch (error) {
       console.error('메르님 말씀 로딩 실패:', error);
       setError(error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다');
@@ -208,11 +217,6 @@ export function TodayMerryQuote() {
                 className="text-sm sm:text-base text-foreground leading-relaxed break-keep"
                 dangerouslySetInnerHTML={{ 
                   __html: highlightStockNames(quote.insight, quote.relatedTickers)
-                    .replace(/\n\n/g, '<br class="mb-3" />')  // 빈 줄(섹션 구분)을 줄바꿈으로
-                    .replace(/\n/g, ' ')   // 일반 줄바꿈은 공백으로
-                    .replace(/\s+/g, ' ')  // 연속된 공백을 하나로 합치기
-                    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-primary">$1</strong>')  // **텍스트** → 굵게
-                    .replace(/- (.*?)(?=\s|<br|$)/g, '<span class="inline-flex items-center gap-1 mr-2"><span class="text-primary text-xs">•</span><span>$1</span></span>')  // - 리스트를 인라인으로
                 }}
               />
             </div>
